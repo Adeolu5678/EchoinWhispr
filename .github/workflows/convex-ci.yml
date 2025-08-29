@@ -11,6 +11,7 @@ on:
     paths:
       - 'Convex/**'
       - '.github/workflows/convex-ci.yml'
+  workflow_call:
 
 env:
   NODE_VERSION: '18'
