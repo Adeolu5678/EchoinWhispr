@@ -84,7 +84,7 @@ jobs:
       - name: Validate Convex schema
         working-directory: ./Convex
         run: |
-          npx convex generate
+          pnpm dlx convex generate
           if [ $? -eq 0 ]; then
             echo "Schema validation successful"
           else
