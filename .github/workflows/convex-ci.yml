@@ -137,13 +137,10 @@ jobs:
         working-directory: ./Convex
         run: pnpm install --frozen-lockfile
 
-      - name: Setup Convex CLI
-        run: pnpm add -g convex
-
       - name: Deploy to Convex (Staging)
         working-directory: ./Convex
         run: |
-          convex deploy --yes
+          pnpm dlx convex deploy --yes
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_STAGING_DEPLOY_KEY }}
           CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_STAGING_DEPLOYMENT }}
