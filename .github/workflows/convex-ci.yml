@@ -20,6 +20,7 @@ jobs:
   validate-and-test:
     name: Validate and Test Convex Backend
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -41,7 +42,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup PNPM cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-convex-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -52,12 +53,32 @@ jobs:
         working-directory: ./Convex
         run: pnpm install --frozen-lockfile
 
-      - name: Run linting and code quality checks
-        uses: ./.github/workflows/lint-and-quality.yml
-        with:
-          working-directory: ./Convex
-          node-version: ${{ env.NODE_VERSION }}
-          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Run TypeScript type checking
+        working-directory: ./Convex
+        run: |
+          if [ -f "tsconfig.json" ]; then
+            npx tsc --noEmit
+          else
+            echo "No tsconfig.json found, skipping TypeScript check"
+          fi
+
+      - name: Run ESLint
+        working-directory: ./Convex
+        run: |
+          if [ -f ".eslintrc.js" ] || [ -f ".eslintrc.json" ] || [ -f "eslint.config.js" ]; then
+            pnpm lint
+          else
+            echo "No ESLint configuration found, skipping linting"
+          fi
+
+      - name: Run Prettier check
+        working-directory: ./Convex
+        run: |
+          if [ -f ".prettierrc" ] || [ -f "prettier.config.js" ]; then
+            npx prettier --check .
+          else
+            echo "No Prettier configuration found, skipping format check"
+          fi
 
       - name: Validate Convex schema
         working-directory: ./Convex
@@ -74,25 +95,26 @@ jobs:
         id: schema-check
         working-directory: ./Convex
         run: |
-          if git diff --quiet convex/_generated/; then
+          if [ -d "convex/_generated" ] && git diff --quiet convex/_generated/ 2>/dev/null; then
             echo "No schema changes detected"
             echo "schema_changed=false" >> $GITHUB_OUTPUT
           else
-            echo "Schema changes detected"
+            echo "Schema changes detected or directory missing"
             echo "schema_changed=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload schema validation artifacts
         if: steps.schema-check.outputs.schema_changed == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: convex-schema
           path: ./Convex/convex/_generated/
-          retention-days: 7
+          retention-days: 3
 
   deploy-staging:
     name: Deploy to Convex Staging
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: validate-and-test
     if: github.ref == 'refs/heads/develop' || (github.ref == 'refs/heads/main' && github.event_name == 'pull_request')
 
@@ -128,6 +150,7 @@ jobs:
   deploy-production:
     name: Deploy to Convex Production
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: validate-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
@@ -163,6 +186,7 @@ jobs:
   schema-migration-check:
     name: Schema Migration Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: validate-and-test
     if: always() && needs.validate-and-test.result == 'success'
 
@@ -172,7 +196,7 @@ jobs:
 
       - name: Download schema artifacts
         if: needs.validate-and-test.outputs.schema_changed == 'true'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: convex-schema
           path: ./Convex/convex/_generated/

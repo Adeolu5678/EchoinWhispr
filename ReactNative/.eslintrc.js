@@ -1,19 +1,23 @@
 module.exports = {
   root: true,
   env: {
-    node: true,
+    'react-native/react-native': true,
     es2020: true,
   },
   extends: [
     'eslint:recommended',
     '@typescript-eslint/recommended',
+    '@react-native',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
+    ecmaFeatures: {
+      jsx: true,
+    },
   },
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'react-native'],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/explicit-function-return-type': 'off',
@@ -21,22 +25,18 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     'prefer-const': 'error',
     'no-var': 'error',
+    'react-native/no-unused-styles': 'error',
+    'react-native/split-platform-components': 'off',
+    'react-native/no-inline-styles': 'warn',
   },
   ignorePatterns: [
     'node_modules/',
     'dist/',
     'build/',
-    '.next/',
     '.expo/',
     'web-build/',
     'coverage/',
     '*.config.js',
     '*.config.ts',
-    'packages/*',
-    'Web/',
-    'ReactNative/',
-    'Flutter/',
-    'Convex/',
-    'design-system/',
   ],
-};
+}
