@@ -11,8 +11,26 @@ on:
     paths:
       - 'ReactNative/**'
       - '.github/workflows/react-native-ci.yml'
+on:
   workflow_call:
-
+    inputs:
+      node_version:
+        description: 'Node.js version'
+        required: false
+        type: string
+        default: '20'
+      pnpm_version:
+        description: 'PNPM version'
+        required: false
+        type: string
+        default: '9'
+    secrets:
+      EXPO_TOKEN:
+        required: true
+      EXPO_PUBLIC_CONVEX_URL:
+        required: true
+      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:
+        required: true
 env:
   NODE_VERSION: '18'
   PNPM_VERSION: '8'
