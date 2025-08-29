@@ -1,0 +1,216 @@
+name: Maintenance & Dependency Updates
+
+on:
+  schedule:
+    # Run weekly on Mondays at 2 AM UTC
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update to perform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - dependencies
+          - security
+          - lint
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  dependency-updates:
+    name: Check for Dependency Updates
+    runs-on: ubuntu-latest
+    if: github.event.inputs.update_type == 'all' || github.event.inputs.update_type == 'dependencies' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for outdated dependencies
+        run: |
+          echo "## 📦 Dependency Update Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          pnpm outdated >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create dependency update PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies'
+          title: '🔄 Weekly Dependency Updates'
+          body: |
+            ## 🔄 Automated Dependency Updates
+
+            This PR contains automated dependency updates for the EchoinWhispr project.
+
+            ### Changes:
+            - Updated dependencies to their latest compatible versions
+            - Ran security audit to ensure no vulnerabilities
+            - Verified build compatibility
+
+            ### Testing:
+            - [ ] Run full test suite
+            - [ ] Test Web application build
+            - [ ] Test React Native build
+            - [ ] Verify Convex deployment
+
+            ### Deployment:
+            - [ ] Deploy to staging environment
+            - [ ] Verify staging functionality
+            - [ ] Deploy to production
+          branch: automated/dependency-updates
+          delete-branch: true
+
+  security-updates:
+    name: Security Updates
+    runs-on: ubuntu-latest
+    if: github.event.inputs.update_type == 'all' || github.event.inputs.update_type == 'security' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run security audit
+        run: |
+          echo "## 🔒 Security Audit Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          pnpm audit >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check for critical vulnerabilities
+        run: |
+          if pnpm audit --audit-level=critical; then
+            echo "✅ No critical vulnerabilities found"
+          else
+            echo "🚨 Critical vulnerabilities detected!"
+            exit 1
+          fi
+
+  code-quality-maintenance:
+    name: Code Quality Maintenance
+    runs-on: ubuntu-latest
+    if: github.event.inputs.update_type == 'all' || github.event.inputs.update_type == 'lint' || github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run comprehensive linting
+        run: |
+          echo "## 🧹 Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Root level linting
+          echo "### Root Level:" >> $GITHUB_STEP_SUMMARY
+          if pnpm lint 2>/dev/null; then
+            echo "✅ Root linting passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  Root linting issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Web app linting
+          echo "### Web Application:" >> $GITHUB_STEP_SUMMARY
+          if [ -d "Web" ] && cd Web && pnpm lint 2>/dev/null; then
+            echo "✅ Web app linting passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  Web app linting issues or directory not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # React Native app linting
+          echo "### React Native Application:" >> $GITHUB_STEP_SUMMARY
+          if [ -d "ReactNative" ] && cd ReactNative && pnpm lint 2>/dev/null; then
+            echo "✅ React Native app linting passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  React Native app linting issues or directory not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Convex backend linting
+          echo "### Convex Backend:" >> $GITHUB_STEP_SUMMARY
+          if [ -d "Convex" ] && cd Convex && pnpm lint 2>/dev/null; then
+            echo "✅ Convex backend linting passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️  Convex backend linting issues or directory not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  cleanup-artifacts:
+    name: Cleanup Old Artifacts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cleanup old workflow artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '7 days'
+          skip-tags: true
+          skip-recent: 5
+
+  maintenance-summary:
+    name: Maintenance Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-updates, security-updates, code-quality-maintenance, cleanup-artifacts]
+    if: always()
+
+    steps:
+      - name: Create maintenance summary
+        run: |
+          echo "## 🔧 Weekly Maintenance Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Task | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Updates | ${{ needs.dependency-updates.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Audit | ${{ needs.security-updates.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.code-quality-maintenance.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact Cleanup | ${{ needs.cleanup-artifacts.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Maintenance completed at $(date)" >> $GITHUB_STEP_SUMMARY

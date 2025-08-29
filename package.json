@@ -1,0 +1,60 @@
+{
+  "name": "echoinwhispr-monorepo",
+  "version": "1.0.0",
+  "description": "EchoinWhispr - Anonymous messaging platform monorepo",
+  "private": true,
+  "packageManager": "pnpm@8.15.0",
+  "workspaces": [
+    "Web",
+    "ReactNative",
+    "Flutter",
+    "Convex",
+    "design-system"
+  ],
+  "scripts": {
+    "install:all": "pnpm install",
+    "dev:web": "pnpm --filter web dev",
+    "dev:rn": "pnpm --filter reactnative start",
+    "dev:flutter": "pnpm --filter flutter run",
+    "convex:dev": "pnpm --filter convex dev",
+    "convex:deploy": "pnpm --filter convex deploy",
+    "build:web": "pnpm --filter web build",
+    "build:rn": "pnpm --filter reactnative build",
+    "build:all": "pnpm build:web && pnpm build:rn",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean",
+    "clean:node_modules": "find . -name 'node_modules' -type d -exec rm -rf {} + && rm -rf pnpm-lock.yaml",
+    "postinstall": "husky install"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/echoinwhispr.git"
+  },
+  "keywords": [
+    "monorepo",
+    "react",
+    "react-native",
+    "nextjs",
+    "flutter",
+    "convex",
+    "typescript"
+  ],
+  "author": "EchoinWhispr Team",
+  "license": "MIT"
+}

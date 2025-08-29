@@ -1,0 +1,195 @@
+name: Convex Backend CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'Convex/**'
+      - '.github/workflows/convex-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'Convex/**'
+      - '.github/workflows/convex-ci.yml'
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  validate-and-test:
+    name: Validate and Test Convex Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get PNPM store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup PNPM cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-convex-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-convex-
+
+      - name: Install dependencies
+        working-directory: ./Convex
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linting and code quality checks
+        uses: ./.github/workflows/lint-and-quality.yml
+        with:
+          working-directory: ./Convex
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+
+      - name: Validate Convex schema
+        working-directory: ./Convex
+        run: |
+          npx convex generate
+          if [ $? -eq 0 ]; then
+            echo "Schema validation successful"
+          else
+            echo "Schema validation failed"
+            exit 1
+          fi
+
+      - name: Check for schema changes
+        id: schema-check
+        working-directory: ./Convex
+        run: |
+          if git diff --quiet convex/_generated/; then
+            echo "No schema changes detected"
+            echo "schema_changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Schema changes detected"
+            echo "schema_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload schema validation artifacts
+        if: steps.schema-check.outputs.schema_changed == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: convex-schema
+          path: ./Convex/convex/_generated/
+          retention-days: 7
+
+  deploy-staging:
+    name: Deploy to Convex Staging
+    runs-on: ubuntu-latest
+    needs: validate-and-test
+    if: github.ref == 'refs/heads/develop' || (github.ref == 'refs/heads/main' && github.event_name == 'pull_request')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        working-directory: ./Convex
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Convex CLI
+        run: pnpm add -g convex
+
+      - name: Deploy to Convex (Staging)
+        working-directory: ./Convex
+        run: |
+          convex deploy --yes
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_STAGING_DEPLOY_KEY }}
+          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_STAGING_DEPLOYMENT }}
+
+  deploy-production:
+    name: Deploy to Convex Production
+    runs-on: ubuntu-latest
+    needs: validate-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        working-directory: ./Convex
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Convex CLI
+        run: pnpm add -g convex
+
+      - name: Deploy to Convex (Production)
+        working-directory: ./Convex
+        run: |
+          convex deploy --prod --yes
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PRODUCTION_DEPLOY_KEY }}
+          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_PRODUCTION_DEPLOYMENT }}
+
+  schema-migration-check:
+    name: Schema Migration Check
+    runs-on: ubuntu-latest
+    needs: validate-and-test
+    if: always() && needs.validate-and-test.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download schema artifacts
+        if: needs.validate-and-test.outputs.schema_changed == 'true'
+        uses: actions/download-artifact@v3
+        with:
+          name: convex-schema
+          path: ./Convex/convex/_generated/
+
+      - name: Check for breaking schema changes
+        working-directory: ./Convex
+        run: |
+          # This is a placeholder for schema migration analysis
+          # In a real scenario, you might compare schema versions
+          # and check for breaking changes
+          echo "Schema migration analysis would go here"
+          echo "Checking for breaking changes in database schema..."
+
+          # For now, just check if _generated directory exists
+          if [ -d "convex/_generated" ]; then
+            echo "Schema generation successful"
+          else
+            echo "Schema generation failed or directory missing"
+            exit 1
+          fi
