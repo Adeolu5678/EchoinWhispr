@@ -11,6 +11,7 @@ on:
     paths:
       - 'ReactNative/**'
       - '.github/workflows/react-native-ci.yml'
+  workflow_call:
 
 env:
   NODE_VERSION: '18'
