@@ -13,6 +13,8 @@
   ],
   "scripts": {
     "install:all": "pnpm install",
+    "web:dev": "pnpm --filter web dev",
+    "rn:dev": "pnpm --filter reactnative start",
     "dev:web": "pnpm --filter web dev",
     "dev:rn": "pnpm --filter reactnative start",
     "dev:flutter": "pnpm --filter flutter run",
@@ -23,6 +25,9 @@
     "build:all": "pnpm build:web && pnpm build:rn",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "pnpm -r type-check",
     "test": "pnpm -r test",
     "clean": "pnpm -r clean",
     "clean:node_modules": "find . -name 'node_modules' -type d -exec rm -rf {} + && rm -rf pnpm-lock.yaml",
