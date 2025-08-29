@@ -15,7 +15,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "pnpm exec eslint . --ext .ts,.tsx",
+    "lint:fix": "pnpm exec eslint . --ext .ts,.tsx --fix",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

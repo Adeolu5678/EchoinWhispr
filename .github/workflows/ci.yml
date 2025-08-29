@@ -15,7 +15,8 @@ jobs:
   root-lint:
     name: Root Level Linting
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, '.eslintrc.js') || contains(github.event.head_commit.modified, '.prettierrc') || contains(github.event.head_commit.modified, 'tsconfig.json')
+    timeout-minutes: 10
+    if: github.event.head_commit != null && (contains(github.event.head_commit.modified, '.eslintrc.js') || contains(github.event.head_commit.modified, '.prettierrc') || contains(github.event.head_commit.modified, 'tsconfig.json'))
 
     steps:
       - name: Checkout code
@@ -31,36 +32,67 @@ jobs:
         with:
           version: '8'
 
+      - name: Get PNPM store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup PNPM cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-root-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-root-
+
       - name: Install root dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run root-level linting
-        uses: ./.github/workflows/lint-and-quality.yml
-        with:
-          working-directory: '.'
-          node-version: '18'
-          pnpm-version: '8'
+      - name: Run TypeScript type checking
+        run: |
+          if [ -f "tsconfig.json" ]; then
+            npx tsc --noEmit
+          else
+            echo "No tsconfig.json found, skipping TypeScript check"
+          fi
+
+      - name: Run ESLint
+        run: |
+          if [ -f ".eslintrc.js" ] || [ -f ".eslintrc.json" ] || [ -f "eslint.config.js" ]; then
+            pnpm lint
+          else
+            echo "No ESLint configuration found, skipping linting"
+          fi
+
+      - name: Run Prettier check
+        run: |
+          if [ -f ".prettierrc" ] || [ -f "prettier.config.js" ]; then
+            npx prettier --check .
+          else
+            echo "No Prettier configuration found, skipping format check"
+          fi
 
   # Individual application workflows
   convex-ci:
     name: Convex Backend CI
     uses: ./.github/workflows/convex-ci.yml
-    if: contains(github.event.head_commit.modified, 'Convex/') || github.event_name == 'push'
+    if: (github.event.head_commit != null && contains(github.event.head_commit.modified, 'Convex/')) || github.event_name == 'push'
 
   web-ci:
     name: Web Application CI
     uses: ./.github/workflows/web-ci.yml
-    if: contains(github.event.head_commit.modified, 'Web/') || github.event_name == 'push'
+    if: (github.event.head_commit != null && contains(github.event.head_commit.modified, 'Web/')) || github.event_name == 'push'
 
   react-native-ci:
     name: React Native Application CI
     uses: ./.github/workflows/react-native-ci.yml
-    if: contains(github.event.head_commit.modified, 'ReactNative/') || github.event_name == 'push'
+    if: (github.event.head_commit != null && contains(github.event.head_commit.modified, 'ReactNative/')) || github.event_name == 'push'
 
   # Dependency and security checks
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -95,6 +127,7 @@ jobs:
   ci-status:
     name: CI Status Check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [root-lint, convex-ci, web-ci, react-native-ci, security-audit]
     if: always()
 
@@ -130,6 +163,7 @@ jobs:
   deploy-coordination:
     name: Deployment Coordination
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: ci-status
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.ci-status.result == 'success'
 

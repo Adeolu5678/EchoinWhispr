@@ -29,6 +29,7 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -62,13 +63,23 @@ jobs:
           echo "## 📋 Changelog" >> changelog.md
           echo "" >> changelog.md
 
-          # Get the latest tag
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "Changes since $LATEST_TAG:" >> changelog.md
-          echo "" >> changelog.md
+          # Get the latest tag (with fallback)
+          if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+            LATEST_TAG=$(git describe --tags --abbrev=0)
+            echo "Changes since $LATEST_TAG:" >> changelog.md
+            echo "" >> changelog.md
 
-          # Generate changelog entries
-          git log --pretty=format:"- %s (%h)" $LATEST_TAG..HEAD >> changelog.md
+            # Generate changelog entries (only if there are commits since last tag)
+            if git log --oneline $LATEST_TAG..HEAD >/dev/null 2>&1; then
+              git log --pretty=format:"- %s (%h)" $LATEST_TAG..HEAD >> changelog.md
+            else
+              echo "- No changes since last tag" >> changelog.md
+            fi
+          else
+            echo "No previous tags found - this is the first release" >> changelog.md
+            echo "" >> changelog.md
+            echo "- Initial release" >> changelog.md
+          fi
           echo "" >> changelog.md
 
           # Read changelog content
@@ -78,19 +89,20 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.changelog }}
           draft: false
-          prerelease: ${{ github.event.inputs.prerelease || false }}
+          prerelease: ${{ github.event.inputs.prerelease == 'true' || false }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: create-release
     if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') && !contains(github.ref, 'rc')
 
@@ -150,6 +162,7 @@ jobs:
   notify-release:
     name: Notify Release
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [create-release, deploy-production]
     if: always()
 
@@ -173,17 +186,10 @@ jobs:
           echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Notify Slack (if configured)
-        uses: 8398a7/action-slack@v3
+        uses: slackapi/slack-github-action@v1.26.0
         if: env.SLACK_WEBHOOK_URL != null
         with:
-          status: ${{ needs.deploy-production.result }}
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          title: '🚀 EchoinWhispr Release ${{ github.ref_name }}'
-          text: |
-            Release ${{ github.ref_name }} has been deployed to production!
-
-            📱 **Web**: https://echoinwhispr.vercel.app
-            📱 **Mobile**: Expo Production Channel
-            ⚙️ **Backend**: Convex Production
-
-            Deployment Status: ${{ needs.deploy-production.result }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
