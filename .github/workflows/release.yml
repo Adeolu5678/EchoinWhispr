@@ -1,0 +1,189 @@
+name: Release Management
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      prerelease:
+        description: 'Create prerelease'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run full test suite
+        run: pnpm test
+
+      - name: Build all applications
+        run: pnpm build:all
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog from git history
+          echo "## 📋 Changelog" >> changelog.md
+          echo "" >> changelog.md
+
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Changes since $LATEST_TAG:" >> changelog.md
+          echo "" >> changelog.md
+
+          # Generate changelog entries
+          git log --pretty=format:"- %s (%h)" $LATEST_TAG..HEAD >> changelog.md
+          echo "" >> changelog.md
+
+          # Read changelog content
+          CHANGELOG_CONTENT=$(cat changelog.md)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: ${{ github.event.inputs.prerelease || false }}
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: create-release
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, 'alpha') && !contains(github.ref, 'beta') && !contains(github.ref, 'rc')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy Web Application
+        working-directory: ./Web
+        run: |
+          pnpm build
+        env:
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT }}
+
+      - name: Deploy to Vercel (Production)
+        working-directory: ./Web
+        run: |
+          npx vercel --prod --yes
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: Deploy Convex Backend
+        working-directory: ./Convex
+        run: |
+          npx convex deploy --prod --yes
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PRODUCTION_DEPLOY_KEY }}
+          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_PRODUCTION_DEPLOYMENT }}
+
+      - name: Deploy React Native App
+        working-directory: ./ReactNative
+        run: |
+          npx expo publish --release-channel production
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_CONVEX_URL: ${{ secrets.EXPO_PUBLIC_CONVEX_URL }}
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [create-release, deploy-production]
+    if: always()
+
+    steps:
+      - name: Release Summary
+        run: |
+          echo "## 🚀 Release ${{ github.ref_name }} Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Deployment Status:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release Creation**: ${{ needs.create-release.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Production Deployment**: ${{ needs.deploy-production.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Live Applications:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Web**: https://echoinwhispr.vercel.app" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mobile**: Available via Expo Go (Production Channel)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend**: Convex Production Environment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Release Details:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify Slack (if configured)
+        uses: 8398a7/action-slack@v3
+        if: env.SLACK_WEBHOOK_URL != null
+        with:
+          status: ${{ needs.deploy-production.result }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          title: '🚀 EchoinWhispr Release ${{ github.ref_name }}'
+          text: |
+            Release ${{ github.ref_name }} has been deployed to production!
+
+            📱 **Web**: https://echoinwhispr.vercel.app
+            📱 **Mobile**: Expo Production Channel
+            ⚙️ **Backend**: Convex Production
+
+            Deployment Status: ${{ needs.deploy-production.result }}

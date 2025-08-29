@@ -1,0 +1,7 @@
+packages:
+  - 'Web'
+  - 'ReactNative'
+  - 'Flutter'
+  - 'Convex'
+  - 'design-system'
+  - 'packages/*'

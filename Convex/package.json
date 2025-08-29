@@ -1,0 +1,19 @@
+{
+  "name": "convex",
+  "version": "1.0.0",
+  "description": "Convex backend for EchoinWhispr",
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy",
+    "generate": "convex generate",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf .convex"
+  },
+  "dependencies": {
+    "convex": "^1.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
