@@ -7,66 +7,6 @@
 
 import React from 'react';
 import { ButtonProps } from '../../design-system/components/Button';
-import { colors, spacing, typography } from '../../design-system/tokens';
-
-const buttonVariants = {
-  primary: {
-    backgroundColor: colors.primary[500],
-    borderColor: colors.primary[500],
-    textColor: colors.text.inverse,
-    hoverBackgroundColor: colors.primary[600],
-    hoverBorderColor: colors.primary[600],
-  },
-  secondary: {
-    backgroundColor: colors.neutral[100],
-    borderColor: colors.neutral[300],
-    textColor: colors.text.primary,
-    hoverBackgroundColor: colors.neutral[200],
-    hoverBorderColor: colors.neutral[400],
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderColor: colors.primary[500],
-    textColor: colors.primary[500],
-    hoverBackgroundColor: colors.primary[50],
-    hoverBorderColor: colors.primary[600],
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
-    textColor: colors.primary[500],
-    hoverBackgroundColor: colors.primary[50],
-    hoverBorderColor: 'transparent',
-  },
-  danger: {
-    backgroundColor: colors.error[500],
-    borderColor: colors.error[500],
-    textColor: colors.text.inverse,
-    hoverBackgroundColor: colors.error[600],
-    hoverBorderColor: colors.error[600],
-  },
-};
-
-const buttonSizes = {
-  sm: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    fontSize: typography.fontSize.sm,
-    minHeight: spacing[8],
-  },
-  md: {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2.5],
-    fontSize: typography.fontSize.sm,
-    minHeight: spacing[10],
-  },
-  lg: {
-    paddingHorizontal: spacing[6],
-    paddingVertical: spacing[3],
-    fontSize: typography.fontSize.base,
-    minHeight: spacing[12],
-  },
-};
 
 export const Button: React.FC<ButtonProps> = ({
   children,
@@ -79,8 +19,6 @@ export const Button: React.FC<ButtonProps> = ({
   textStyle,
   fullWidth = false,
 }) => {
-  const variantStyles = buttonVariants[variant as keyof typeof buttonVariants];
-  const sizeStyles = buttonSizes[size as keyof typeof buttonSizes];
 
   const baseClasses = `
     inline-flex items-center justify-center

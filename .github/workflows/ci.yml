@@ -81,7 +81,6 @@ jobs:
   web-ci:
     name: Web Application CI
     uses: ./.github/workflows/web-ci.yml
-    if: (github.event.head_commit != null && contains(github.event.head_commit.modified, 'Web/')) || github.event_name == 'push'
 
   react-native-ci:
     name: React Native Application CI

@@ -11,6 +11,7 @@ on:
     paths:
       - 'Web/**'
       - '.github/workflows/web-ci.yml'
+  workflow_call:
 
 env:
   NODE_VERSION: '18'
@@ -135,19 +136,32 @@ jobs:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT }}
 
+      - name: Verify build output
+        run: |
+          if [ ! -d "./Web/.next" ]; then
+            echo "❌ Error: Build output directory .next not found"
+            exit 1
+          else
+            echo "✅ Build output directory exists"
+            ls -la ./Web/.next/ | head -10
+          fi
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: web-build
           path: ./Web/.next/
-          retention-days: 3
+          retention-days: 7
+
+      - name: Confirm artifact upload
+        run: echo "✅ web-build artifact uploaded successfully"
 
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: build
-    if: github.ref == 'refs/heads/develop' || (github.ref == 'refs/heads/main' && github.event_name == 'pull_request')
+    if: (github.ref == 'refs/heads/develop' && github.event_name == 'push') || (github.ref == 'refs/heads/main' && github.event_name == 'pull_request')
 
     steps:
       - name: Checkout code
@@ -158,6 +172,20 @@ jobs:
         with:
           name: web-build
           path: ./Web/.next/
+
+      - name: Verify artifact download
+        run: |
+          if [ ! -d "./Web/.next" ]; then
+            echo "❌ Error: web-build artifact not found or download failed"
+            echo "This might be due to:"
+            echo "  - Build job failed to upload artifact"
+            echo "  - Artifact expired (retention: 7 days)"
+            echo "  - Workflow timing issue"
+            exit 1
+          else
+            echo "✅ web-build artifact downloaded successfully"
+            ls -la ./Web/.next/
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -197,6 +225,20 @@ jobs:
         with:
           name: web-build
           path: ./Web/.next/
+
+      - name: Verify artifact download
+        run: |
+          if [ ! -d "./Web/.next" ]; then
+            echo "❌ Error: web-build artifact not found or download failed"
+            echo "This might be due to:"
+            echo "  - Build job failed to upload artifact"
+            echo "  - Artifact expired (retention: 7 days)"
+            echo "  - Workflow timing issue"
+            exit 1
+          else
+            echo "✅ web-build artifact downloaded successfully"
+            ls -la ./Web/.next/
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
