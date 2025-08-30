@@ -1,2 +1,2 @@
 // Authentication components exports
-// SignInForm, SignUpForm components will be exported here
+// Note: Custom forms have been replaced with Clerk's built-in components
