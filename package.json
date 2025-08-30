@@ -35,7 +35,7 @@
     "type-check": "pnpm -r type-check",
     "test": "pnpm -r test",
     "clean": "pnpm -r clean",
-    "clean:node_modules": "if exist node_modules rmdir /s /q node_modules && for /d /r . %d in (node_modules) do @if exist \"%d\" rmdir /s /q \"%d\" && del /q pnpm-lock.yaml",
+    "clean:node_modules": "rimraf node_modules \"**/node_modules\" pnpm-lock.yaml",
     "clean:install": "pnpm clean:node_modules && pnpm install",
     "convex:dev": "pnpm --filter Convex dev",
     "convex:deploy": "pnpm --filter Convex deploy",
