@@ -29,6 +29,9 @@ importers:
       prettier:
         specifier: ^3.0.0
         version: 3.6.2
+      rimraf:
+        specifier: ^5.0.0
+        version: 5.0.10
       typescript:
         specifier: ^5.0.0
         version: 5.9.2
@@ -145,9 +148,6 @@ importers:
       '@radix-ui/react-toast':
         specifier: ^1.2.15
         version: 1.2.15(@types/react-dom@18.3.7)(@types/react@18.2.79)(react-dom@18.3.1)(react@18.3.1)
-      autoprefixer:
-        specifier: ^10.4.0
-        version: 10.4.21(postcss@8.5.6)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -163,14 +163,11 @@ importers:
       next:
         specifier: ^14.0.0
         version: 14.2.32(react-dom@18.3.1)(react@18.3.1)
-      postcss:
-        specifier: ^8.4.0
-        version: 8.5.6
       react:
         specifier: ^18.3.1
         version: 18.3.1
       react-dom:
-        specifier: ^18.2.0
+        specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       react-hook-form:
         specifier: ^7.62.0
@@ -178,9 +175,6 @@ importers:
       tailwind-merge:
         specifier: ^2.0.0
         version: 2.6.0
-      tailwindcss:
-        specifier: ^3.3.0
-        version: 3.4.17
       zod:
         specifier: ^4.1.5
         version: 4.1.5
@@ -200,12 +194,21 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^6.0.0
         version: 6.21.0(eslint@8.57.1)(typescript@5.9.2)
+      autoprefixer:
+        specifier: ^10.4.0
+        version: 10.4.21(postcss@8.5.6)
       eslint:
         specifier: ^8.56.0
         version: 8.57.1
       eslint-config-next:
         specifier: ^14.0.0
         version: 14.2.32(eslint@8.57.1)(typescript@5.9.2)
+      postcss:
+        specifier: ^8.4.0
+        version: 8.5.6
+      tailwindcss:
+        specifier: ^3.3.0
+        version: 3.4.17
       typescript:
         specifier: ^5.0.0
         version: 5.9.2
@@ -4704,7 +4707,7 @@ packages:
       picocolors: 1.1.1
       postcss: 8.5.6
       postcss-value-parser: 4.2.0
-    dev: false
+    dev: true
 
   /available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
@@ -6838,7 +6841,7 @@ packages:
 
   /fraction.js@4.3.7:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
-    dev: false
+    dev: true
 
   /freeport-async@2.0.0:
     resolution: {integrity: sha512-K7od3Uw45AJg00XUmy15+Hae2hOcgKcmN3/EF6Y7i01O0gaqiRx8sUSpsb9+BRNL8RPBrhzPsVfy8q9ADlJuWQ==}
@@ -8880,7 +8883,7 @@ packages:
   /normalize-range@0.1.2:
     resolution: {integrity: sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA==}
     engines: {node: '>=0.10.0'}
-    dev: false
+    dev: true
 
   /npm-package-arg@7.0.0:
     resolution: {integrity: sha512-xXxr8y5U0kl8dVkz2oK7yZjPBvqM2fwaO5l3Yg13p03v8+E3qQcD0JNhHzjL1vyGgxcKkD0cco+NLR72iuPk3g==}
@@ -10062,6 +10065,13 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.3
+
+  /rimraf@5.0.10:
+    resolution: {integrity: sha512-l0OE8wL34P4nJH/H2ffoaniAokM2qSmrtXHmlpvYr5AVVX8msAyW0l8NVJFDxlSK4u3Uh/f41cQheDVdnYijwQ==}
+    hasBin: true
+    dependencies:
+      glob: 10.4.5
+    dev: true
 
   /run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}

@@ -33,7 +33,6 @@ const CardTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  // …rest of component
   <h3
     ref={ref}
     className={cn(
