@@ -29,19 +29,15 @@ export function useAuthStatus() {
   const isAuthenticated = isSignedIn && isConvexAuthenticated
 
   // User information - safely extract user data from Clerk user object
-  const user = useMemo(() => {
-    if (!clerkUser) return null
-
-    return {
-      id: clerkUser.id,
-      email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
-      firstName: clerkUser.firstName ?? '',
-      lastName: clerkUser.lastName ?? '',
-      fullName: clerkUser.fullName ?? '',
-      username: clerkUser.username ?? '',
-      imageUrl: clerkUser.imageUrl ?? '',
-    }
-  }, [clerkUser])
+  const user = useMemo(() => clerkUser ? {
+    id: clerkUser.id,
+    email: clerkUser.primaryEmailAddress?.emailAddress || '',
+    firstName: clerkUser.firstName || '',
+    lastName: clerkUser.lastName || '',
+    fullName: clerkUser.fullName || '',
+    username: clerkUser.username || '',
+    imageUrl: clerkUser.imageUrl || '',
+  } : null, [clerkUser])
 
   /**
     * Sign out the current user from both Clerk and Convex
