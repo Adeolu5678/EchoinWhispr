@@ -18,11 +18,16 @@
     "dev:convex": "pnpm --filter Convex dev",
     "start:web": "pnpm --filter Web start",
     "start:rn": "pnpm --filter ReactNative start",
+  "scripts": {
     "build": "pnpm -r build",
     "build:web": "pnpm --filter Web build",
     "build:rn": "pnpm --filter ReactNative build",
-    "build:convex": "pnpm --filter Convex deploy",
-    "build:all": "pnpm build:web && pnpm build:rn && pnpm build:convex",
+-   "build:convex": "pnpm --filter Convex deploy",
+   "build:convex": "pnpm --filter Convex build",
+   "build:all": "pnpm build:web && pnpm build:rn",
+   "deploy:convex": "pnpm --filter Convex deploy",
+    // ...other scripts...
+  }
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix",
     "format": "prettier --write .",
