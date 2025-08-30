@@ -23,7 +23,6 @@
     "build:rn": "pnpm --filter ReactNative build",
     "build:convex": "pnpm --filter Convex build",
     "build:all": "pnpm build:web && pnpm build:rn",
-    "deploy:convex": "pnpm --filter Convex deploy",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix",
     "format": "prettier --write .",

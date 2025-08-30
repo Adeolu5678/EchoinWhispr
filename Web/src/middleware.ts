@@ -1,11 +1,7 @@
-
-
-// Define protected routes that require authentication
 import { authMiddleware } from '@clerk/nextjs/server';
 
-// Define protected routes that require authentication
+export default authMiddleware({
   publicRoutes: ['/', '/sign-in(.*)', '/sign-up(.*)', '/api/webhooks/(.*)']
-  // All other routes are protected by default
 });
 
 export const config = {
@@ -15,4 +11,4 @@ export const config = {
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
-}
+};
