@@ -11,27 +11,34 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "^14.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "convex": "^1.6.0",
-    "@clerk/nextjs": "^4.27.0",
-    "lucide-react": "^0.294.0",
-    "tailwindcss": "^3.3.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0",
+    "@clerk/nextjs": "^4.29.0",
     "@echoinwhspr/design-system": "workspace:*",
+    "@hookform/resolvers": "^5.2.1",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-toast": "^1.2.15",
+    "autoprefixer": "^10.4.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
-    "tailwind-merge": "^2.0.0"
+    "convex": "^1.9.0",
+    "lucide-react": "^0.294.0",
+    "next": "^14.0.0",
+    "postcss": "^8.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.62.0",
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss": "^3.3.0",
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "typescript": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0"
+    "typescript": "^5.0.0"
   }
 }
