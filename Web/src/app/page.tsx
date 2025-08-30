@@ -56,7 +56,14 @@ export default function Home() {
                 Welcome, {user?.firstName || user?.username || 'User'}
               </span>
               <button
-                onClick={signOut}
+                onClick={async () => {
+                  try {
+                    await signOut()
+                  } catch {
+                    /* toast already handled in hook */
+                  }
+                }}
+                type="button"
                 className="text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
               >
                 Sign Out
