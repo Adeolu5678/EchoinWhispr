@@ -3,6 +3,8 @@
 import { useAuthStatus } from '@/features/authentication'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   const { isAuthenticated, isLoading, user, signOut } = useAuthStatus()
 
