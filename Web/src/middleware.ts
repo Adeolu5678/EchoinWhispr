@@ -2,7 +2,8 @@ import { authMiddleware } from '@clerk/nextjs/server'
 
 // Define protected routes that require authentication
 export default authMiddleware({
-  publicRoutes: ['/', '/sign-in', '/sign-up'],
+export default authMiddleware({
+  publicRoutes: ['/', '/sign-in(.*)', '/sign-up(.*)'],
   // All other routes are protected by default
 })
 
