@@ -1,10 +1,12 @@
-import { authMiddleware } from '@clerk/nextjs/server'
+
 
 // Define protected routes that require authentication
-export default authMiddleware({
-  publicRoutes: ['/', '/sign-in(.*)', '/sign-up(.*)', '/api/webhooks/(.*)'],
+import { authMiddleware } from '@clerk/nextjs/server';
+
+// Define protected routes that require authentication
+  publicRoutes: ['/', '/sign-in(.*)', '/sign-up(.*)', '/api/webhooks/(.*)']
   // All other routes are protected by default
-})
+});
 
 export const config = {
   matcher: [
