@@ -49,6 +49,8 @@ const LoadingSpinner = ({ className }: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
+    aria-hidden="true"
+    focusable="false"
   >
     <circle
       className="opacity-25"
@@ -65,7 +67,6 @@ const LoadingSpinner = ({ className }: { className?: string }) => (
     />
   </svg>
 )
-
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
