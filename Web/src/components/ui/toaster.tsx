@@ -11,7 +11,7 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 
-export interface ToasterProps {}
+export type ToasterProps = Record<never, never>
 
 export function Toaster(_: Readonly<ToasterProps>): JSX.Element {
   const { toasts } = useToast()
