@@ -186,3 +186,6 @@ jobs:
           echo "🔗 **Live URLs:**" >> $GITHUB_STEP_SUMMARY
           echo "- Web: [Production URL](https://echoinwhispr.vercel.app)" >> $GITHUB_STEP_SUMMARY
           echo "- Mobile: Available via Expo Go" >> $GITHUB_STEP_SUMMARY
+env:
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+  NEXT_PUBLIC_CONVEX_URL: ${{ secrets.NEXT_PUBLIC_CONVEX_URL }}

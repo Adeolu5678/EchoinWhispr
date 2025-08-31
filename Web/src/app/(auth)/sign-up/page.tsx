@@ -1,12 +1,25 @@
-export default function SignUpPage() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-8">Sign Up</h1>
-        <p className="text-center text-gray-600">
-          Sign up page placeholder - Clerk integration coming soon
-        </p>
-      </div>
+'use client'
+
+import { SignUp } from '@clerk/nextjs'
+
+export const dynamic = 'force-dynamic'
+
+export default function SignUpPage(): JSX.Element {  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-4">
+      <SignUp
+        path="/sign-up"
+        routing="path"
+        signInUrl="/sign-in"
+        redirectUrl="/"
+        appearance={{
+          elements: {
+            formButtonPrimary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+            card: 'shadow-lg',
+            headerTitle: 'text-2xl font-bold',
+            headerSubtitle: 'text-muted-foreground',
+          },
+        }}
+      />
     </main>
   )
 }

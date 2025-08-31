@@ -27,9 +27,6 @@
         "../design-system"
       ]
     },
-    "types": [
-      "@types/node"
-    ],
     "plugins": [
       {
         "name": "next"
