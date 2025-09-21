@@ -22,10 +22,10 @@ export function useAuthStatus() {
   // Toast hook for user feedback
   const { toast } = useToast()
 
-  // Combined loading state - wait for both Clerk and Convex to be ready
-  const isLoading = !isClerkLoaded || isConvexLoading
+  // Combined loading state - wait for Clerk to be ready, Convex is optional for initial load
+  const isLoading = !isClerkLoaded
 
-  // Authentication status - user must be signed in to Clerk AND authenticated with Convex
+  // Authentication status - user must be signed in to Clerk, Convex auth is checked separately
   const isAuthenticated = isSignedIn && isConvexAuthenticated
 
   // User information - safely extract user data from Clerk user object

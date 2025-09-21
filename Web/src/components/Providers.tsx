@@ -5,6 +5,7 @@ import { ConvexProviderWithClerk } from 'convex/react-clerk'
 import convex from '@/lib/convex'
 import { ReactNode } from 'react'
 import { Toaster } from '@/components/ui/toaster'
+import { ClerkErrorBoundary } from '@/components/ClerkErrorBoundary'
 
 /**
  * Validates that the Clerk publishable key environment variable is set
@@ -37,16 +38,22 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <ClerkProvider
-      publishableKey={validateClerkPublishableKey()}
-    >
-      <ConvexProviderWithClerk
-        client={convex}
-        useAuth={useAuth}
+    <ClerkErrorBoundary>
+      <ClerkProvider
+        publishableKey={validateClerkPublishableKey()}
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        afterSignInUrl="/"
+        afterSignUpUrl="/"
       >
-        {children}
-        <Toaster />
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+        <ConvexProviderWithClerk
+          client={convex}
+          useAuth={useAuth}
+        >
+          {children}
+          <Toaster />
+        </ConvexProviderWithClerk>
+      </ClerkProvider>
+    </ClerkErrorBoundary>
   )
 }

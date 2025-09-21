@@ -114,3 +114,39 @@ export const updateUserProfile = mutation({
     return user._id;
   },
 });
+
+// Get or create current user (client-side fallback)
+export const getOrCreateCurrentUser = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Check if user already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    // Create new user from Clerk identity
+    const now = Date.now();
+    const userId = await ctx.db.insert("users", {
+      clerkId: identity.subject,
+      username: identity.nickname || identity.name || `user_${identity.subject.slice(-8)}`,
+      email: identity.email || "",
+      firstName: identity.givenName || undefined,
+      lastName: identity.familyName || undefined,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Return the newly created user
+    return await ctx.db.get(userId);
+  },
+});
