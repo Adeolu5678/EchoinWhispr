@@ -20,6 +20,9 @@ export default function RootLayout({
 }: {
   children: ReactNode
 }) {
+  // Add this to any component temporarily to debug
+console.log('Clerk Key:', process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+console.log('Convex URL:', process.env.NEXT_PUBLIC_CONVEX_URL)
   return (
     <html lang="en">
       <body className={inter.className}>
