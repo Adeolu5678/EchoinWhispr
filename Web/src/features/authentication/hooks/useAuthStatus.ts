@@ -3,11 +3,14 @@
 import { useUser, useAuth } from '@clerk/nextjs'
 import { useConvexAuth } from 'convex/react'
 import { useToast } from '@/hooks/use-toast'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useEffect, useState } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../../../../Convex/convex/_generated/api'
 
 /**
  * Custom hook for managing authentication status and user information
  * Provides unified access to Clerk and Convex authentication state
+ * Automatically creates user in Convex when authenticated with Clerk
  *
  * @returns Object containing authentication state, user data, and actions
  */
@@ -22,11 +25,21 @@ export function useAuthStatus() {
   // Toast hook for user feedback
   const { toast } = useToast()
 
-  // Combined loading state - wait for Clerk to be ready, Convex is optional for initial load
-  const isLoading = !isClerkLoaded
+  // Mutation for creating/getting user in Convex
+  const getOrCreateUser = useMutation(api.users.getOrCreateCurrentUser)
 
-  // Authentication status - user must be signed in to Clerk, Convex auth is checked separately
-  const isAuthenticated = isSignedIn && isConvexAuthenticated
+  // Local state for user creation status
+  const [isCreatingUser, setIsCreatingUser] = useState(false)
+  const [userCreationError, setUserCreationError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const MAX_RETRIES = 3
+
+  // Combined loading state - wait for both Clerk and Convex to be ready
+  const isLoading = !isClerkLoaded || isConvexLoading || isCreatingUser
+
+  // Authentication status - user must be signed in to Clerk and authenticated with Convex
+  // Wait for both systems to be ready before determining final authentication state
+  const isAuthenticated = isSignedIn && isConvexAuthenticated && !isLoading
 
   // User information - safely extract user data from Clerk user object
   const user = useMemo(() => clerkUser ? {
@@ -39,13 +52,113 @@ export function useAuthStatus() {
     imageUrl: clerkUser.imageUrl || '',
   } : null, [clerkUser])
 
+  // Automatically create user in Convex when Clerk user is authenticated but Convex user doesn't exist
+  useEffect(() => {
+    const createUserIfNeeded = async () => {
+      // Debug logging
+      console.log('🔍 [useAuthStatus] createUserIfNeeded called with:', {
+        isClerkLoaded,
+        isSignedIn,
+        isConvexAuthenticated,
+        isCreatingUser,
+        retryCount,
+        maxRetries: MAX_RETRIES
+      })
+
+      // Only proceed if:
+      // 1. Clerk user is loaded and signed in
+      // 2. Convex is authenticated
+      // 3. We're not already creating a user
+      // 4. We haven't exceeded max retries
+      if (!isClerkLoaded || !isSignedIn || !isConvexAuthenticated || isCreatingUser || retryCount >= MAX_RETRIES) {
+        console.log('🚫 [useAuthStatus] Skipping user creation due to conditions:', {
+          isClerkLoaded,
+          isSignedIn,
+          isConvexAuthenticated,
+          isCreatingUser,
+          retryCount
+        })
+        return
+      }
+
+      try {
+        setIsCreatingUser(true)
+        setUserCreationError(null)
+
+        console.log('🚀 [useAuthStatus] Attempting to create/get user in Convex...')
+
+        // Attempt to get or create the user in Convex
+        const result = await getOrCreateUser()
+        console.log('✅ [useAuthStatus] User creation successful:', result)
+
+        // Reset retry count on success
+        setRetryCount(0)
+      } catch (error) {
+        console.error('❌ [useAuthStatus] Error creating/getting user in Convex:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Failed to sync user data'
+        setUserCreationError(errorMessage)
+
+        // Increment retry count
+        const newRetryCount = retryCount + 1
+        setRetryCount(newRetryCount)
+
+        // Show error toast with retry information
+        toast({
+          title: 'Authentication Error',
+          description: newRetryCount >= MAX_RETRIES
+            ? 'There was an issue syncing your account. Please try refreshing the page.'
+            : `There was an issue syncing your account. Retrying... (${newRetryCount}/${MAX_RETRIES})`,
+          variant: 'destructive',
+        })
+
+        // Schedule retry with exponential backoff if we haven't exceeded max retries
+        if (newRetryCount < MAX_RETRIES) {
+          const delay = Math.pow(2, newRetryCount - 1) * 1000 // 1s, 2s, 4s
+          console.log(`⏰ [useAuthStatus] Scheduling retry in ${delay}ms (attempt ${newRetryCount + 1}/${MAX_RETRIES})`)
+          setTimeout(() => {
+            // Only retry if user is still authenticated
+            if (isSignedIn && isConvexAuthenticated) {
+              console.log('🔄 [useAuthStatus] Retrying user creation...')
+              createUserIfNeeded()
+            } else {
+              console.log('🚫 [useAuthStatus] Skipping retry - user no longer authenticated')
+            }
+          }, delay)
+        }
+      } finally {
+        setIsCreatingUser(false)
+      }
+    }
+
+    createUserIfNeeded()
+  }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, isCreatingUser, retryCount, getOrCreateUser, toast])
+
+  // Clear error when user successfully authenticates
+  useEffect(() => {
+    if (isAuthenticated && userCreationError) {
+      setUserCreationError(null)
+      setRetryCount(0)
+    }
+  }, [isAuthenticated, userCreationError])
+
   /**
-    * Sign out the current user from both Clerk and Convex
-    * Handles errors gracefully and provides user feedback via toast notifications
-    */
+   * Reset retry count and error state
+   * Useful for manual retry attempts or when user wants to try again
+   */
+  const resetRetryState = useCallback(() => {
+    setRetryCount(0)
+    setUserCreationError(null)
+  }, [])
+
+  /**
+   * Sign out the current user from both Clerk and Convex
+   * Handles errors gracefully and provides user feedback via toast notifications
+   */
   const handleSignOut = useCallback(async (): Promise<void> => {
     try {
       await signOut()
+      // Clear any user creation errors on successful sign out
+      setUserCreationError(null)
       toast({
         title: 'Signed out successfully',
         description: 'You have been signed out of your account.',
@@ -71,8 +184,14 @@ export function useAuthStatus() {
     // User data
     user,
 
+    // User creation status
+    isCreatingUser,
+    userCreationError,
+    retryCount,
+
     // Actions
     signOut: handleSignOut,
+    resetRetryState,
 
     // Raw data for advanced use cases
     clerkUser,
