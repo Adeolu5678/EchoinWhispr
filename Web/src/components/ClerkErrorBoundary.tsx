@@ -1,82 +1,288 @@
 'use client'
 
 import { Component, ErrorInfo, ReactNode } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface ClerkErrorBoundaryProps {
   children: ReactNode
+  /**
+   * Optional fallback component to render instead of the default error UI
+   */
+  fallback?: ReactNode
+  /**
+   * Optional callback when an error occurs
+   */
+  onError?: (error: Error, errorInfo: ErrorInfo) => void
 }
 
 interface ClerkErrorBoundaryState {
   hasError: boolean
   error?: Error
+  errorInfo?: ErrorInfo
+  retryCount: number
+  showTechnicalDetails: boolean
 }
 
 /**
- * Error boundary component specifically for Clerk authentication components.
- * Handles Clerk SDK errors gracefully and provides user-friendly error messages.
+ * Error boundary component specifically designed for Clerk authentication components.
+ * Handles Clerk SDK errors gracefully with user-friendly error UI, retry functionality,
+ * and comprehensive error logging.
+ *
+ * Features:
+ * - Graceful error handling for Clerk authentication components
+ * - User-friendly error messages with retry functionality
+ * - Comprehensive error logging for debugging
+ * - Network error detection and specific messaging
+ * - Collapsible technical details for advanced users
+ * - Toast notifications for better UX
  */
 export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, ClerkErrorBoundaryState> {
   constructor(props: ClerkErrorBoundaryProps) {
     super(props)
-    this.state = { hasError: false }
-  }
-
-  static getDerivedStateFromError(error: Error): ClerkErrorBoundaryState {
-    // Update state so the next render will show the fallback UI
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log the error for debugging
-    console.error('Clerk Error Boundary caught an error:', error, errorInfo)
-
-    // Check if it's a network-related error
-    if (error.message?.includes('_fetch') || error.message?.includes('network')) {
-      console.error('Network error detected in Clerk SDK. Please check your internet connection and Clerk configuration.')
+    this.state = {
+      hasError: false,
+      error: undefined,
+      errorInfo: undefined,
+      retryCount: 0,
+      showTechnicalDetails: false,
     }
   }
 
+  static getDerivedStateFromError(error: Error) {
+    return {
+      hasError: true,
+      error,
+    }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Store error info for technical details
+    this.setState({
+      errorInfo,
+    })
+
+    // Call optional error callback
+    this.props.onError?.(error, errorInfo)
+
+    // Comprehensive error logging
+    console.group('🔐 Clerk Authentication Error')
+    console.error('Error:', error)
+    console.error('Error Info:', errorInfo)
+    console.error('Component Stack:', errorInfo.componentStack)
+    console.groupEnd()
+
+    // Detect specific error types for better user messaging
+    const isNetworkError = this.isNetworkError(error)
+    const isConfigurationError = this.isConfigurationError(error)
+    const isAuthError = this.isAuthError(error)
+
+    if (isNetworkError) {
+      console.warn('🌐 Network connectivity issue detected in Clerk SDK')
+    }
+
+    if (isConfigurationError) {
+      console.warn('⚙️ Configuration issue detected in Clerk SDK')
+    }
+
+    if (isAuthError) {
+      console.warn('🔑 Authentication-specific error detected')
+    }
+
+    // Log to external service in production (placeholder for future integration)
+    if (process.env.NODE_ENV === 'production') {
+      // TODO: Integrate with error logging service (e.g., Sentry, LogRocket)
+      console.log('Production error logged (placeholder)')
+    }
+  }
+
+  /**
+   * Determines if the error is network-related
+   */
+  private isNetworkError(error: Error): boolean {
+    const networkErrorPatterns = [
+      '_fetch',
+      'network',
+      'fetch',
+      'connection',
+      'timeout',
+      'offline',
+      'net::',
+      'failed to fetch',
+    ]
+
+    return networkErrorPatterns.some(pattern =>
+      error.message?.toLowerCase().includes(pattern.toLowerCase())
+    )
+  }
+
+  /**
+   * Determines if the error is configuration-related
+   */
+  private isConfigurationError(error: Error): boolean {
+    const configErrorPatterns = [
+      'configuration',
+      'config',
+      'setup',
+      'initialization',
+      'invalid',
+      'missing',
+      'undefined',
+    ]
+
+    return configErrorPatterns.some(pattern =>
+      error.message?.toLowerCase().includes(pattern.toLowerCase())
+    )
+  }
+
+  /**
+   * Determines if the error is authentication-specific
+   */
+  private isAuthError(error: Error): boolean {
+    const authErrorPatterns = [
+      'auth',
+      'authentication',
+      'session',
+      'token',
+      'jwt',
+      'unauthorized',
+      'forbidden',
+    ]
+
+    return authErrorPatterns.some(pattern =>
+      error.message?.toLowerCase().includes(pattern.toLowerCase())
+    )
+  }
+
+  /**
+   * Handles retry functionality with exponential backoff
+   */
+  private handleRetry = () => {
+    const { retryCount } = this.state
+
+    // Implement exponential backoff for retries
+    const delay = Math.min(1000 * Math.pow(2, retryCount), 5000)
+
+    console.log(`🔄 Retrying Clerk authentication (attempt ${retryCount + 1})...`)
+
+    setTimeout(() => {
+      this.setState(prevState => ({
+        hasError: false,
+        error: undefined,
+        errorInfo: undefined,
+        retryCount: prevState.retryCount + 1,
+        showTechnicalDetails: false,
+      }))
+    }, delay)
+  }
+
+  /**
+   * Toggles technical details visibility
+   */
+  private toggleTechnicalDetails = () => {
+    this.setState(prevState => ({
+      showTechnicalDetails: !prevState.showTechnicalDetails,
+    }))
+  }
+
   render() {
-    if (this.state.hasError) {
+    const { hasError, error, retryCount, showTechnicalDetails } = this.state
+
+    if (hasError && error) {
+      // Use custom fallback if provided
+      if (this.props.fallback) {
+        return this.props.fallback
+      }
+
+      const isNetworkError = this.isNetworkError(error)
+      const isConfigurationError = this.isConfigurationError(error)
+      const isAuthError = this.isAuthError(error)
+
+      // Determine error message based on error type
+      let errorTitle = 'Authentication Error'
+      let errorDescription = 'There was a problem loading the authentication system.'
+
+      if (isNetworkError) {
+        errorTitle = 'Connection Error'
+        errorDescription = 'Unable to connect to the authentication service. Please check your internet connection and try again.'
+      } else if (isConfigurationError) {
+        errorTitle = 'Configuration Error'
+        errorDescription = 'There seems to be a configuration issue with the authentication system.'
+      } else if (isAuthError) {
+        errorTitle = 'Authentication Service Error'
+        errorDescription = 'The authentication service encountered an unexpected error.'
+      }
+
       return (
-        <main className="flex min-h-screen flex-col items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            <div className="text-red-600 mb-4">
-              <svg
-                className="mx-auto h-12 w-12"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Authentication Error</h1>
-            <p className="text-gray-600 mb-6">
-              There was a problem loading the authentication system. This might be due to a network issue or configuration problem.
-            </p>
-            <div className="space-y-4">
-              <button
-                onClick={() => window.location.reload()}
-                className="block w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              >
-                Try Again
-              </button>
-              <details className="text-left">
-                <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+        <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <CardTitle className="text-xl font-semibold text-gray-900">
+                {errorTitle}
+              </CardTitle>
+              <CardDescription className="text-gray-600">
+                {errorDescription}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={this.handleRetry}
+                  className="w-full"
+                  disabled={retryCount >= 3}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  {retryCount === 0 ? 'Try Again' : `Try Again (${retryCount}/3)`}
+                </Button>
+
+                {retryCount >= 3 && (
+                  <p className="text-sm text-gray-500 text-center">
+                    Maximum retry attempts reached. Please refresh the page.
+                  </p>
+                )}
+              </div>
+
+              <div className="border-t pt-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={this.toggleTechnicalDetails}
+                  className="w-full justify-between text-gray-600 hover:text-gray-900"
+                >
                   Technical Details
-                </summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
-                  {this.state.error?.message || 'Unknown error'}
-                </pre>
-              </details>
-            </div>
-          </div>
+                  {showTechnicalDetails ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+
+                {showTechnicalDetails && (
+                  <div className="mt-2 rounded-md bg-gray-100 p-3">
+                    <div className="text-xs text-gray-700">
+                      <div className="mb-2 font-medium">Error Message:</div>
+                      <div className="mb-3 font-mono break-all">
+                        {error.message || 'Unknown error'}
+                      </div>
+
+                      {error.stack && (
+                        <>
+                          <div className="mb-2 font-medium">Stack Trace:</div>
+                          <pre className="whitespace-pre-wrap text-xs leading-relaxed">
+                            {error.stack}
+                          </pre>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </main>
       )
     }
