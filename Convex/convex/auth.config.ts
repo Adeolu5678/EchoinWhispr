@@ -21,10 +21,10 @@ interface AuthConfig {
  * Validates that required environment variables are set
  */
 function validateEnvironmentVariables(): void {
-  const clerkDomain = process.env.CLERK_JWT_ISSUER_DOMAIN;
+  const clerkJwtIssuerDomain = process.env.CLERK_JWT_ISSUER_DOMAIN;
   const convexApplicationId = process.env.CONVEX_APPLICATION_ID;
 
-  if (!clerkDomain) {
+  if (!clerkJwtIssuerDomain) {
     throw new Error('CLERK_JWT_ISSUER_DOMAIN environment variable is not set');
   }
 
@@ -34,12 +34,12 @@ function validateEnvironmentVariables(): void {
 
   // Validate domain format
   try {
-    const url = new URL(clerkDomain);
+    const url = new URL(clerkJwtIssuerDomain);
     if (!url.protocol.startsWith('https')) {
       throw new Error('CLERK_JWT_ISSUER_DOMAIN must use HTTPS protocol');
     }
   } catch (error) {
-    throw new Error(`CLERK_JWT_ISSUER_DOMAIN is not a valid URL: ${clerkDomain}`);
+    throw new Error(`CLERK_JWT_ISSUER_DOMAIN is not a valid URL: ${clerkJwtIssuerDomain}`);
   }
 }
 
@@ -47,8 +47,8 @@ const authConfig: AuthConfig = {
   // Configure Convex to use Clerk for authentication
   providers: [
     {
-      domain: process.env.CLERK_JWT_ISSUER_DOMAIN!,
-      applicationID: process.env.CONVEX_APPLICATION_ID!,
+      domain: process.env.CLERK_FRONTEND_API_URL!,
+      applicationID: "convex",
     },
   ],
 
