@@ -118,35 +118,61 @@ export const updateUserProfile = mutation({
 // Get or create current user (client-side fallback)
 export const getOrCreateCurrentUser = mutation({
   args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
+  handler: async (ctx): Promise<Doc<"users"> | null> => {
+    try {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        throw new Error("Not authenticated");
+      }
+
+      // Validate required Clerk identity fields
+      if (!identity.subject || !identity.email) {
+        throw new Error("Invalid identity: missing required fields");
+      }
+
+      // Check if user already exists
+      const existingUser = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .first();
+
+      if (existingUser) {
+        return existingUser;
+      }
+
+      // Generate unique username with better fallback
+      let username = identity.nickname || identity.name || identity.email?.split("@")[0];
+      if (!username) {
+        username = `user_${identity.subject.slice(-8)}`;
+      }
+
+      // Ensure username uniqueness
+      const existingUsername = await ctx.db
+        .query("users")
+        .withIndex("by_username", (q) => q.eq("username", username))
+        .first();
+
+      if (existingUsername) {
+        username = `${username}_${Date.now()}`;
+      }
+
+      // Create new user from Clerk identity
+      const now = Date.now();
+      const userId = await ctx.db.insert("users", {
+        clerkId: identity.subject,
+        username,
+        email: identity.email,
+        firstName: identity.givenName || undefined,
+        lastName: identity.familyName || undefined,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      // Return the newly created user
+      return await ctx.db.get(userId);
+    } catch (error) {
+      console.error("Error in getOrCreateCurrentUser:", error);
+      throw error;
     }
-
-    // Check if user already exists
-    const existingUser = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (existingUser) {
-      return existingUser;
-    }
-
-    // Create new user from Clerk identity
-    const now = Date.now();
-    const userId = await ctx.db.insert("users", {
-      clerkId: identity.subject,
-      username: identity.nickname || identity.name || `user_${identity.subject.slice(-8)}`,
-      email: identity.email || "",
-      firstName: identity.givenName || undefined,
-      lastName: identity.familyName || undefined,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    // Return the newly created user
-    return await ctx.db.get(userId);
   },
 });
