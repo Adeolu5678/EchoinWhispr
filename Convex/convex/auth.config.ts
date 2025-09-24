@@ -7,15 +7,7 @@
  * Environment variables are used instead of hardcoded values for security and flexibility.
  */
 
-interface AuthProvider {
-  domain: string;
-  applicationID: string;
-}
-
-interface AuthConfig {
-  providers: AuthProvider[];
-  generateCommonJSApi: boolean;
-}
+import type { AuthConfig } from "convex/server";
 
 /**
  * Validates that required environment variables are set
