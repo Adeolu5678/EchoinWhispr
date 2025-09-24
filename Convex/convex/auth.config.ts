@@ -7,20 +7,12 @@
  * Environment variables are used instead of hardcoded values for security and flexibility.
  */
 
-interface AuthProvider {
-  domain: string;
-  applicationID: string;
-}
-
-interface AuthConfig {
-  providers: AuthProvider[];
-  generateCommonJSApi: boolean;
-}
+import type { Auth } from "convex/server";
 
 /**
- * Validates that required environment variables are set
+ * Validates that required environment variables are set and normalizes the domain
  */
-function validateEnvironmentVariables(): void {
+function validateEnvironmentVariables(): { normalizedDomain: string } {
   const clerkJwtIssuerDomain = process.env.CLERK_JWT_ISSUER_DOMAIN;
   const convexApplicationId = process.env.CONVEX_APPLICATION_ID;
 
@@ -32,31 +24,28 @@ function validateEnvironmentVariables(): void {
     throw new Error('CONVEX_APPLICATION_ID environment variable is not set');
   }
 
-  // Validate domain format
+  // Validate and normalize domain format
   try {
     const url = new URL(clerkJwtIssuerDomain);
     if (!url.protocol.startsWith('https')) {
       throw new Error('CLERK_JWT_ISSUER_DOMAIN must use HTTPS protocol');
     }
+    // Return normalized domain (origin only, no path or trailing slash)
+    const normalizedDomain = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
+    return { normalizedDomain };
   } catch (error) {
     throw new Error(`CLERK_JWT_ISSUER_DOMAIN is not a valid URL: ${clerkJwtIssuerDomain}`);
   }
 }
 
-const authConfig: AuthConfig = {
+const authConfig = {
   // Configure Convex to use Clerk for authentication
   providers: [
     {
-      domain: process.env.CLERK_FRONTEND_API_URL!,
+      domain: process.env.CLERK_JWT_ISSUER_DOMAIN!,
       applicationID: "convex",
     },
   ],
-
-  // Generate Convex auth tokens for Clerk users
-  generateCommonJSApi: true,
 };
-
-// Validate environment variables at module load time
-validateEnvironmentVariables();
 
 export default authConfig;

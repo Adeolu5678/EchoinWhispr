@@ -160,6 +160,7 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
    */
   private handleRetry = () => {
     const { retryCount } = this.state
+    if (retryCount >= 3) return
 
     // Implement exponential backoff for retries
     const delay = Math.min(1000 * Math.pow(2, retryCount), 5000)
@@ -215,8 +216,8 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
       }
 
       return (
-        <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
-          <Card className="w-full max-w-md">
+        <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50" aria-live="assertive">
+          <Card className="w-full max-w-md" role="alert">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
@@ -252,6 +253,8 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
                   size="sm"
                   onClick={this.toggleTechnicalDetails}
                   className="w-full justify-between text-gray-600 hover:text-gray-900"
+                  aria-expanded={showTechnicalDetails}
+                  aria-controls="clerk-error-technical-details"
                 >
                   Technical Details
                   {showTechnicalDetails ? (
@@ -262,7 +265,7 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
                 </Button>
 
                 {showTechnicalDetails && (
-                  <div className="mt-2 rounded-md bg-gray-100 p-3">
+                  <div id="clerk-error-technical-details" className="mt-2 rounded-md bg-gray-100 p-3">
                     <div className="text-xs text-gray-700">
                       <div className="mb-2 font-medium">Error Message:</div>
                       <div className="mb-3 font-mono break-all">

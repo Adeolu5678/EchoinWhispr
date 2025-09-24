@@ -3,7 +3,7 @@
 import { useAuth, useUser } from '@clerk/nextjs'
 import { useConvexAuth } from 'convex/react'
 import { useMutation } from 'convex/react'
-import { api } from '../../../../Convex/convex/_generated/api'
+import { api } from '@/lib/convex'
 import { useState } from 'react'
 
 /**
