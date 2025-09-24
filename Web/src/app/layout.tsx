@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from '@/components/Providers'
+import { Navigation } from '@/components/Navigation'
 import { ReactNode } from 'react'
 import './globals.css'
 
@@ -24,7 +25,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <Providers>
-          {children}
+          <Navigation />
+          <main className="min-h-screen">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>
