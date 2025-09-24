@@ -4,18 +4,14 @@
   "description": "EchoinWhspr - Anonymous messaging platform monorepo",
   "private": true,
   "packageManager": "pnpm@8.15.0",
-  "workspaces": [
-    "Web",
-    "ReactNative",
-    "Convex",
-    "design-system"
-  ],
   "scripts": {
     "install:all": "pnpm install",
     "dev": "pnpm -r dev",
     "dev:web": "pnpm --filter Web dev",
     "dev:rn": "pnpm --filter ReactNative start",
     "dev:convex": "pnpm --filter Convex dev",
+    "dev:fullstack": "pnpm --parallel --filter Web dev --filter Convex dev",
+    "dev:fullstack:sequential": "pnpm dev:convex & pnpm dev:web",
     "start:web": "pnpm --filter Web start",
     "start:rn": "pnpm --filter ReactNative start",
     "build": "pnpm -r build",
@@ -35,6 +31,9 @@
     "convex:dev": "pnpm --filter Convex dev",
     "convex:deploy": "pnpm --filter Convex deploy",
     "convex:generate": "pnpm --filter Convex generate",
+    "stop:all": "pkill -f \"next dev\" && pkill -f \"convex dev\" || true",
+    "stop:web": "pkill -f \"next dev\" || true",
+    "stop:convex": "pkill -f \"convex dev\" || true",
     "prepare": "husky install"
   },
   "devDependencies": {

@@ -1,29 +1,18 @@
 name: React Native Application CI/CD
 
 on:
-  push:
-    branches: [ main, develop ]
-    paths:
-      - 'ReactNative/**'
-      - '.github/workflows/react-native-ci.yml'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'ReactNative/**'
-      - '.github/workflows/react-native-ci.yml'
-on:
   workflow_call:
     inputs:
       node_version:
         description: 'Node.js version'
         required: false
         type: string
-        default: '20'
+        default: '18'
       pnpm_version:
         description: 'PNPM version'
         required: false
         type: string
-        default: '9'
+        default: '8'
     secrets:
       EXPO_TOKEN:
         required: true
@@ -161,7 +150,7 @@ jobs:
       - name: Build Android APK
         working-directory: ./ReactNative
         run: |
-          npx expo build:android --type apk --no-publish --no-wait
+          npx eas build --platform android --profile production --no-wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_CONVEX_URL: ${{ secrets.EXPO_PUBLIC_CONVEX_URL }}
@@ -221,7 +210,7 @@ jobs:
       - name: Build iOS App
         working-directory: ./ReactNative
         run: |
-          npx expo build:ios --type archive --no-publish --no-wait
+          npx eas build --platform ios --profile production --no-wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_CONVEX_URL: ${{ secrets.EXPO_PUBLIC_CONVEX_URL }}
@@ -262,10 +251,10 @@ jobs:
       - name: Setup Expo CLI
         run: pnpm add -g @expo/cli
 
-      - name: Publish to Expo (Staging Channel)
+      - name: Submit to Expo (Staging Channel)
         working-directory: ./ReactNative
         run: |
-          npx expo publish --release-channel staging
+          npx eas submit --platform all --profile staging
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_CONVEX_URL: ${{ secrets.EXPO_PUBLIC_CONVEX_URL }}
@@ -299,10 +288,10 @@ jobs:
       - name: Setup Expo CLI
         run: pnpm add -g @expo/cli
 
-      - name: Publish to Expo (Production Channel)
+      - name: Submit to Expo (Production Channel)
         working-directory: ./ReactNative
         run: |
-          npx expo publish --release-channel production
+          npx eas submit --platform all --profile production
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EXPO_PUBLIC_CONVEX_URL: ${{ secrets.EXPO_PUBLIC_CONVEX_URL }}

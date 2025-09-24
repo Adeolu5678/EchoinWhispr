@@ -3,8 +3,9 @@
 import { ClerkProvider, useAuth } from '@clerk/nextjs'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
 import convex from '@/lib/convex'
-import { ReactNode } from 'react'
+import { ReactNode, useMemo } from 'react'
 import { Toaster } from '@/components/ui/toaster'
+import { ClerkErrorBoundary } from '@/components/ClerkErrorBoundary'
 
 /**
  * Validates that the Clerk publishable key environment variable is set
@@ -36,17 +37,40 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
+  const clerkPublishableKey = useMemo(() => {
+    try {
+      return validateClerkPublishableKey()
+    } catch (error) {
+      console.error('Provider initialization failed:', error)
+      return null
+    }
+  }, [])
+
+  if (!clerkPublishableKey) {
+    return (
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <div className="text-center space-y-2">
+          <p className="text-lg font-semibold">Authentication initialization failed</p>
+          <p className="text-sm text-muted-foreground">Please refresh the page or try again later.</p>
+        </div>
+      </main>
+    )
+  }
+
   return (
-    <ClerkProvider
-      publishableKey={validateClerkPublishableKey()}
-    >
-      <ConvexProviderWithClerk
-        client={convex}
-        useAuth={useAuth}
+    <ClerkErrorBoundary>
+      <ClerkProvider
+        publishableKey={clerkPublishableKey}
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        afterSignInUrl="/"
+        afterSignUpUrl="/"
       >
-        {children}
-        <Toaster />
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+          {children}
+          <Toaster />
+        </ConvexProviderWithClerk>
+      </ClerkProvider>
+    </ClerkErrorBoundary>
   )
 }

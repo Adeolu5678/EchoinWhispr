@@ -5,15 +5,56 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-export default function Home() {
-  const { isAuthenticated, isLoading, user, signOut } = useAuthStatus()
+export default function Home(): JSX.Element {
+  const {
+    isAuthenticated,
+    isLoading,
+    user,
+    signOut,
+    userCreationError,
+    isCreatingUser
+  } = useAuthStatus()
 
   if (isLoading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+        <div className="text-center" role="status" aria-live="polite">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" aria-hidden="true"></div>
+          <span className="sr-only">
+            {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
+          </span>
+          <p className="text-gray-600">
+            {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  if (userCreationError) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">
+              Account Setup Failed
+            </h2>
+            <p className="text-red-700 mb-4">
+              There was an error setting up your account. Please try signing out and signing in again.
+            </p>
+            <button
+              onClick={async () => {
+                try {
+                  await signOut()
+                } catch {
+                  /* toast already handled in hook */
+                }
+              }}
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+            >
+              Sign Out & Try Again
+            </button>
+          </div>
         </div>
       </main>
     )
@@ -55,7 +96,7 @@ export default function Home() {
             <h1 className="text-2xl font-bold text-gray-900">EchoinWhispr</h1>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Welcome, {user?.firstName || user?.username || 'User'}
+                Welcome, {user?.firstName?.trim() || user?.fullName?.trim()?.split(/\s+/)[0] || user?.username || 'User'}
               </span>
               <button
                 onClick={async () => {
