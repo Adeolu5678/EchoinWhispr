@@ -42,7 +42,7 @@ export interface UseAuthStatusReturn {
   resetRetryState: () => void
 
   // Raw data for advanced use cases
-  clerkUser: any
+  clerkUser: ReturnType<typeof useUser>['user']
   isClerkLoaded: boolean
   isConvexLoading: boolean
 }

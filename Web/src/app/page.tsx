@@ -15,11 +15,14 @@ export default function Home(): JSX.Element {
     isCreatingUser
   } = useAuthStatus()
 
-  if (isLoading || isCreatingUser) {
+  if (isLoading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <div className="text-center" role="status" aria-live="polite">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" aria-hidden="true"></div>
+          <span className="sr-only">
+            {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
+          </span>
           <p className="text-gray-600">
             {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
           </p>
@@ -93,7 +96,7 @@ export default function Home(): JSX.Element {
             <h1 className="text-2xl font-bold text-gray-900">EchoinWhispr</h1>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Welcome, {(user?.fullName?.split(' ')[0]) || user?.username || 'User'}
+                Welcome, {user?.firstName?.trim() || user?.fullName?.trim()?.split(/\s+/)[0] || user?.username || 'User'}
               </span>
               <button
                 onClick={async () => {
