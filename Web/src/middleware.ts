@@ -1,18 +1,41 @@
 import { authMiddleware } from '@clerk/nextjs/server';
 
+/**
+ * Middleware configuration for route protection and authentication
+ * Protects main application routes while keeping public routes accessible
+ */
 export default authMiddleware({
+  // Public routes that don't require authentication
   publicRoutes: [
     '/',
     '/sign-in(.*)',
     '/sign-up(.*)',
-    '/api/webhooks/(.*)'
+    '/api/webhooks/(.*)',
+    '/api/test-env(.*)',
+    '/test-clerk(.*)',
+    '/test-user-creation(.*)'
   ],
+  // Routes to ignore (static files, assets, etc.)
   ignoredRoutes: [
     '/_next/static/(.*)',
     '/favicon.ico',
     '/robots.txt',
     '/sitemap.xml'
-  ]
+  ],
+  // Custom redirect behavior
+  afterAuth(auth, req) {
+    // If user is not authenticated and trying to access protected routes
+    if (!auth.userId && req.nextUrl.pathname.startsWith('/(main)')) {
+      const signInUrl = new URL('/sign-in', req.url);
+      signInUrl.searchParams.set('redirect_url', req.nextUrl.pathname);
+      return Response.redirect(signInUrl);
+    }
+
+    // If user is authenticated and trying to access auth pages, redirect to main app
+    if (auth.userId && (req.nextUrl.pathname.startsWith('/sign-in') || req.nextUrl.pathname.startsWith('/sign-up'))) {
+      return Response.redirect(new URL('/', req.url));
+    }
+  }
 });
 
 export const config = {
