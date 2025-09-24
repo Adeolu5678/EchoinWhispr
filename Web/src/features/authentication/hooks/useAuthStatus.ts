@@ -45,8 +45,6 @@ export function useAuthStatus() {
   const user = useMemo(() => clerkUser ? {
     id: clerkUser.id,
     email: clerkUser.primaryEmailAddress?.emailAddress || '',
-    firstName: clerkUser.firstName || '',
-    lastName: clerkUser.lastName || '',
     fullName: clerkUser.fullName || '',
     username: clerkUser.username || '',
     imageUrl: clerkUser.imageUrl || '',
@@ -115,7 +113,7 @@ export function useAuthStatus() {
         if (newRetryCount < MAX_RETRIES) {
           const delay = Math.pow(2, newRetryCount - 1) * 1000 // 1s, 2s, 4s
           console.log(`⏰ [useAuthStatus] Scheduling retry in ${delay}ms (attempt ${newRetryCount + 1}/${MAX_RETRIES})`)
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             // Only retry if user is still authenticated
             if (isSignedIn && isConvexAuthenticated) {
               console.log('🔄 [useAuthStatus] Retrying user creation...')
@@ -124,6 +122,9 @@ export function useAuthStatus() {
               console.log('🚫 [useAuthStatus] Skipping retry - user no longer authenticated')
             }
           }, delay)
+
+          // Cleanup function to clear timeout if component unmounts or dependencies change
+          return () => clearTimeout(timeoutId)
         }
       } finally {
         setIsCreatingUser(false)
@@ -131,7 +132,7 @@ export function useAuthStatus() {
     }
 
     createUserIfNeeded()
-  }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, isCreatingUser, retryCount, getOrCreateUser, toast])
+  }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, retryCount, toast]) // isCreatingUser and getOrCreateUser removed
 
   // Clear error when user successfully authenticates
   useEffect(() => {
