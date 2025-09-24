@@ -2,8 +2,9 @@
 
 import { ClerkProvider, useAuth } from '@clerk/clerk-expo'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
-import convex from '@/lib/convex'
-import { ReactNode } from 'react'
+import { tokenCache } from '@clerk/clerk-expo/token-cache'
+import { ReactNode, useMemo } from 'react'
+import convex from '../lib/convex'
 
 /**
  * Validates that the Clerk publishable key environment variable is set
@@ -35,15 +36,6 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
-  return (
-    <ClerkProvider
-      publishableKey={validateClerkPublishableKey()}
-import { ClerkProvider, useAuth } from '@clerk/clerk-expo'
-import { ConvexProviderWithClerk } from 'convex/react-clerk'
-import convex from '@/lib/convex'
-import { ReactNode, useMemo } from 'react'
-import { tokenCache } from '@clerk/clerk-expo/token-cache'
-export function Providers({ children }: ProvidersProps) {
   const publishableKey = useMemo(() => validateClerkPublishableKey(), [])
 
   return (
@@ -52,14 +44,6 @@ export function Providers({ children }: ProvidersProps) {
       tokenCache={tokenCache}
     >
       <ConvexProviderWithClerk
-        client={convex}
-        useAuth={useAuth}
-      >
-        {children}
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
-  )
-}      <ConvexProviderWithClerk
         client={convex}
         useAuth={useAuth}
       >

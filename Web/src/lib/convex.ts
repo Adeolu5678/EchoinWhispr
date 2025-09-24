@@ -1,4 +1,5 @@
 import { ConvexReactClient } from 'convex/react'
+import { api } from '../../../Convex/convex/_generated/api'
 
 /**
  * Validates that the Convex URL environment variable is set and is an absolute URL
@@ -45,3 +46,4 @@ function createConvexClient(): ConvexReactClient {
 const convex = createConvexClient()
 
 export default convex
+export { api }
