@@ -73,13 +73,14 @@ export function useAuthStatus(): UseAuthStatusReturn {
   const [userCreationError, setUserCreationError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
   const MAX_RETRIES = 3
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Combined loading state - wait for both Clerk and Convex to be ready
   const isLoading = !isClerkLoaded || isConvexLoading || isCreatingUser
 
   // Authentication status - user must be signed in to Clerk and authenticated with Convex
   // Wait for both systems to be ready before determining final authentication state
-  const isAuthenticated = isSignedIn && isConvexAuthenticated && !isLoading
+  const isAuthenticated = (isSignedIn ?? false) && (isConvexAuthenticated ?? false) && !isLoading
 
   // User information - safely extract user data from Clerk user object
   const user = useMemo(() => clerkUser ? {
@@ -91,12 +92,6 @@ export function useAuthStatus(): UseAuthStatusReturn {
     username: clerkUser.username || '',
     imageUrl: clerkUser.imageUrl || '',
   } : null, [clerkUser])
-
-import { useCallback, useMemo, useEffect, useState, useRef } from 'react'
-
-  const [retryCount, setRetryCount] = useState(0)
-  const MAX_RETRIES = 3
-  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Automatically create user in Convex when Clerk user is authenticated but Convex user doesn't exist
   useEffect(() => {
@@ -230,8 +225,8 @@ import { useCallback, useMemo, useEffect, useState, useRef } from 'react'
     // Authentication state
     isAuthenticated,
     isLoading,
-    isSignedIn,
-    isConvexAuthenticated,
+    isSignedIn: isSignedIn ?? false,
+    isConvexAuthenticated: isConvexAuthenticated ?? false,
 
     // User data
     user,
