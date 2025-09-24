@@ -92,6 +92,12 @@ export function useAuthStatus(): UseAuthStatusReturn {
     imageUrl: clerkUser.imageUrl || '',
   } : null, [clerkUser])
 
+import { useCallback, useMemo, useEffect, useState, useRef } from 'react'
+
+  const [retryCount, setRetryCount] = useState(0)
+  const MAX_RETRIES = 3
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // Automatically create user in Convex when Clerk user is authenticated but Convex user doesn't exist
   useEffect(() => {
     const createUserIfNeeded = async () => {
@@ -155,7 +161,8 @@ export function useAuthStatus(): UseAuthStatusReturn {
         if (newRetryCount < MAX_RETRIES) {
           const delay = Math.pow(2, newRetryCount - 1) * 1000 // 1s, 2s, 4s
           console.log(`⏰ [useAuthStatus] Scheduling retry in ${delay}ms (attempt ${newRetryCount + 1}/${MAX_RETRIES})`)
-          const timeoutId = setTimeout(() => {
+          // Store the timeout ID so we can clear it on effect cleanup
+          retryTimeoutRef.current = setTimeout(() => {
             // Only retry if user is still authenticated
             if (isSignedIn && isConvexAuthenticated) {
               console.log('🔄 [useAuthStatus] Retrying user creation...')
@@ -164,9 +171,6 @@ export function useAuthStatus(): UseAuthStatusReturn {
               console.log('🚫 [useAuthStatus] Skipping retry - user no longer authenticated')
             }
           }, delay)
-
-          // Cleanup function to clear timeout if component unmounts or dependencies change
-          return () => clearTimeout(timeoutId)
         }
       } finally {
         setIsCreatingUser(false)
@@ -174,8 +178,13 @@ export function useAuthStatus(): UseAuthStatusReturn {
     }
 
     createUserIfNeeded()
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current)
+        retryTimeoutRef.current = null
+      }
+    }
   }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, retryCount, toast, getOrCreateUser])
-
   // Clear error when user successfully authenticates
   useEffect(() => {
     if (isAuthenticated && userCreationError) {
