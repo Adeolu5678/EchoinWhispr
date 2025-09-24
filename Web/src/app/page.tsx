@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-export default function Home() {
+export default function Home(): JSX.Element {
   const {
     isAuthenticated,
     isLoading,
@@ -93,7 +93,7 @@ export default function Home() {
             <h1 className="text-2xl font-bold text-gray-900">EchoinWhispr</h1>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Welcome, {user?.firstName || user?.username || 'User'}
+                Welcome, {(user?.fullName?.split(' ')[0]) || user?.username || 'User'}
               </span>
               <button
                 onClick={async () => {

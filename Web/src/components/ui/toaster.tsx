@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast"
  *
  * @returns JSX element containing the toast provider and viewport with all active toasts
  */
-export function Toaster() {
+export function Toaster(): JSX.Element {
   const { toasts } = useToast()
 
   return (
