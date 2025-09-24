@@ -15,7 +15,7 @@ function validateConvexUrl(): string {
 
   try {
     const url = new URL(convexUrl)
-    const isValidProtocol = url.protocol.startsWith('http')
+    const isValidProtocol = url.protocol === 'http:' || url.protocol === 'https:'
 
     if (!isValidProtocol) {
       const error = new Error('NEXT_PUBLIC_CONVEX_URL must be an absolute URL starting with http:// or https://')
