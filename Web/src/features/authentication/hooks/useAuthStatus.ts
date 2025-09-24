@@ -45,6 +45,8 @@ export function useAuthStatus() {
   const user = useMemo(() => clerkUser ? {
     id: clerkUser.id,
     email: clerkUser.primaryEmailAddress?.emailAddress || '',
+    firstName: clerkUser.firstName || '',
+    lastName: clerkUser.lastName || '',
     fullName: clerkUser.fullName || '',
     username: clerkUser.username || '',
     imageUrl: clerkUser.imageUrl || '',
@@ -132,7 +134,7 @@ export function useAuthStatus() {
     }
 
     createUserIfNeeded()
-  }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, retryCount, toast]) // isCreatingUser and getOrCreateUser removed
+  }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, retryCount, toast, getOrCreateUser])
 
   // Clear error when user successfully authenticates
   useEffect(() => {
