@@ -14,20 +14,15 @@ import type { AuthConfig } from "convex/server";
  */
 function validateEnvironmentVariables(): void {
   const clerkJwtIssuerDomain = process.env.CLERK_JWT_ISSUER_DOMAIN;
-  const convexApplicationId = process.env.CONVEX_APPLICATION_ID;
 
   if (!clerkJwtIssuerDomain) {
     throw new Error('CLERK_JWT_ISSUER_DOMAIN environment variable is not set');
   }
 
-  if (!convexApplicationId) {
-    throw new Error('CONVEX_APPLICATION_ID environment variable is not set');
-  }
-
   // Validate domain format
   try {
     const url = new URL(clerkJwtIssuerDomain);
-    if (!url.protocol.startsWith('https')) {
+    if (url.protocol !== 'https:') {
       throw new Error('CLERK_JWT_ISSUER_DOMAIN must use HTTPS protocol');
     }
   } catch (error) {
