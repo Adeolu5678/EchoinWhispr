@@ -37,30 +37,16 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
-  try {
-    const clerkPublishableKey = useMemo(() => validateClerkPublishableKey(), [])
+  const clerkPublishableKey = useMemo(() => {
+    try {
+      return validateClerkPublishableKey()
+    } catch (error) {
+      console.error('Provider initialization failed:', error)
+      return null
+    }
+  }, [])
 
-    return (
-      <ClerkErrorBoundary>
-        <ClerkProvider
-          publishableKey={clerkPublishableKey}
-          signInUrl="/sign-in"
-          signUpUrl="/sign-up"
-          afterSignInUrl="/"
-          afterSignUpUrl="/"
-        >
-          <ConvexProviderWithClerk
-            client={convex}
-            useAuth={useAuth}
-          >
-            {children}
-            <Toaster />
-          </ConvexProviderWithClerk>
-        </ClerkProvider>
-      </ClerkErrorBoundary>
-    )
-  } catch (error) {
-    console.error('Provider initialization failed:', error)
+  if (!clerkPublishableKey) {
     return (
       <main className="flex min-h-screen items-center justify-center p-6">
         <div className="text-center space-y-2">
@@ -69,4 +55,22 @@ export function Providers({ children }: ProvidersProps) {
         </div>
       </main>
     )
-  }}
+  }
+
+  return (
+    <ClerkErrorBoundary>
+      <ClerkProvider
+        publishableKey={clerkPublishableKey}
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        afterSignInUrl="/"
+        afterSignUpUrl="/"
+      >
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+          {children}
+          <Toaster />
+        </ConvexProviderWithClerk>
+      </ClerkProvider>
+    </ClerkErrorBoundary>
+  )
+}
