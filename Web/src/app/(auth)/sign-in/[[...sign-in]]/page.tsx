@@ -4,12 +4,12 @@ import { SignIn } from '@clerk/nextjs'
 
 export const dynamic = 'force-dynamic'
 
-export default function SignInPage() {
+export default function SignInPage(): JSX.Element {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <SignIn
-        path="/sign-in"
         routing="path"
+        path="/sign-in"
         signUpUrl="/sign-up"
         redirectUrl="/"
         appearance={{
