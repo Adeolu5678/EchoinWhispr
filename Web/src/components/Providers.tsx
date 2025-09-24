@@ -3,7 +3,7 @@
 import { ClerkProvider, useAuth } from '@clerk/nextjs'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
 import convex from '@/lib/convex'
-import { ReactNode } from 'react'
+import { ReactNode, useMemo } from 'react'
 import { Toaster } from '@/components/ui/toaster'
 import { ClerkErrorBoundary } from '@/components/ClerkErrorBoundary'
 
@@ -38,7 +38,7 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   try {
-    const clerkPublishableKey = validateClerkPublishableKey()
+    const clerkPublishableKey = useMemo(() => validateClerkPublishableKey(), [])
 
     return (
       <ClerkErrorBoundary>
@@ -61,6 +61,12 @@ export function Providers({ children }: ProvidersProps) {
     )
   } catch (error) {
     console.error('Provider initialization failed:', error)
-    throw error
-  }
-}
+    return (
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <div className="text-center space-y-2">
+          <p className="text-lg font-semibold">Authentication initialization failed</p>
+          <p className="text-sm text-muted-foreground">Please refresh the page or try again later.</p>
+        </div>
+      </main>
+    )
+  }}

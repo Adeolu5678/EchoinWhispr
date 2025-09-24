@@ -3,9 +3,49 @@
 import { useUser, useAuth } from '@clerk/nextjs'
 import { useConvexAuth } from 'convex/react'
 import { useToast } from '@/hooks/use-toast'
-import { useCallback, useMemo, useEffect, useState } from 'react'
+import { useCallback, useMemo, useEffect, useState, useRef } from 'react'
 import { useMutation } from 'convex/react'
-import { api } from '../../../../../Convex/convex/_generated/api'
+import { api } from '@/lib/convex'
+/**
+ * Interface representing the authenticated user data structure
+ */
+export interface AuthUser {
+  id: string
+  email: string
+  fullName: string
+  username: string
+  imageUrl: string
+  firstName?: string
+  lastName?: string
+}
+
+/**
+ * Interface representing the return type of the useAuthStatus hook
+ */
+export interface UseAuthStatusReturn {
+  // Authentication state
+  isAuthenticated: boolean
+  isLoading: boolean
+  isSignedIn: boolean
+  isConvexAuthenticated: boolean
+
+  // User data
+  user: AuthUser | null
+
+  // User creation status
+  isCreatingUser: boolean
+  userCreationError: string | null
+  retryCount: number
+
+  // Actions
+  signOut: () => Promise<void>
+  resetRetryState: () => void
+
+  // Raw data for advanced use cases
+  clerkUser: any
+  isClerkLoaded: boolean
+  isConvexLoading: boolean
+}
 
 /**
  * Custom hook for managing authentication status and user information
@@ -14,7 +54,7 @@ import { api } from '../../../../../Convex/convex/_generated/api'
  *
  * @returns Object containing authentication state, user data, and actions
  */
-export function useAuthStatus() {
+export function useAuthStatus(): UseAuthStatusReturn {
   // Clerk authentication state
   const { user: clerkUser, isLoaded: isClerkLoaded, isSignedIn } = useUser()
   const { signOut } = useAuth()
@@ -45,9 +85,9 @@ export function useAuthStatus() {
   const user = useMemo(() => clerkUser ? {
     id: clerkUser.id,
     email: clerkUser.primaryEmailAddress?.emailAddress || '',
+    fullName: clerkUser.fullName || '',
     firstName: clerkUser.firstName || '',
     lastName: clerkUser.lastName || '',
-    fullName: clerkUser.fullName || '',
     username: clerkUser.username || '',
     imageUrl: clerkUser.imageUrl || '',
   } : null, [clerkUser])
