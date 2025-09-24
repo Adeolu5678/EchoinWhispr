@@ -14,7 +14,6 @@ import type { Auth } from "convex/server";
  */
 function validateEnvironmentVariables(): { normalizedDomain: string } {
   const clerkJwtIssuerDomain = process.env.CLERK_JWT_ISSUER_DOMAIN;
-  const convexApplicationId = process.env.CONVEX_APPLICATION_ID;
 
   if (!clerkJwtIssuerDomain) {
     throw new Error('CLERK_JWT_ISSUER_DOMAIN environment variable is not set');
@@ -27,7 +26,7 @@ function validateEnvironmentVariables(): { normalizedDomain: string } {
   // Validate and normalize domain format
   try {
     const url = new URL(clerkJwtIssuerDomain);
-    if (!url.protocol.startsWith('https')) {
+    if (url.protocol !== 'https:') {
       throw new Error('CLERK_JWT_ISSUER_DOMAIN must use HTTPS protocol');
     }
     // Return normalized domain (origin only, no path or trailing slash)
