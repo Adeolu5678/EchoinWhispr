@@ -41,4 +41,19 @@ export default defineSchema({
   })
     .index("by_user_id", ["userId"])
     .index("by_is_public", ["isPublic"]),
+
+  // Friends table - friendship relationships between users
+  friends: defineTable({
+    userId: v.id("users"),
+    friendId: v.id("users"),
+    status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("blocked")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_id", ["userId"])
+    .index("by_friend_id", ["friendId"])
+    .index("by_user_friend", ["userId", "friendId"])
+    .index("by_status", ["status"])
+    .index("by_user_status", ["userId", "status"])
+    .index("by_friend_status", ["friendId", "status"]),
 });
