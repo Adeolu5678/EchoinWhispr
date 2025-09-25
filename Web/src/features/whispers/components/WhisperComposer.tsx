@@ -6,8 +6,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSendWhisper } from '../hooks/useWhispers'
 import { WHISPER_LIMITS } from '../types'
-import { UserSearch } from '../../users/components/UserSearch'
-import { UserSearchResult as UserSearchResultType } from '../../users/types'
+import { RecipientSelector } from './RecipientSelector'
+import type { Doc } from '../../../../Convex/convex/_generated/dataModel.d.ts'
 import { Users, X, Send } from 'lucide-react'
 
 interface WhisperComposerProps {
@@ -43,7 +43,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
 }) => {
   // Component state
   const [content, setContent] = useState('')
-  const [selectedUser, setSelectedUser] = useState<UserSearchResultType | null>(null)
+  const [selectedUser, setSelectedUser] = useState<Doc<'users'> | null>(null)
   const { sendWhisper, isLoading, error } = useSendWhisper()
 
   /**
@@ -66,7 +66,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
    * Handles user selection from search results
    * For single recipient selection, replaces current selection
    */
-  const handleUserToggle = useCallback((user: UserSearchResultType) => {
+  const handleUserToggle = useCallback((user: Doc<'users'>) => {
     setSelectedUser(user)
   }, [])
 
@@ -154,11 +154,9 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <UserSearch
-            placeholder="Search for users to whisper..."
-            maxResults={20}
-            onUserToggle={handleUserToggle}
-            className="border-0 shadow-none p-0"
+          <RecipientSelector
+            selectedRecipient={selectedUser}
+            onRecipientSelect={handleUserToggle}
           />
         </CardContent>
       </Card>
