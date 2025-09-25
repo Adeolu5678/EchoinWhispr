@@ -17,13 +17,13 @@ export default function Home(): JSX.Element {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-primary">
         <div className="text-center" role="status" aria-live="polite">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" aria-hidden="true"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4" aria-hidden="true"></div>
           <span className="sr-only">
             {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
           </span>
-          <p className="text-gray-600">
+          <p className="text-body">
             {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
           </p>
         </div>
@@ -33,13 +33,13 @@ export default function Home(): JSX.Element {
 
   if (userCreationError) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-primary">
         <div className="text-center max-w-md">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">
+          <div className="bg-deep border border-red-200 rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-semibold text-body mb-2">
               Account Setup Failed
             </h2>
-            <p className="text-red-700 mb-4">
+            <p className="text-body mb-4">
               There was an error setting up your account. Please try signing out and signing in again.
             </p>
             <button
@@ -62,22 +62,22 @@ export default function Home(): JSX.Element {
 
   if (!isAuthenticated) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-primary">
         <div className="text-center max-w-md">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">EchoinWhispr</h1>
-          <p className="text-lg text-gray-600 mb-8">
+          <h1 className="text-4xl font-bold text-body mb-4">EchoinWhispr</h1>
+          <p className="text-lg text-body mb-8">
             Send and receive anonymous messages in a safe, private environment.
           </p>
           <div className="space-y-4">
             <Link
               href="/sign-up"
-              className="block w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              className="block w-full bg-deep text-body py-3 px-6 rounded-lg font-medium hover:bg-opacity-80 transition-colors"
             >
               Get Started
             </Link>
             <Link
               href="/sign-in"
-              className="block w-full bg-gray-100 text-gray-900 py-3 px-6 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+              className="block w-full bg-white text-gray-900 py-3 px-6 rounded-lg font-medium hover:bg-gray-100 transition-colors"
             >
               Sign In
             </Link>
@@ -88,14 +88,14 @@ export default function Home(): JSX.Element {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-primary">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-deep shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">EchoinWhispr</h1>
+            <h1 className="text-2xl font-bold text-body">EchoinWhispr</h1>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-body">
                 Welcome, {user?.firstName?.trim() || user?.fullName?.trim()?.split(/\s+/)[0] || user?.username || 'User'}
               </span>
               <button
@@ -119,10 +119,10 @@ export default function Home(): JSX.Element {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-body mb-4">
             Welcome to your Inbox
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-lg text-body mb-8">
             Your whispers will appear here. The whisper functionality will be implemented next.
           </p>
           <div className="bg-white rounded-lg shadow p-8">

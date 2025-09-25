@@ -81,15 +81,15 @@ export const MobileNavigation = ({
       />
 
       {/* Mobile Navigation Menu */}
-      <div className="fixed top-0 left-0 bottom-0 w-64 bg-white z-50 md:hidden transform transition-transform duration-300 ease-in-out">
+      <div className="fixed top-0 left-0 bottom-0 w-64 bg-primary-600 z-50 md:hidden transform transition-transform duration-300 ease-in-out">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between p-4 border-b border-primary-700">
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">EW</span>
               </div>
-              <span className="text-lg font-bold text-gray-900">EchoinWhispr</span>
+              <span className="text-lg font-bold text-inverse">EchoinWhispr</span>
             </div>
           </div>
 
@@ -108,14 +108,14 @@ export const MobileNavigation = ({
                       className={cn(
                         'flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors',
                         isActive
-                          ? 'bg-gray-100 text-gray-900'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          ? 'bg-primary-700 text-inverse'
+                          : 'text-primary-100 hover:text-inverse hover:bg-primary-700'
                       )}
                     >
                       <Icon className="h-5 w-5" />
                       <div className="flex-1">
                         <div className="font-medium">{item.label}</div>
-                        <div className="text-xs text-gray-500">{item.description}</div>
+                        <div className="text-xs text-primary-200">{item.description}</div>
                       </div>
                     </Link>
                   </li>
@@ -125,8 +125,8 @@ export const MobileNavigation = ({
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
-            <div className="text-xs text-gray-500 text-center">
+          <div className="p-4 border-t border-primary-700">
+            <div className="text-xs text-primary-200 text-center">
               EchoinWhispr v1.0
             </div>
           </div>

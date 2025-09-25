@@ -23,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-primary text-body`}>
         <Providers>
           <Navigation />
           <main className="min-h-screen">
