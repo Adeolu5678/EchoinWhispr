@@ -56,8 +56,8 @@ export const NavigationLink = forwardRef<HTMLAnchorElement, NavigationLinkProps>
           className={`
             flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-colors
             ${isActive
-              ? 'bg-gray-100 text-gray-900'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              ? 'bg-primary-700 text-inverse'
+              : 'text-inverse hover:text-inverse hover:bg-primary-700'
             }
           `}
           aria-current={isActive ? 'page' : undefined}

@@ -86,14 +86,14 @@ export const Navigation = () => {
   // Show loading state while Clerk is loading
   if (!isLoaded) {
     return (
-      <nav className="bg-white border-b border-gray-200 shadow-sm">
+      <nav className="bg-primary-600 border-b border-primary-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="h-8 w-32 bg-gray-200 animate-pulse rounded"></div>
+              <div className="h-8 w-32 bg-primary-700 animate-pulse rounded"></div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="h-8 w-8 bg-gray-200 animate-pulse rounded-full"></div>
+              <div className="h-8 w-8 bg-primary-700 animate-pulse rounded-full"></div>
             </div>
           </div>
         </div>
@@ -107,14 +107,14 @@ export const Navigation = () => {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+    <nav className="bg-primary-600 border-b border-primary-700 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center space-x-2 text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
+              className="flex items-center space-x-2 text-xl font-bold text-inverse hover:text-primary-100 transition-colors"
               onClick={closeMobileMenu}
             >
               <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
