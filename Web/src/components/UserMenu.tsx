@@ -130,7 +130,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center space-x-2 px-2 py-2 h-auto"
+          className="flex items-center space-x-2 px-2 py-2 h-auto bg-primary-600 hover:bg-primary-700 text-inverse"
           aria-label="User menu"
         >
           <Avatar className="h-8 w-8">
@@ -138,14 +138,14 @@ export const UserMenu = ({ user }: UserMenuProps) => {
               src={user.imageUrl}
               alt={getDisplayName()}
             />
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm font-medium">
+            <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-600 text-inverse text-sm font-medium">
               {getUserInitials()}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden sm:inline text-sm font-medium text-gray-700">
+          <span className="hidden sm:inline text-sm font-medium text-inverse">
             {getDisplayName()}
           </span>
-          <ChevronDown className="h-4 w-4 text-gray-500" />
+          <ChevronDown className="h-4 w-4 text-inverse" />
         </Button>
       </DropdownMenuTrigger>
 

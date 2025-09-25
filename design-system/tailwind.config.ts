@@ -189,6 +189,7 @@ const tailwindConfig = {
           fontWeight: theme('fontWeight.normal'),
           lineHeight: theme('fontSize.base[1].lineHeight'),
           letterSpacing: theme('letterSpacing.normal'),
+          color: theme('colors.text.primary'), // Black color for better readability on purple backgrounds
         },
         '.text-caption': {
           fontSize: theme('fontSize.sm[0]'),
@@ -206,6 +207,73 @@ const tailwindConfig = {
         '.touch-target': {
           minHeight: '44px',
           minWidth: '44px',
+        },
+
+        // Background utilities for purple theme
+        '.bg-primary': {
+          backgroundColor: theme('colors.primary.500'), // #a855f7 - Main primary purple
+        },
+        '.bg-deep': {
+          backgroundColor: theme('colors.primary.600'), // #9333ea - Deep purple for headers
+        },
+        '.bg-light': {
+          backgroundColor: theme('colors.primary.300'), // #d8b4fe - Light purple for input backgrounds
+        },
+        '.bg-inverse': {
+          backgroundColor: theme('colors.white'), // #ffffff - White for contrast elements
+        },
+        // Additional purple theme utilities
+        '.bg-primary-hover': {
+          backgroundColor: theme('colors.primary.600'), // #9333ea - Darker shade for hover states
+        },
+        '.bg-primary-subtle': {
+          backgroundColor: theme('colors.primary.100'), // #f3e8ff - Very light purple for subtle backgrounds
+        },
+        '.bg-surface': {
+          backgroundColor: theme('colors.background.secondary'), // #fafafa - Neutral surface that works with purple
+        },
+        '.bg-gradient-primary': {
+          background: `linear-gradient(135deg, ${theme('colors.primary.500')} 0%, ${theme('colors.primary.600')} 100%)`,
+        },
+
+        // Input field utilities with purple theme
+        '.input-bg-purple': {
+          backgroundColor: theme('colors.primary.300'), // #d8b4fe - Light purple background
+          color: theme('colors.text.primary'), // Black text for better readability
+          borderColor: theme('colors.primary.200'), // Slightly darker purple for subtle border
+          borderWidth: '1px',
+          borderRadius: theme('borderRadius.md'),
+          padding: `${theme('spacing.3')} ${theme('spacing.4')}`,
+          transition: 'all 150ms ease-in-out',
+        },
+        '.input-bg-purple::placeholder': {
+          color: theme('colors.text.tertiary'), // Muted text for placeholder
+        },
+        '.input-focus-purple': {
+          '@apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500': {},
+        },
+        '.input-bg-purple-hover': {
+          backgroundColor: theme('colors.primary.400'), // Slightly darker purple on hover
+          borderColor: theme('colors.primary.300'),
+        },
+        '.input-bg-purple-error': {
+          backgroundColor: theme('colors.error.50'), // Light error background
+          borderColor: theme('colors.error.300'), // Error border color
+          color: theme('colors.error.700'), // Error text color
+        },
+        '.input-bg-purple-success': {
+          backgroundColor: theme('colors.success.50'), // Light success background
+          borderColor: theme('colors.success.300'), // Success border color
+          color: theme('colors.success.700'), // Success text color
+        },
+        '.input-border-purple': {
+          borderColor: theme('colors.primary.300'), // Purple border for inputs
+          borderWidth: '1px',
+        },
+        '.input-border-purple-focus': {
+          borderColor: theme('colors.primary.500'), // Darker purple for focus state
+          borderWidth: '2px',
+          boxShadow: `0 0 0 3px ${theme('colors.primary.500')}20`, // Purple ring with opacity
         },
 
         // Safe area utilities
