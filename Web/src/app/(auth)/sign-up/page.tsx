@@ -48,7 +48,6 @@ export default function SignUpPage(): JSX.Element {
             headerSubtitle: 'text-muted-foreground',
           },
         }}
-        afterSignUpUrl="/factor-one"
         afterSignInUrl="/"
       />
       <UsernamePickerModal
