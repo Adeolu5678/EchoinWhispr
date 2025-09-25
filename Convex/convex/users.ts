@@ -177,11 +177,22 @@ export const getOrCreateCurrentUser = mutation({
     try {
       const identity = await ctx.auth.getUserIdentity();
       if (!identity) {
+        console.log("🔍 [DEBUG] getOrCreateCurrentUser: No identity found");
         throw new Error("Not authenticated");
       }
 
+      console.log("🔍 [DEBUG] getOrCreateCurrentUser: Identity found:", {
+        subject: identity.subject,
+        email: identity.email,
+        name: identity.name,
+        nickname: identity.nickname,
+        givenName: identity.givenName,
+        familyName: identity.familyName,
+      });
+
       // Validate required Clerk identity fields
       if (!identity.subject || !identity.email) {
+        console.log("🔍 [DEBUG] getOrCreateCurrentUser: Invalid identity - missing required fields");
         throw new Error("Invalid identity: missing required fields");
       }
 
@@ -192,14 +203,19 @@ export const getOrCreateCurrentUser = mutation({
         .first();
 
       if (existingUser) {
+        console.log("🔍 [DEBUG] getOrCreateCurrentUser: User already exists:", existingUser.username);
         return existingUser;
       }
+
+      console.log("🔍 [DEBUG] getOrCreateCurrentUser: Creating new user");
 
       // Generate unique username with better fallback
       let username = identity.nickname || identity.name || identity.email?.split("@")[0];
       if (!username) {
         username = `user_${identity.subject.slice(-8)}`;
       }
+
+      console.log("🔍 [DEBUG] getOrCreateCurrentUser: Generated username:", username);
 
       // Ensure username uniqueness
       const existingUsername = await ctx.db
@@ -208,7 +224,9 @@ export const getOrCreateCurrentUser = mutation({
         .first();
 
       if (existingUsername) {
+        const originalUsername = username;
         username = `${username}_${Date.now()}`;
+        console.log("🔍 [DEBUG] getOrCreateCurrentUser: Username conflict detected. Changed from", originalUsername, "to", username);
       }
 
       // Create new user from Clerk identity
@@ -223,11 +241,79 @@ export const getOrCreateCurrentUser = mutation({
         updatedAt: now,
       });
 
+      console.log("🔍 [DEBUG] getOrCreateCurrentUser: User created with ID:", userId);
+
       // Return the newly created user
       return await ctx.db.get(userId);
     } catch (error) {
-      console.error("Error in getOrCreateCurrentUser:", error);
+      console.error("🔍 [DEBUG] getOrCreateCurrentUser: Error:", error);
       throw error;
     }
+  },
+});
+
+// Update user username
+export const updateUsername = mutation({
+  args: {
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
+    const usernameRegex = /^[a-z0-9_]{3,20}$/;
+    if (!usernameRegex.test(args.username)) {
+      throw new Error("Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check if username is already taken by another user
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .first();
+
+    if (existingUser && existingUser._id !== user._id) {
+      throw new Error("Username is already taken");
+    }
+
+    // Update username
+    await ctx.db.patch(user._id, {
+      username: args.username,
+      updatedAt: Date.now(),
+    });
+
+    return user._id;
+  },
+});
+
+// Check if username is available for registration
+export const checkUsernameAvailability = query({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
+    const usernameRegex = /^[a-z0-9_]{3,20}$/;
+    if (!usernameRegex.test(args.username)) {
+      return false;
+    }
+
+    // Check if username already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .first();
+
+    return !existingUser; // Return true if username is available (no existing user)
   },
 });
