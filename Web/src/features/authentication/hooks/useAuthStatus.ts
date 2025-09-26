@@ -8,6 +8,17 @@ import { useMutation } from 'convex/react'
 import { api } from '@/lib/convex'
 
 /**
+ * Authentication state machine states
+ */
+type AuthState =
+  | 'initializing'     // Initial state, checking authentication
+  | 'authenticated'    // User is fully authenticated with username
+  | 'needs_username'   // User is authenticated but needs username selection
+  | 'processing'       // Currently processing user creation/update
+  | 'error'           // Error occurred during authentication
+  | 'retrying'        // Retrying after an error
+
+/**
  * Interface representing the authenticated user data structure
  */
 export interface AuthUser {
@@ -38,6 +49,13 @@ export interface UseAuthStatusReturn {
   userCreationError: string | null
   retryCount: number
 
+  // Username selection state
+  needsUsernameSelection: boolean
+  isUsernameSelectionOpen: boolean
+  showUsernamePicker: () => void
+  hideUsernamePicker: () => void
+  onUsernameSelected: (username: string) => Promise<void>
+
   // Actions
   signOut: () => Promise<void>
   resetRetryState: () => void
@@ -55,9 +73,9 @@ const MAX_RETRY_ATTEMPTS = 3
 
 /**
  * Custom hook for managing authentication status and user information
+ * Uses a state machine pattern to prevent circular dependencies and infinite re-renders
  * Provides unified access to Clerk and Convex authentication state
  * Automatically creates user in Convex when authenticated with Clerk
- * Implements retry logic for user creation with proper state management
  *
  * @returns Object containing authentication state, user data, and actions
  */
@@ -74,30 +92,48 @@ export function useAuthStatus(): UseAuthStatusReturn {
 
   // Mutation for creating/getting user in Convex
   const getOrCreateUserMutation = useMutation(api.users.getOrCreateCurrentUser)
+  const updateUsernameMutation = useMutation(api.users.updateUsername)
 
-  // Memoized function to call the mutation with proper error handling
-  const getOrCreateUser = useCallback(async () => {
-    try {
-      return await getOrCreateUserMutation()
-    } catch (error) {
-      console.error('Error in getOrCreateUser mutation:', error)
-      throw error
-    }
-  }, [getOrCreateUserMutation])
-
-  // State management - separated loading states to prevent circular dependencies
-  const [isUserCreationLoading, setIsUserCreationLoading] = useState(false)
+  // State machine for authentication flow
+  const [authState, setAuthState] = useState<AuthState>('initializing')
   const [userCreationError, setUserCreationError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
 
-  // Refs for values that shouldn't trigger re-renders but need to be accessed in effects
+  // Username selection state
+  const [isUsernameSelectionOpen, setIsUsernameSelectionOpen] = useState(false)
+
+  // Refs for preventing race conditions
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isRetryingRef = useRef(false)
+  const isProcessingRef = useRef(false)
+  const hasInitializedRef = useRef(false)
+  const lastAuthStateRef = useRef<AuthState>('initializing')
 
   // Computed authentication states using useMemo to prevent unnecessary recalculations
   const isLoading = useMemo(() => {
-    return !isClerkLoaded || isConvexLoading || isUserCreationLoading
-  }, [isClerkLoaded, isConvexLoading, isUserCreationLoading])
+    // More stable loading state to prevent flashing
+    const clerkNotReady = !isClerkLoaded
+    const convexStillLoading = isConvexLoading
+    const stillInitializing = authState === 'initializing'
+
+    // Only show loading if we're actually in a loading state
+    // Prevent rapid state changes that cause flashing
+    // Don't include 'processing' here as it should transition to final states
+    return clerkNotReady || convexStillLoading || stillInitializing
+  }, [isClerkLoaded, isConvexLoading, authState])
+// DEBUG: Comprehensive logging for loading state analysis
+console.log('🔍 [useAuthStatus] Loading State Analysis:', {
+  isLoading,
+  isClerkLoaded,
+  isConvexLoading,
+  authState,
+  isSignedIn,
+  isConvexAuthenticated,
+  retryCount,
+  userCreationError,
+  hasInitialized: hasInitializedRef.current,
+  isProcessing: isProcessingRef.current,
+  timestamp: new Date().toISOString()
+})
 
   const isAuthenticated = useMemo(() => {
     // Only consider authenticated if both systems are ready and user is signed in
@@ -105,8 +141,12 @@ export function useAuthStatus(): UseAuthStatusReturn {
     const convexAuth = isConvexAuthenticated ?? false
     const systemsReady = isClerkLoaded && !isConvexLoading
 
-    return signedIn && convexAuth && systemsReady && !isLoading
-  }, [isSignedIn, isConvexAuthenticated, isClerkLoaded, isConvexLoading, isLoading])
+    return signedIn && convexAuth && systemsReady && authState === 'authenticated'
+  }, [isSignedIn, isConvexAuthenticated, isClerkLoaded, isConvexLoading, authState])
+
+  const needsUsernameSelection = useMemo(() => {
+    return authState === 'needs_username'
+  }, [authState])
 
   // User information - safely extract user data from Clerk user object
   const user = useMemo(() => clerkUser ? {
@@ -119,29 +159,88 @@ export function useAuthStatus(): UseAuthStatusReturn {
     imageUrl: clerkUser.imageUrl || '',
   } : null, [clerkUser])
 
-  // Retry function with proper state management and race condition prevention
-  const retryUserCreation = useCallback(async (attemptNumber: number) => {
-    // Prevent concurrent retries
-    if (isRetryingRef.current) {
+  // Function to refetch user data after username update
+  const refetchUser = useCallback(async () => {
+    try {
+      await getOrCreateUserMutation()
+    } catch (error) {
+      console.error('Error refetching user data:', error)
+      throw error
+    }
+  }, [getOrCreateUserMutation])
+
+  // Memoized function to call the mutation with proper error handling
+  const getOrCreateUser = useCallback(async () => {
+    try {
+      return await getOrCreateUserMutation()
+    } catch (error) {
+      console.error('Error in getOrCreateUser mutation:', error)
+      throw error
+    }
+// DEBUG: Log state transitions
+console.log('🔄 [useAuthStatus] State Transition Analysis:', {
+  previousAuthState: authState,
+  isSignedIn,
+  isConvexAuthenticated,
+  hasInitialized: hasInitializedRef.current,
+  isProcessing: isProcessingRef.current,
+  shouldTransition: {
+    toAuthenticated: isSignedIn && isConvexAuthenticated && hasInitializedRef.current,
+    toNeedsUsername: isSignedIn && !isConvexAuthenticated && hasInitializedRef.current,
+    toError: userCreationError !== null,
+    toRetrying: retryCount > 0 && retryCount < MAX_RETRY_ATTEMPTS,
+    stayInitializing: !hasInitializedRef.current
+  },
+  timestamp: new Date().toISOString()
+})
+  }, [getOrCreateUserMutation])
+
+  // State machine transition function with safeguards
+  const transitionToState = useCallback((newState: AuthState, error?: string | null) => {
+    // Prevent unnecessary state transitions
+    if (lastAuthStateRef.current === newState) {
       return
     }
 
-    isRetryingRef.current = true
+    // Prevent rapid state changes that could cause flashing
+    if (isProcessingRef.current && newState !== 'processing' && newState !== 'error') {
+      return
+    }
+
+    lastAuthStateRef.current = newState
+    setAuthState(newState)
+    if (error !== undefined) {
+      setUserCreationError(error)
+    }
+  }, [])
+
+  // Retry function with proper state management and race condition prevention
+  const retryUserCreation = useCallback(async (attemptNumber: number) => {
+    // Prevent concurrent retries
+    if (isProcessingRef.current) {
+      return
+    }
+
+    isProcessingRef.current = true
+    transitionToState('processing')
 
     try {
-      setIsUserCreationLoading(true)
-      setUserCreationError(null)
-
       // Attempt to get or create the user in Convex
       const result = await getOrCreateUser()
 
-      // Reset retry count and clear error on success
+      // Handle the new return structure with needsUsernameSelection flag
+      if (result.needsUsernameSelection) {
+        transitionToState('needs_username')
+        return // Exit early - user needs to select username
+      }
+
+      // Success - user is fully authenticated
+      transitionToState('authenticated')
       setRetryCount(0)
       setUserCreationError(null)
     } catch (error) {
       console.error('Error creating/getting user in Convex:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to sync user data'
-      setUserCreationError(errorMessage)
 
       // Increment retry count
       const newRetryCount = attemptNumber
@@ -161,17 +260,18 @@ export function useAuthStatus(): UseAuthStatusReturn {
         const delay = Math.min(1000 * Math.pow(2, newRetryCount - 1), 30000) // Exponential backoff, max 30s
 
         retryTimeoutRef.current = setTimeout(() => {
-          isRetryingRef.current = false
           retryUserCreation(newRetryCount + 1)
         }, delay)
+      } else {
+        // Max retries exceeded, transition to error state
+        transitionToState('error', errorMessage)
       }
     } finally {
-      setIsUserCreationLoading(false)
-      isRetryingRef.current = false
+      isProcessingRef.current = false
     }
-  }, [getOrCreateUser, toast])
+  }, [getOrCreateUser, toast, transitionToState])
 
-  // Automatically create user in Convex when Clerk user is authenticated but Convex user doesn't exist
+  // Main authentication effect - runs only when core auth state changes
   useEffect(() => {
     // Clear any existing retry timeout
     if (retryTimeoutRef.current) {
@@ -179,7 +279,12 @@ export function useAuthStatus(): UseAuthStatusReturn {
       retryTimeoutRef.current = null
     }
 
-    const createUserIfNeeded = async () => {
+    // Prevent multiple initializations
+    if (hasInitializedRef.current) {
+      return
+    }
+
+    const initializeAuth = async () => {
       // Only proceed if:
       // 1. Clerk user is loaded and signed in
       // 2. Convex is authenticated
@@ -188,45 +293,39 @@ export function useAuthStatus(): UseAuthStatusReturn {
       if (!isClerkLoaded ||
           !isSignedIn ||
           !isConvexAuthenticated ||
-          isUserCreationLoading ||
+          isProcessingRef.current ||
           retryCount >= MAX_RETRY_ATTEMPTS) {
         return
       }
 
-      await retryUserCreation(1)
+      // Set initialized flag BEFORE attempting user creation to prevent race conditions
+      hasInitializedRef.current = true
+
+      try {
+        await retryUserCreation(1)
+      } catch (error) {
+        // Even if retryUserCreation fails, we've initialized, so don't reset the flag
+        console.error('Authentication initialization failed:', error)
+      }
     }
 
-    createUserIfNeeded()
+    initializeAuth()
 
-    // Cleanup function to clear timeout on unmount or dependency change
+    // Cleanup function to clear timeout on unmount
     return () => {
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current)
         retryTimeoutRef.current = null
       }
-      isRetryingRef.current = false
+      isProcessingRef.current = false
     }
-  }, [
-    isClerkLoaded,
-    isSignedIn,
-    isConvexAuthenticated,
-    retryCount,
-    retryUserCreation
-  ])
+  }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, retryCount])
 
-  // Clear error when user successfully authenticates and clean up state
+  // Clear error when user successfully authenticates
   useEffect(() => {
     if (isAuthenticated && userCreationError) {
       setUserCreationError(null)
       setRetryCount(0)
-      setIsUserCreationLoading(false)
-
-      // Clear any pending retry
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current)
-        retryTimeoutRef.current = null
-      }
-      isRetryingRef.current = false
     }
   }, [isAuthenticated, userCreationError])
 
@@ -240,11 +339,12 @@ export function useAuthStatus(): UseAuthStatusReturn {
       clearTimeout(retryTimeoutRef.current)
       retryTimeoutRef.current = null
     }
-    isRetryingRef.current = false
+    isProcessingRef.current = false
+    hasInitializedRef.current = false
 
     setRetryCount(0)
     setUserCreationError(null)
-    setIsUserCreationLoading(false)
+    setAuthState('initializing')
   }, [])
 
   /**
@@ -258,11 +358,16 @@ export function useAuthStatus(): UseAuthStatusReturn {
         clearTimeout(retryTimeoutRef.current)
         retryTimeoutRef.current = null
       }
-      isRetryingRef.current = false
+      isProcessingRef.current = false
+      hasInitializedRef.current = false
 
       await signOut()
-      // Clear any user creation errors on successful sign out
+      // Reset all state on successful sign out
+      setAuthState('initializing')
       setUserCreationError(null)
+      setRetryCount(0)
+      setIsUsernameSelectionOpen(false)
+
       toast({
         title: 'Signed out successfully',
         description: 'You have been signed out of your account.',
@@ -278,6 +383,54 @@ export function useAuthStatus(): UseAuthStatusReturn {
     }
   }, [signOut, toast])
 
+  // Username selection functions
+  const showUsernamePicker = useCallback(() => {
+    setIsUsernameSelectionOpen(true)
+  }, [])
+
+  const hideUsernamePicker = useCallback(() => {
+    setIsUsernameSelectionOpen(false)
+  }, [])
+
+  const onUsernameSelected = useCallback(async (username: string) => {
+    if (!username.trim()) {
+      toast({
+        title: "Username Required",
+        description: "Please enter a username to continue.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setIsUsernameSelectionOpen(false)
+      transitionToState('processing')
+
+      // Update the user with the chosen username
+      await updateUsernameMutation({ username: username.trim() })
+
+      // Refresh the user data to get the updated user
+      await refetchUser()
+
+      // Success - transition to authenticated state
+      transitionToState('authenticated')
+
+      toast({
+        title: "Username Set",
+        description: "Your username has been successfully set!",
+      })
+    } catch (error) {
+      console.error("Error updating username:", error)
+      toast({
+        title: "Error",
+        description: "Failed to set username. Please try again.",
+        variant: "destructive",
+      })
+      setIsUsernameSelectionOpen(true) // Re-open modal on error
+      transitionToState('needs_username')
+    }
+  }, [updateUsernameMutation, refetchUser, toast, transitionToState])
+
   return {
     // Authentication state
     isAuthenticated,
@@ -289,9 +442,16 @@ export function useAuthStatus(): UseAuthStatusReturn {
     user,
 
     // User creation status
-    isProcessing: isUserCreationLoading,
+    isProcessing: authState === 'processing',
     userCreationError,
     retryCount,
+
+    // Username selection state
+    needsUsernameSelection,
+    isUsernameSelectionOpen,
+    showUsernamePicker,
+    hideUsernamePicker,
+    onUsernameSelected,
 
     // Actions
     signOut: handleSignOut,
