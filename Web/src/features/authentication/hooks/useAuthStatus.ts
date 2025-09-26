@@ -13,7 +13,6 @@ import { api } from '@/lib/convex'
 type AuthState =
   | 'initializing'     // Initial state, checking authentication
   | 'authenticated'    // User is fully authenticated with username
-  | 'needs_username'   // User is authenticated but needs username selection
   | 'processing'       // Currently processing user creation/update
   | 'error'           // Error occurred during authentication
   | 'retrying'        // Retrying after an error
@@ -29,6 +28,7 @@ export interface AuthUser {
   imageUrl: string
   firstName?: string
   lastName?: string
+  createdAt?: number
 }
 
 /**
@@ -50,7 +50,6 @@ export interface UseAuthStatusReturn {
   retryCount: number
 
   // Username selection state
-  needsUsernameSelection: boolean
   isUsernameSelectionOpen: boolean
   showUsernamePicker: () => void
   hideUsernamePicker: () => void
@@ -110,7 +109,13 @@ export function useAuthStatus(): UseAuthStatusReturn {
 
   // Computed authentication states using useMemo to prevent unnecessary recalculations
   const isLoading = useMemo(() => {
-    // More stable loading state to prevent flashing
+    // Only show loading when actually initializing or processing
+     // If user is not signed in, show sign-in page immediately
+     if (!isSignedIn) {
+       return false
+     }
+
+     // Show loading only during actual initialization or processing
     const clerkNotReady = !isClerkLoaded
     const convexStillLoading = isConvexLoading
     const stillInitializing = authState === 'initializing'
@@ -120,20 +125,6 @@ export function useAuthStatus(): UseAuthStatusReturn {
     // Don't include 'processing' here as it should transition to final states
     return clerkNotReady || convexStillLoading || stillInitializing
   }, [isClerkLoaded, isConvexLoading, authState])
-// DEBUG: Comprehensive logging for loading state analysis
-console.log('🔍 [useAuthStatus] Loading State Analysis:', {
-  isLoading,
-  isClerkLoaded,
-  isConvexLoading,
-  authState,
-  isSignedIn,
-  isConvexAuthenticated,
-  retryCount,
-  userCreationError,
-  hasInitialized: hasInitializedRef.current,
-  isProcessing: isProcessingRef.current,
-  timestamp: new Date().toISOString()
-})
 
   const isAuthenticated = useMemo(() => {
     // Only consider authenticated if both systems are ready and user is signed in
@@ -144,11 +135,8 @@ console.log('🔍 [useAuthStatus] Loading State Analysis:', {
     return signedIn && convexAuth && systemsReady && authState === 'authenticated'
   }, [isSignedIn, isConvexAuthenticated, isClerkLoaded, isConvexLoading, authState])
 
-  const needsUsernameSelection = useMemo(() => {
-    return authState === 'needs_username'
-  }, [authState])
-
   // User information - safely extract user data from Clerk user object
+  // Note: createdAt will be populated from Convex user data when available
   const user = useMemo(() => clerkUser ? {
     id: clerkUser.id,
     email: clerkUser.primaryEmailAddress?.emailAddress || '',
@@ -157,6 +145,7 @@ console.log('🔍 [useAuthStatus] Loading State Analysis:', {
     lastName: clerkUser.lastName || '',
     username: clerkUser.username || '',
     imageUrl: clerkUser.imageUrl || '',
+    createdAt: undefined, // Will be populated from Convex data
   } : null, [clerkUser])
 
   // Function to refetch user data after username update
@@ -177,22 +166,6 @@ console.log('🔍 [useAuthStatus] Loading State Analysis:', {
       console.error('Error in getOrCreateUser mutation:', error)
       throw error
     }
-// DEBUG: Log state transitions
-console.log('🔄 [useAuthStatus] State Transition Analysis:', {
-  previousAuthState: authState,
-  isSignedIn,
-  isConvexAuthenticated,
-  hasInitialized: hasInitializedRef.current,
-  isProcessing: isProcessingRef.current,
-  shouldTransition: {
-    toAuthenticated: isSignedIn && isConvexAuthenticated && hasInitializedRef.current,
-    toNeedsUsername: isSignedIn && !isConvexAuthenticated && hasInitializedRef.current,
-    toError: userCreationError !== null,
-    toRetrying: retryCount > 0 && retryCount < MAX_RETRY_ATTEMPTS,
-    stayInitializing: !hasInitializedRef.current
-  },
-  timestamp: new Date().toISOString()
-})
   }, [getOrCreateUserMutation])
 
   // State machine transition function with safeguards
@@ -227,12 +200,6 @@ console.log('🔄 [useAuthStatus] State Transition Analysis:', {
     try {
       // Attempt to get or create the user in Convex
       const result = await getOrCreateUser()
-
-      // Handle the new return structure with needsUsernameSelection flag
-      if (result.needsUsernameSelection) {
-        transitionToState('needs_username')
-        return // Exit early - user needs to select username
-      }
 
       // Success - user is fully authenticated
       transitionToState('authenticated')
@@ -427,7 +394,7 @@ console.log('🔄 [useAuthStatus] State Transition Analysis:', {
         variant: "destructive",
       })
       setIsUsernameSelectionOpen(true) // Re-open modal on error
-      transitionToState('needs_username')
+      transitionToState('authenticated') // Stay authenticated even if username update fails
     }
   }, [updateUsernameMutation, refetchUser, toast, transitionToState])
 
@@ -447,7 +414,6 @@ console.log('🔄 [useAuthStatus] State Transition Analysis:', {
     retryCount,
 
     // Username selection state
-    needsUsernameSelection,
     isUsernameSelectionOpen,
     showUsernamePicker,
     hideUsernamePicker,
