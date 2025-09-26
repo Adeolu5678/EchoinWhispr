@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSendWhisper } from '../hooks/useWhispers'
 import { WHISPER_LIMITS } from '../types'
 import { RecipientSelector } from './RecipientSelector'
-import type { Doc } from '../../../../Convex/convex/_generated/dataModel.d.ts'
+import type { Doc } from '../../../../../Convex/convex/_generated/dataModel'
 import { Users, X, Send } from 'lucide-react'
 
 interface WhisperComposerProps {
