@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState, useMemo } from 'react'
 import { useAuthStatus } from '../hooks/useAuthStatus'
 import { UsernamePickerModal } from './UsernamePickerModal'
 
@@ -11,7 +11,6 @@ import { UsernamePickerModal } from './UsernamePickerModal'
  */
 export function UsernameSelectionHandler(): JSX.Element | null {
   const {
-    needsUsernameSelection,
     isUsernameSelectionOpen,
     showUsernamePicker,
     hideUsernamePicker,
@@ -24,11 +23,19 @@ export function UsernameSelectionHandler(): JSX.Element | null {
   const hasTriggeredModal = useRef<boolean>(false)
   const hasInitialized = useRef<boolean>(false)
 
+  // Check if user is new by comparing creation time with current time
+  // If user was created within the last 5 minutes, consider them new
+  const isUserNew = useMemo(() => {
+    if (!user?.createdAt) return false
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000)
+    return user.createdAt > fiveMinutesAgo
+  }, [user?.createdAt])
+
   // Only show the modal when:
-  // 1. User needs username selection
+  // 1. User is new (created within last 5 minutes)
   // 2. User is authenticated but doesn't have a username
   // 3. Modal is explicitly opened
-  const shouldShowModal = needsUsernameSelection && isUsernameSelectionOpen
+  const shouldShowModal = isUserNew && isUsernameSelectionOpen
 
   // Reset the trigger flag when modal state changes
   useEffect(() => {
@@ -37,15 +44,15 @@ export function UsernameSelectionHandler(): JSX.Element | null {
     }
   }, [isUsernameSelectionOpen])
 
-  // If user needs username selection but modal is not open, show it
+  // If user is new but modal is not open, show it
   // Use useEffect with proper guards to prevent infinite re-renders
   useEffect(() => {
-    // Only trigger if user needs username selection and modal is not already open
-    if (needsUsernameSelection && !isUsernameSelectionOpen && !hasTriggeredModal.current) {
+    // Only trigger if user is new and modal is not already open
+    if (isUserNew && !isUsernameSelectionOpen && !hasTriggeredModal.current) {
       hasTriggeredModal.current = true
       showUsernamePicker()
     }
-  }, [needsUsernameSelection, isUsernameSelectionOpen, showUsernamePicker])
+  }, [isUserNew, isUsernameSelectionOpen, showUsernamePicker])
 
   // If user is already authenticated and has a username, don't render anything
   if (isAuthenticated && user?.username) {
