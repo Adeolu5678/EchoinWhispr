@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native';
 
 export default function ComposeScreen() {
   return (
@@ -6,7 +6,7 @@ export default function ComposeScreen() {
       <Text style={styles.title}>Compose Whisper</Text>
       <Text style={styles.subtitle}>Compose screen placeholder</Text>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -26,4 +26,4 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 8,
   },
-})
+});

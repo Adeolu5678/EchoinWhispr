@@ -46,6 +46,7 @@ export interface UseAuthStatusReturn {
 
   // User creation status
   isProcessing: boolean
+  isCreatingUser: boolean
   userCreationError: string | null
   retryCount: number
 
@@ -124,7 +125,7 @@ export function useAuthStatus(): UseAuthStatusReturn {
     // Prevent rapid state changes that cause flashing
     // Don't include 'processing' here as it should transition to final states
     return clerkNotReady || convexStillLoading || stillInitializing
-  }, [isClerkLoaded, isConvexLoading, authState])
+  }, [isClerkLoaded, isConvexLoading, authState, isSignedIn])
 
   const isAuthenticated = useMemo(() => {
     // Only consider authenticated if both systems are ready and user is signed in
@@ -199,7 +200,7 @@ export function useAuthStatus(): UseAuthStatusReturn {
 
     try {
       // Attempt to get or create the user in Convex
-      const result = await getOrCreateUser()
+      await getOrCreateUser()
 
       // Success - user is fully authenticated
       transitionToState('authenticated')
@@ -286,7 +287,7 @@ export function useAuthStatus(): UseAuthStatusReturn {
       }
       isProcessingRef.current = false
     }
-  }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, retryCount])
+  }, [isClerkLoaded, isSignedIn, isConvexAuthenticated, retryCount, retryUserCreation])
 
   // Clear error when user successfully authenticates
   useEffect(() => {
@@ -374,7 +375,9 @@ export function useAuthStatus(): UseAuthStatusReturn {
       transitionToState('processing')
 
       // Update the user with the chosen username
-      await updateUsernameMutation({ username: username.trim() })
+      await updateUsernameMutation({
+        username: username.trim()
+      })
 
       // Refresh the user data to get the updated user
       await refetchUser()
@@ -410,6 +413,7 @@ export function useAuthStatus(): UseAuthStatusReturn {
 
     // User creation status
     isProcessing: authState === 'processing',
+    isCreatingUser: authState === 'processing',
     userCreationError,
     retryCount,
 

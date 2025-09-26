@@ -7,6 +7,7 @@ export const FEATURE_FLAGS = {
   WHISPER_REPLIES: false,
   PUSH_NOTIFICATIONS: false,
   OFFLINE_MODE: false,
-} as const
+  CONVERSATION_EVOLUTION: false,
+} as const;
 
-export type FeatureFlag = keyof typeof FEATURE_FLAGS
+export type FeatureFlag = keyof typeof FEATURE_FLAGS;

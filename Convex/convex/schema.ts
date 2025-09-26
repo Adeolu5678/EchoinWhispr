@@ -11,6 +11,7 @@ export default defineSchema({
     lastName: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
+    needsUsernameSelection: v.optional(v.boolean()),
   })
     .index("by_clerk_id", ["clerkId"])
     .index("by_username", ["username"])
@@ -24,11 +25,24 @@ export default defineSchema({
     isRead: v.boolean(),
     createdAt: v.number(),
     readAt: v.optional(v.number()),
+    conversationId: v.optional(v.id("conversations")),
   })
     .index("by_sender", ["senderId"])
     .index("by_recipient", ["recipientId"])
     .index("by_sender_recipient", ["senderId", "recipientId"])
     .index("by_created_at", ["createdAt"]),
+
+  // Conversations table - deferred feature for conversation evolution
+  conversations: defineTable({
+    participantIds: v.array(v.id("users")),
+    initialWhisperId: v.id("whispers"),
+    status: v.union(v.literal("initiated"), v.literal("active"), v.literal("closed")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_participants", ["participantIds"])
+    .index("by_initial_whisper", ["initialWhisperId"])
+    .index("by_status", ["status"]),
 
   // User profiles table - additional user information
   profiles: defineTable({

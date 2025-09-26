@@ -79,7 +79,6 @@ export default function HomePage() {
  */
 function WhisperListContent() {
   const {
-    whispers,
     isLoadingWhispers,
     whispersError,
     refetchWhispers
