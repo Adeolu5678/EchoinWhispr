@@ -40,14 +40,8 @@ export function UsernameSelectionHandler(): JSX.Element | null {
   // If user needs username selection but modal is not open, show it
   // Use useEffect with proper guards to prevent infinite re-renders
   useEffect(() => {
-    // Prevent multiple initializations
-    if (hasInitialized.current) {
-      return
-    }
-
     // Only trigger if user needs username selection and modal is not already open
     if (needsUsernameSelection && !isUsernameSelectionOpen && !hasTriggeredModal.current) {
-      hasInitialized.current = true
       hasTriggeredModal.current = true
       showUsernamePicker()
     }
