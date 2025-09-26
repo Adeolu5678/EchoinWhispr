@@ -126,7 +126,7 @@ export const getColor = (token: ColorToken, scale?: string) => {
     return colorGroup;
   }
   if (scale && typeof colorGroup === 'object') {
-    return colorGroup[scale as keyof typeof colorGroup] || (colorGroup as any)['500'];
+    return colorGroup[scale as keyof typeof colorGroup] || (colorGroup as Record<string, string>)['500'];
   }
-  return (colorGroup as any)['500'];
-};
+                  return (colorGroup as Record<string, string>)['500'];
+};;

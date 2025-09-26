@@ -13,6 +13,7 @@ export interface Whisper {
   isRead: boolean
   createdAt: number
   readAt?: number
+  conversationId?: string // Future feature: links to conversation if whisper evolved
 }
 
 // Extended whisper with additional computed fields for UI display

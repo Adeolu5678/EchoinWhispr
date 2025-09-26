@@ -4,7 +4,6 @@ import { Component, ErrorInfo, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp, Home, LogOut } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
 
 interface AuthErrorBoundaryProps {
   children: ReactNode
@@ -199,7 +198,7 @@ export class AuthErrorBoundary extends Component<AuthErrorBoundaryProps, AuthErr
   private reportErrorToService = (
     error: Error,
     errorInfo: ErrorInfo,
-    context: any,
+    context: Record<string, unknown>,
     category: string
   ) => {
     const errorReport = {

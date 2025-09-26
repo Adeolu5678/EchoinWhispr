@@ -6,8 +6,8 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    '@typescript-eslint/recommended',
-    '@react-native',
+    'plugin:@typescript-eslint/recommended',
+    '@react-native-community',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -39,4 +39,4 @@ module.exports = {
     '*.config.js',
     '*.config.ts',
   ],
-}
+};

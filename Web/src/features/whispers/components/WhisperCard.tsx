@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { WhisperWithSender } from '../types'
 import { useMarkAsRead } from '../hooks/useWhispers'
 import { formatDistanceToNow } from 'date-fns'
+import { FEATURE_FLAGS } from '@/config/featureFlags'
 import { CheckCircle2, Clock, User } from 'lucide-react'
 
 interface WhisperCardProps {
@@ -85,6 +86,11 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(({
           {/* Header with sender info and timestamp */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
+               <span>
+                 {FEATURE_FLAGS.CONVERSATION_EVOLUTION && whisper.conversationId
+                   ? whisper.senderName || 'Anonymous'
+                   : 'Anonymous'}
+               </span>
               <User className="w-4 h-4" aria-hidden="true" />
               <span>{whisper.senderName || 'Anonymous'}</span>
               {!whisper.isRead && (

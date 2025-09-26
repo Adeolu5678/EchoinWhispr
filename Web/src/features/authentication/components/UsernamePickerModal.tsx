@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useMutation } from 'convex/react'
 import { api } from '@/lib/convex'
@@ -9,7 +9,6 @@ import { useUsernameValidation } from '../hooks/useUsernameValidation'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -59,10 +58,8 @@ export function UsernamePickerModal({ isOpen, onClose, onSuccess }: UsernamePick
     status,
     errorMessage,
     isValid,
-    isAvailable,
     validateUsername,
     clearValidation,
-    debouncedUsername,
     isDebouncing,
   } = useUsernameValidation()
 
@@ -71,7 +68,6 @@ export function UsernamePickerModal({ isOpen, onClose, onSuccess }: UsernamePick
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Convex mutation for updating user profile
-  const updateUserProfile = useMutation(api.users.updateUserProfile)
   const updateUsername = useMutation(api.users.updateUsername)
 
   /**
