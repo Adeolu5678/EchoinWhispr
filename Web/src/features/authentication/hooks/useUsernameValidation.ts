@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useQuery, useMutation } from 'convex/react'
+import { useQuery } from 'convex/react'
 import { api } from '@/lib/convex'
-import { useToast } from '@/hooks/use-toast'
 
 /**
  * Username validation status types
@@ -50,9 +49,6 @@ export function useUsernameValidation(): UseUsernameValidationReturn {
   const [debouncedUsername, setDebouncedUsername] = useState('')
   const [isDebouncing, setIsDebouncing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  // Toast hook for user feedback
-  const { toast } = useToast()
 
   // Convex query for checking username availability
   const checkUsernameAvailability = useQuery(

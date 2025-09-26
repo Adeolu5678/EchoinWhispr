@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Users } from 'lucide-react'
+import { ChevronDown, ChevronUp, Users, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { useFriendsList } from '../hooks/useFriendsList'
+import { Input } from '@/components/ui/input'
+import { useUserSearch } from '@/features/users/hooks/useUserSearch'
 import type { Doc } from '../../../../../Convex/convex/_generated/dataModel'
 
 interface RecipientSelectorProps {
@@ -17,15 +18,20 @@ export const RecipientSelector = ({
   onRecipientSelect,
 }: RecipientSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const { friends, isLoading } = useFriendsList()
+  const { query, results, isLoading, setQuery } = useUserSearch()
 
   const handleToggleDropdown = () => {
     setIsOpen(!isOpen)
   }
 
-  const handleSelectRecipient = (friend: Doc<'users'>) => {
-    onRecipientSelect(friend)
+  const handleSelectRecipient = (user: Doc<'users'>) => {
+    onRecipientSelect(user)
     setIsOpen(false)
+    setQuery('') // Clear search
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value)
   }
 
   return (
@@ -57,37 +63,56 @@ export const RecipientSelector = ({
       {/* Dropdown Popup */}
       {isOpen && (
         <Card className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border-purple-200 shadow-lg">
-          <CardContent className="p-0">
+          <CardContent className="p-4">
+            {/* Search Input */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search users by username..."
+                value={query}
+                onChange={handleSearchChange}
+                className="pl-10"
+                autoFocus
+              />
+            </div>
+
+            {/* Results */}
             {isLoading ? (
-              <div className="p-4 text-center text-purple-600">
+              <div className="text-center text-purple-600 py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto mb-2"></div>
-                Loading friends...
+                Searching users...
               </div>
-            ) : friends.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
+            ) : results.length === 0 && query.trim() ? (
+              <div className="text-center text-gray-500 py-4">
                 <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                No friends found
+                No users found
               </div>
-            ) : (
+            ) : results.length > 0 ? (
               <div className="max-h-48 overflow-y-auto">
-                {friends.map((friend) => (
+                {results.map((user) => (
                   <button
-                    key={friend._id}
-                    onClick={() => handleSelectRecipient(friend)}
-                    className="w-full px-4 py-3 text-left hover:bg-purple-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                    key={user._id}
+                    onClick={() => handleSelectRecipient(user as Doc<'users'>)}
+                    className="w-full px-3 py-2 text-left hover:bg-purple-50 border-b border-gray-100 last:border-b-0 transition-colors rounded"
                   >
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
                         <span className="text-purple-600 font-medium text-sm">
-                          {friend.username.charAt(0).toUpperCase()}
+                          {user.username.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-gray-900">{friend.username}</span>
+                      <span className="text-gray-900">{user.username}</span>
                     </div>
                   </button>
                 ))}
               </div>
-            )}
+            ) : query.trim() === '' ? (
+              <div className="text-center text-gray-500 py-4">
+                <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                Start typing to search users
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       )}

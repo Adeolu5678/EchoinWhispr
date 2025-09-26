@@ -11,7 +11,6 @@ import {
   WhisperWithSender,
   SendWhisperRequest,
   SendWhisperResponse,
-  WhisperError,
 } from '../types'
 import {
   createWhisperError,
@@ -116,7 +115,7 @@ class WhisperService {
       // Mark whisper as read using Convex mutation with retry logic
       await withRetry(async () => {
         return await convex.mutation(api.whispers.markWhisperAsRead, {
-          whisperId: whisperId as any, // Cast to Convex ID type
+          whisperId: whisperId as any, // Convex accepts string IDs
         })
       })
     } catch (error) {

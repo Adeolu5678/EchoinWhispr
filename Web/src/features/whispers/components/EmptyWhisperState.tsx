@@ -71,7 +71,7 @@ export const EmptyWhisperState: React.FC<EmptyWhisperStateProps> = React.memo(({
           {/* Additional encouragement */}
           <div className="pt-4 border-t border-border/50">
             <p className="text-sm text-muted-foreground">
-              💭 Whispers are anonymous messages that can brighten someone's day
+              💭 Whispers are anonymous messages that can brighten someone&apos;s day
             </p>
           </div>
         </div>

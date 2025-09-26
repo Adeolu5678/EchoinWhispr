@@ -2,6 +2,8 @@ import { Suspense } from 'react'
 import { WhisperList } from '@/features/whispers/components/WhisperList'
 import { useWhispers } from '@/features/whispers/hooks/useWhispers'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Loading skeleton component for the inbox page
  */
@@ -96,7 +98,7 @@ export default function InboxPage() {
             <div className="mt-2 text-sm text-body/80">
               <ul className="list-disc list-inside space-y-1">
                 <li>Mark whispers as read to keep your inbox organized</li>
-                <li>All whispers are anonymous - you won't know who sent them</li>
+                <li>All whispers are anonymous - you won&apos;t know who sent them</li>
                 <li>Whispers are automatically sorted by newest first</li>
                 <li>Use the refresh button to check for new messages</li>
               </ul>
@@ -168,7 +170,6 @@ function InboxContent() {
     whispersError,
     refetchWhispers,
     markAsRead,
-    isMarkingAsRead
   } = useWhispers()
 
   // Show loading state
@@ -214,7 +215,7 @@ function InboxContent() {
           Your inbox is empty
         </h3>
         <p className="text-body/60 mb-4">
-          You haven't received any whispers yet. Share your profile to start receiving anonymous messages!
+          You haven&apos;t received any whispers yet. Share your profile to start receiving anonymous messages!
         </p>
         <button
           onClick={() => refetchWhispers()}

@@ -10,15 +10,14 @@ import React from 'react';
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export interface ButtonProps {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
   onPress: () => void;
-  style?: React.CSSProperties | any; // Platform-specific style type
-  textStyle?: React.CSSProperties | any; // Platform-specific style type
+  textStyle?: React.CSSProperties; // Platform-specific style type
   fullWidth?: boolean;
 }
 

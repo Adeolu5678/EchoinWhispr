@@ -192,11 +192,14 @@ export const getOrCreateCurrentUser = mutation({
         .first();
 
       if (existingUser) {
+        console.log("DEBUG: Found existing user:", existingUser._id, "needsUsernameSelection:", existingUser.needsUsernameSelection);
         return existingUser;
       }
 
       // User doesn't exist - create immediately with Clerk-assigned username
       const username = identity.nickname || identity.givenName || `user_${identity.subject.slice(0, 8)}`;
+
+      console.log("DEBUG: Creating new user with needsUsernameSelection: true");
 
       const newUserId = await ctx.db.insert("users", {
         clerkId: identity.subject,
@@ -206,10 +209,12 @@ export const getOrCreateCurrentUser = mutation({
         lastName: identity.familyName,
         createdAt: Date.now(),
         updatedAt: Date.now(),
+        needsUsernameSelection: true,
       });
 
       // Return the newly created user
       const newUser = await ctx.db.get(newUserId);
+      console.log("DEBUG: Created new user:", newUserId, "needsUsernameSelection:", newUser?.needsUsernameSelection);
       return newUser;
     } catch (error) {
       console.error("Error in getOrCreateCurrentUser:", error);
@@ -281,5 +286,27 @@ export const checkUsernameAvailability = query({
       .first();
 
     return !existingUser; // Return true if username is available (no existing user)
+  },
+});
+
+// Get current user's username selection status
+export const getUserNeedsUsernameSelection = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      return null;
+    }
+
+    return user.needsUsernameSelection ?? false;
   },
 });

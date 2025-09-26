@@ -6,7 +6,12 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
 import { ButtonProps } from '../../design-system/components/Button';
 
 export const Button: React.FC<ButtonProps> = ({
@@ -33,17 +38,15 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const getTextStyle = () => {
-    const baseStyle = [
-      styles.textBase,
-      styles[size],
-      styles[`${variant}Text`],
-    ];
+    const baseStyle = [styles.textBase, styles[size], styles[`${variant}Text`]];
 
     return baseStyle;
   };
 
   const getLoadingColor = () => {
-    return variant === 'primary' || variant === 'danger' ? '#ffffff' : '#0ea5e9';
+    return variant === 'primary' || variant === 'danger'
+      ? '#ffffff'
+      : '#0ea5e9';
   };
 
   return (
@@ -60,9 +63,7 @@ export const Button: React.FC<ButtonProps> = ({
           style={styles.loadingIndicator}
         />
       )}
-      <Text style={[getTextStyle(), textStyle]}>
-        {children}
-      </Text>
+      <Text style={[getTextStyle(), textStyle]}>{children}</Text>
     </TouchableOpacity>
   );
 };

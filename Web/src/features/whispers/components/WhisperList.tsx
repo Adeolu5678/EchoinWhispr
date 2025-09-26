@@ -1,13 +1,12 @@
 'use client'
 
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { WhisperCard } from './WhisperCard'
 import { EmptyWhisperState } from './EmptyWhisperState'
-import { WhisperWithSender } from '../types'
 import { useReceivedWhispers } from '../hooks/useWhispers'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { RefreshCw, AlertCircle, Loader2 } from 'lucide-react'
+import { RefreshCw, AlertCircle } from 'lucide-react'
 
 interface WhisperListProps {
   className?: string
@@ -38,15 +37,14 @@ export const WhisperList: React.FC<WhisperListProps> = React.memo(({
   emptyStateActionLabel,
   onEmptyStateAction,
 }) => {
-  const [refreshKey, setRefreshKey] = useState(0)
   const { whispers, isLoading, error, refetch } = useReceivedWhispers()
 
   /**
    * Handles manual refresh of the whisper list
    */
   const handleRefresh = useCallback(async () => {
-    setRefreshKey(prev => prev + 1)
-  }, [])
+    refetch()
+  }, [refetch])
 
   /**
    * Handles when a whisper is marked as read

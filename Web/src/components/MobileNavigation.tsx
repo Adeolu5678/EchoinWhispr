@@ -3,7 +3,6 @@
 import { useCallback } from 'react'
 import Link from 'next/link'
 import { LucideIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 /**
