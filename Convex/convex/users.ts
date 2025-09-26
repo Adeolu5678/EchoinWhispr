@@ -170,29 +170,18 @@ export const updateUserProfile = mutation({
   },
 });
 
-// Get current user or determine if username selection is needed
+// Get current user or create if doesn't exist
 export const getOrCreateCurrentUser = mutation({
   args: {},
-  handler: async (ctx): Promise<{ user: Doc<"users"> | null; needsUsernameSelection: boolean }> => {
+  handler: async (ctx): Promise<Doc<"users"> | null> => {
     try {
       const identity = await ctx.auth.getUserIdentity();
       if (!identity) {
-        console.log("🔍 [DEBUG] getOrCreateCurrentUser: No identity found");
         throw new Error("Not authenticated");
       }
 
-      console.log("🔍 [DEBUG] getOrCreateCurrentUser: Identity found:", {
-        subject: identity.subject,
-        email: identity.email,
-        name: identity.name,
-        nickname: identity.nickname,
-        givenName: identity.givenName,
-        familyName: identity.familyName,
-      });
-
       // Validate required Clerk identity fields
       if (!identity.subject || !identity.email) {
-        console.log("🔍 [DEBUG] getOrCreateCurrentUser: Invalid identity - missing required fields");
         throw new Error("Invalid identity: missing required fields");
       }
 
@@ -203,15 +192,27 @@ export const getOrCreateCurrentUser = mutation({
         .first();
 
       if (existingUser) {
-        console.log("🔍 [DEBUG] getOrCreateCurrentUser: User already exists:", existingUser.username);
-        return { user: existingUser, needsUsernameSelection: false };
+        return existingUser;
       }
 
-      // User doesn't exist - they need to select a username
-      console.log("🔍 [DEBUG] getOrCreateCurrentUser: New user needs username selection");
-      return { user: null, needsUsernameSelection: true };
+      // User doesn't exist - create immediately with Clerk-assigned username
+      const username = identity.nickname || identity.givenName || `user_${identity.subject.slice(0, 8)}`;
+
+      const newUserId = await ctx.db.insert("users", {
+        clerkId: identity.subject,
+        username: username,
+        email: identity.email,
+        firstName: identity.givenName,
+        lastName: identity.familyName,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+
+      // Return the newly created user
+      const newUser = await ctx.db.get(newUserId);
+      return newUser;
     } catch (error) {
-      console.error("🔍 [DEBUG] getOrCreateCurrentUser: Error:", error);
+      console.error("Error in getOrCreateCurrentUser:", error);
       throw error;
     }
   },
