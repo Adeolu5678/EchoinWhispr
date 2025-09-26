@@ -170,10 +170,10 @@ export const updateUserProfile = mutation({
   },
 });
 
-// Get or create current user (client-side fallback)
+// Get current user or determine if username selection is needed
 export const getOrCreateCurrentUser = mutation({
   args: {},
-  handler: async (ctx): Promise<Doc<"users"> | null> => {
+  handler: async (ctx): Promise<{ user: Doc<"users"> | null; needsUsernameSelection: boolean }> => {
     try {
       const identity = await ctx.auth.getUserIdentity();
       if (!identity) {
@@ -204,47 +204,12 @@ export const getOrCreateCurrentUser = mutation({
 
       if (existingUser) {
         console.log("🔍 [DEBUG] getOrCreateCurrentUser: User already exists:", existingUser.username);
-        return existingUser;
+        return { user: existingUser, needsUsernameSelection: false };
       }
 
-      console.log("🔍 [DEBUG] getOrCreateCurrentUser: Creating new user");
-
-      // Generate unique username with better fallback
-      let username = identity.nickname || identity.name || identity.email?.split("@")[0];
-      if (!username) {
-        username = `user_${identity.subject.slice(-8)}`;
-      }
-
-      console.log("🔍 [DEBUG] getOrCreateCurrentUser: Generated username:", username);
-
-      // Ensure username uniqueness
-      const existingUsername = await ctx.db
-        .query("users")
-        .withIndex("by_username", (q) => q.eq("username", username))
-        .first();
-
-      if (existingUsername) {
-        const originalUsername = username;
-        username = `${username}_${Date.now()}`;
-        console.log("🔍 [DEBUG] getOrCreateCurrentUser: Username conflict detected. Changed from", originalUsername, "to", username);
-      }
-
-      // Create new user from Clerk identity
-      const now = Date.now();
-      const userId = await ctx.db.insert("users", {
-        clerkId: identity.subject,
-        username,
-        email: identity.email,
-        firstName: identity.givenName || undefined,
-        lastName: identity.familyName || undefined,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      console.log("🔍 [DEBUG] getOrCreateCurrentUser: User created with ID:", userId);
-
-      // Return the newly created user
-      return await ctx.db.get(userId);
+      // User doesn't exist - they need to select a username
+      console.log("🔍 [DEBUG] getOrCreateCurrentUser: New user needs username selection");
+      return { user: null, needsUsernameSelection: true };
     } catch (error) {
       console.error("🔍 [DEBUG] getOrCreateCurrentUser: Error:", error);
       throw error;

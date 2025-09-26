@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useFriendsList } from '../hooks/useFriendsList'
-import type { Doc } from '../../../Convex/convex/_generated/dataModel.d.ts'
+import type { Doc } from '../../../../../Convex/convex/_generated/dataModel'
 
 interface RecipientSelectorProps {
   selectedRecipient: Doc<'users'> | null
