@@ -13,7 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as friends from "../friends.js";
+import type * as conversations from "../conversations.js";
 import type * as users from "../users.js";
 import type * as webhooks from "../webhooks.js";
 import type * as whispers from "../whispers.js";
@@ -27,7 +27,7 @@ import type * as whispers from "../whispers.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  friends: typeof friends;
+  conversations: typeof conversations;
   users: typeof users;
   webhooks: typeof webhooks;
   whispers: typeof whispers;

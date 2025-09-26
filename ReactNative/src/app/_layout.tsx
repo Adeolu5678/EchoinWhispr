@@ -1,5 +1,5 @@
-import { Stack } from 'expo-router'
-import { Providers } from '@/components/Providers'
+import { Stack } from 'expo-router';
+import { Providers } from '@/components/Providers';
 
 export default function RootLayout() {
   return (
@@ -9,5 +9,5 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack>
     </Providers>
-  )
+  );
 }

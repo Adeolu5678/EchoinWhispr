@@ -1,26 +1,30 @@
-'use client'
+'use client';
 
-import { ClerkProvider, useAuth } from '@clerk/clerk-expo'
-import { ConvexProviderWithClerk } from 'convex/react-clerk'
-import { tokenCache } from '@clerk/clerk-expo/token-cache'
-import { ReactNode, useMemo } from 'react'
-import convex from '../lib/convex'
+import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
+import { ConvexProviderWithClerk } from 'convex/react-clerk';
+import { tokenCache } from '@clerk/clerk-expo/token-cache';
+import { ReactNode, useMemo } from 'react';
+import convex from '../lib/convex';
 
 /**
  * Validates that the Clerk publishable key environment variable is set
  */
 function validateClerkPublishableKey(): string {
-  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
+  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   if (!publishableKey) {
-    throw new Error('EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable is not set')
+    throw new Error(
+      'EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY environment variable is not set',
+    );
   }
 
   if (!publishableKey.startsWith('pk_')) {
-    throw new Error('EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY must be a valid Clerk publishable key starting with "pk_"')
+    throw new Error(
+      'EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY must be a valid Clerk publishable key starting with "pk_"'
+    );
   }
 
-  return publishableKey
+  return publishableKey;
 }
 
 /**
@@ -32,23 +36,17 @@ function validateClerkPublishableKey(): string {
  * @param children - The child components to render within the providers
  */
 interface ProvidersProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function Providers({ children }: ProvidersProps) {
-  const publishableKey = useMemo(() => validateClerkPublishableKey(), [])
+  const publishableKey = useMemo(() => validateClerkPublishableKey(), []);
 
   return (
-    <ClerkProvider
-      publishableKey={publishableKey}
-      tokenCache={tokenCache}
-    >
-      <ConvexProviderWithClerk
-        client={convex}
-        useAuth={useAuth}
-      >
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         {children}
       </ConvexProviderWithClerk>
     </ClerkProvider>
-  )
+  );
 }

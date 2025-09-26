@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useCallback, useState, useMemo } from 'react'
+import { useEffect, useRef } from 'react'
 import { useAuthStatus } from '../hooks/useAuthStatus'
 import { UsernamePickerModal } from './UsernamePickerModal'
+import { useQuery } from 'convex/react'
+import { api } from '@/lib/convex'
 
 /**
  * Component that handles the integration of UsernamePickerModal into the authentication flow
@@ -19,23 +21,19 @@ export function UsernameSelectionHandler(): JSX.Element | null {
     user,
   } = useAuthStatus()
 
+  // Query to check if user needs username selection
+  const needsUsernameSelection = useQuery(api.users.getUserNeedsUsernameSelection)
+
   // Use refs to track initialization and prevent unnecessary re-renders
   const hasTriggeredModal = useRef<boolean>(false)
-  const hasInitialized = useRef<boolean>(false)
-
-  // Check if user is new by comparing creation time with current time
-  // If user was created within the last 5 minutes, consider them new
-  const isUserNew = useMemo(() => {
-    if (!user?.createdAt) return false
-    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000)
-    return user.createdAt > fiveMinutesAgo
-  }, [user?.createdAt])
 
   // Only show the modal when:
-  // 1. User is new (created within last 5 minutes)
+  // 1. User needs username selection (database flag is true)
   // 2. User is authenticated but doesn't have a username
-  // 3. Modal is explicitly opened
-  const shouldShowModal = isUserNew && isUsernameSelectionOpen
+  // Note: Modal visibility is controlled by isUsernameSelectionOpen state
+  const shouldShowModal = needsUsernameSelection === true
+
+  console.log("DEBUG: UsernameSelectionHandler - needsUsernameSelection:", needsUsernameSelection, "isUsernameSelectionOpen:", isUsernameSelectionOpen, "shouldShowModal:", shouldShowModal, "hasTriggeredModal:", hasTriggeredModal.current)
 
   // Reset the trigger flag when modal state changes
   useEffect(() => {
@@ -44,15 +42,18 @@ export function UsernameSelectionHandler(): JSX.Element | null {
     }
   }, [isUsernameSelectionOpen])
 
-  // If user is new but modal is not open, show it
+  // If user needs username selection but modal is not open, show it
   // Use useEffect with proper guards to prevent infinite re-renders
   useEffect(() => {
-    // Only trigger if user is new and modal is not already open
-    if (isUserNew && !isUsernameSelectionOpen && !hasTriggeredModal.current) {
+    console.log("DEBUG: UsernameSelectionHandler useEffect - needsUsernameSelection:", needsUsernameSelection, "isUsernameSelectionOpen:", isUsernameSelectionOpen, "hasTriggeredModal:", hasTriggeredModal.current)
+
+    // Only trigger if user needs username selection and modal is not already open
+    if (needsUsernameSelection === true && !isUsernameSelectionOpen && !hasTriggeredModal.current) {
+      console.log("DEBUG: UsernameSelectionHandler - Triggering modal display")
       hasTriggeredModal.current = true
       showUsernamePicker()
     }
-  }, [isUserNew, isUsernameSelectionOpen, showUsernamePicker])
+  }, [needsUsernameSelection, isUsernameSelectionOpen, showUsernamePicker])
 
   // If user is already authenticated and has a username, don't render anything
   if (isAuthenticated && user?.username) {
@@ -71,6 +72,7 @@ export function UsernameSelectionHandler(): JSX.Element | null {
         isOpen={isUsernameSelectionOpen}
         onClose={hideUsernamePicker}
         onSuccess={() => {
+          console.log("DEBUG: UsernameSelectionHandler - Username selection successful")
           // Refresh user data after successful username selection
           // The modal handles the username update internally
           setTimeout(() => {
