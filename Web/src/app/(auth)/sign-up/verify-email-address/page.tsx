@@ -45,7 +45,7 @@ function VerifyEmailAddressContent(): JSX.Element {
         </CardHeader>
         <CardContent className="text-center">
           <div className="flex flex-col items-center space-y-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             <p className="text-sm text-muted-foreground">
               This may take a few moments
             </p>

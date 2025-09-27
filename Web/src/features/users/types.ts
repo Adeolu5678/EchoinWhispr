@@ -1,4 +1,4 @@
-import type { Id } from 'convex/values';
+import type { GenericId } from 'convex/values';
 
 /**
  * User search result interface
@@ -6,7 +6,7 @@ import type { Id } from 'convex/values';
  */
 export interface UserSearchResult {
   /** Unique user identifier */
-  _id: Id<"users">;
+  _id: GenericId<"users">;
   /** Clerk authentication identifier */
   clerkId: string;
   /** User's display username */

@@ -10,6 +10,7 @@ import { RecipientSelector } from './RecipientSelector';
 import { UserSearchResult } from '@/features/users/types';
 import { Users, X, Send } from 'lucide-react';
 
+
 interface WhisperComposerProps {
   onWhisperSent?: () => void;
   placeholder?: string;
@@ -66,7 +67,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
    * Handles user selection from search results
    * For single recipient selection, replaces current selection
    */
-  const handleUserToggle = useCallback((user: Doc<'users'>) => {
+  const handleUserToggle = useCallback((user: UserSearchResult) => {
     setSelectedUser(user);
   }, []);
 

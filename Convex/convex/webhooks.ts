@@ -1,13 +1,14 @@
-import { action, ActionCtx } from "./_generated/server";
-import { api } from "./_generated/api";
-import { Webhook } from "svix";
-import { WebhookEvent, UserJSON } from "@clerk/clerk-sdk-node";
+import { action, ActionCtx } from './_generated/server';
+import { api } from './_generated/api';
+import { v } from 'convex/values';
+import { Webhook } from 'svix';
+import { WebhookEvent, UserJSON } from '@clerk/clerk-sdk-node';
 
 // Webhook handler for Clerk events
 export const clerkWebhook = action({
   args: {
-    body: '''v.string()''',
-    headers: '''v.any()''',
+    body: v.string(),
+    headers: v.any(),
   },
   handler: async (ctx, args) => {
     const { body, headers } = args;
@@ -15,8 +16,8 @@ export const clerkWebhook = action({
     // Verify webhook signature for security
     const event = await verifyWebhookSignature(body, headers);
     if (!event) {
-      console.error("Invalid webhook signature");
-      throw new Error("Unauthorized webhook request");
+      console.error('Invalid webhook signature');
+      throw new Error('Unauthorized webhook request');
     }
 
     try {
@@ -25,23 +26,30 @@ export const clerkWebhook = action({
       console.log(`Received Clerk webhook: ${type}`);
 
       switch (type) {
-        case "user.created":
+        case 'user.created':
           await handleUserCreated(ctx, data);
           break;
-        case "user.updated":
+        case 'user.updated':
           await handleUserUpdated(ctx, data);
           break;
-        case "user.deleted":
-          await handleUserDeleted(ctx, data);
-          break;
+    case "user.deleted":
+      {
+        const data: UserDeletedEventData = {
+          id: event.data.id,
+          deleted: event.data.deleted,
+          object: "user",
+        };
+        await handleUserDeleted(ctx, data);
+      }
+      break;
         default:
           console.log(`Unhandled webhook event type: ${type}`);
       }
 
       return { success: true, eventType: type };
     } catch (error) {
-      console.error("Error processing webhook:", error);
-      throw new Error("Failed to process webhook");
+      console.error('Error processing webhook:', error);
+      throw new Error('Failed to process webhook');
     }
   },
 });
@@ -53,13 +61,13 @@ async function verifyWebhookSignature(
 ): Promise<WebhookEvent | null> {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error("CLERK_WEBHOOK_SECRET not configured");
+    console.error('CLERK_WEBHOOK_SECRET not configured');
     return null;
   }
 
-  const svix_id = headers["svix-id"] as string;
-  const svix_timestamp = headers["svix-timestamp"] as string;
-  const svix_signature = headers["svix-signature"] as string;
+  const svix_id = headers['svix-id'] as string;
+  const svix_timestamp = headers['svix-timestamp'] as string;
+  const svix_signature = headers['svix-signature'] as string;
 
   if (!svix_id || !svix_timestamp || !svix_signature) {
     return null;
@@ -69,13 +77,13 @@ async function verifyWebhookSignature(
 
   try {
     const event = wh.verify(body, {
-      "svix-id": svix_id,
-      "svix-timestamp": svix_timestamp,
-      "svix-signature": svix_signature,
+      'svix-id': svix_id,
+      'svix-timestamp': svix_timestamp,
+      'svix-signature': svix_signature,
     }) as WebhookEvent;
     return event;
   } catch (err) {
-    console.error("Error verifying webhook:", err);
+    console.error('Error verifying webhook:', err);
     return null;
   }
 }
@@ -83,12 +91,18 @@ async function verifyWebhookSignature(
 // Handle user creation event
 async function handleUserCreated(ctx: ActionCtx, userData: UserJSON) {
   try {
-    const { id: clerkId, email_addresses, first_name, last_name, username } = userData;
+    const {
+      id: clerkId,
+      email_addresses,
+      first_name,
+      last_name,
+      username,
+    } = userData;
 
     // Extract primary email
     const primaryEmail = email_addresses?.[0]?.email_address;
     if (!primaryEmail) {
-      console.error("No email found for user:", clerkId);
+      console.error('No email found for user:', clerkId);
       return;
     }
 
@@ -105,7 +119,7 @@ async function handleUserCreated(ctx: ActionCtx, userData: UserJSON) {
 
     console.log(`User created: ${clerkId} (${userUsername})`);
   } catch (error) {
-    console.error("Error handling user creation:", error);
+    console.error('Error handling user creation:', error);
     throw error;
   }
 }
@@ -113,12 +127,18 @@ async function handleUserCreated(ctx: ActionCtx, userData: UserJSON) {
 // Handle user update event
 async function handleUserUpdated(ctx: ActionCtx, userData: UserJSON) {
   try {
-    const { id: clerkId, email_addresses, first_name, last_name, username } = userData;
+    const {
+      id: clerkId,
+      email_addresses,
+      first_name,
+      last_name,
+      username,
+    } = userData;
 
     // Extract primary email
     const primaryEmail = email_addresses?.[0]?.email_address;
     if (!primaryEmail) {
-      console.error("No email found for user:", clerkId);
+      console.error('No email found for user:', clerkId);
       return;
     }
 
@@ -135,21 +155,27 @@ async function handleUserUpdated(ctx: ActionCtx, userData: UserJSON) {
 
     console.log(`User updated: ${clerkId} (${userUsername})`);
   } catch (error) {
-    console.error("Error handling user update:", error);
+    console.error('Error handling user update:', error);
     throw error;
   }
 }
 
 interface UserDeletedEventData {
-  id: string;
-  object: "user";
+  id?: string;
+  object: 'user';
   deleted: boolean;
 }
 
 // Handle user deletion event
-async function handleUserDeleted(ctx: ActionCtx, userData: UserDeletedEventData) {
+async function handleUserDeleted(
+  ctx: ActionCtx,
+  userData: UserDeletedEventData
+) {
   try {
     const { id: clerkId } = userData;
+    if (clerkId === undefined) {
+      throw new Error("Clerk ID is undefined in webhook event data.");
+    }
 
     // Find user by clerkId
     const user = await ctx.runQuery(api.users.getUserByClerkId, { clerkId });
@@ -165,14 +191,14 @@ async function handleUserDeleted(ctx: ActionCtx, userData: UserDeletedEventData)
     // Optional: You could implement user deletion logic here
     // await ctx.runMutation(api.users.deleteUser, { userId: user._id });
   } catch (error) {
-    console.error("Error handling user deletion:", error);
+    console.error('Error handling user deletion:', error);
     throw error;
   }
 }
 
 // Generate username from email address
 function generateUsernameFromEmail(email: string): string {
-  const [localPart] = email.split("@");
+  const [localPart] = email.split('@');
   // Remove special characters and ensure uniqueness
-  return localPart.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  return localPart.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 }

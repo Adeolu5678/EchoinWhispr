@@ -28,7 +28,7 @@ interface MainLayoutProps {
  */
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="min-h-screen bg-primary">
+    <div className="min-h-screen">
       {/* Main Navigation */}
       <Navigation />
 

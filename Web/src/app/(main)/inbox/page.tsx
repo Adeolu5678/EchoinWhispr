@@ -1,3 +1,5 @@
+'use client';
+
 import { Suspense } from 'react';
 import { WhisperList } from '@/features/whispers/components/WhisperList';
 import { useWhispers } from '@/features/whispers/hooks/useWhispers';
@@ -13,20 +15,20 @@ function InboxPageSkeleton() {
       {/* Page header skeleton */}
       <div className="text-center">
         <div className="animate-pulse">
-          <div className="h-8 bg-deep rounded w-1/3 mx-auto mb-4"></div>
-          <div className="h-4 bg-deep rounded w-2/3 mx-auto"></div>
+          <div className="h-8 rounded w-1/3 mx-auto mb-4"></div>
+          <div className="h-4 rounded w-2/3 mx-auto"></div>
         </div>
       </div>
 
       {/* Inbox content skeleton */}
-      <div className="bg-primary rounded-lg shadow-sm border border-deep p-6">
+      <div className="rounded-lg shadow-sm border p-6">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-deep rounded w-1/3"></div>
+          <div className="h-4 rounded w-1/3"></div>
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="border border-deep rounded-lg p-4">
-              <div className="h-4 bg-deep rounded w-full mb-2"></div>
-              <div className="h-4 bg-deep rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-deep rounded w-1/4"></div>
+            <div key={i} className="border rounded-lg p-4">
+              <div className="h-4 rounded w-full mb-2"></div>
+              <div className="h-4 rounded w-3/4 mb-2"></div>
+              <div className="h-3 rounded w-1/4"></div>
             </div>
           ))}
         </div>
@@ -58,16 +60,16 @@ export default function InboxPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Page Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-body mb-2">Your Inbox</h1>
-        <p className="text-body/80">
+        <h1 className="text-3xl font-bold mb-2">Your Inbox</h1>
+        <p className="text-gray-600">
           View and manage all the anonymous whispers sent to you.
         </p>
       </div>
 
       {/* Inbox Content */}
-      <div className="bg-primary rounded-lg shadow-sm border border-deep p-6">
+      <div className="rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-body">Received Whispers</h2>
+          <h2 className="text-lg font-semibold">Received Whispers</h2>
           <div className="flex items-center gap-4">
             <UnreadCountBadge />
             <RefreshButton />
@@ -80,11 +82,11 @@ export default function InboxPage() {
       </div>
 
       {/* Inbox Tips */}
-      <div className="bg-deep rounded-lg border border-deep p-4">
+      <div className="rounded-lg border p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg
-              className="h-5 w-5 text-body/60"
+              className="h-5 w-5 text-gray-500"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -96,10 +98,10 @@ export default function InboxPage() {
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-body">
+            <h3 className="text-sm font-medium">
               Inbox Management Tips
             </h3>
-            <div className="mt-2 text-sm text-body/80">
+            <div className="mt-2 text-sm text-gray-500">
               <ul className="list-disc list-inside space-y-1">
                 <li>Mark whispers as read to keep your inbox organized</li>
                 <li>
@@ -124,14 +126,14 @@ function UnreadCountBadge() {
 
   if (unreadCount === 0) {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-deep text-body">
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
         No unread
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-deep text-body">
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
       {unreadCount} unread
     </span>
   );
@@ -147,7 +149,7 @@ function RefreshButton() {
     <button
       onClick={() => refetchWhispers()}
       disabled={isLoadingWhispers}
-      className="inline-flex items-center px-3 py-1.5 border border-deep shadow-sm text-sm font-medium rounded-md text-body bg-primary hover:bg-primary/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
       aria-label="Refresh inbox"
     >
       {isLoadingWhispers ? (
@@ -227,16 +229,16 @@ function InboxContent() {
             />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-body mb-2">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
           Unable to load inbox
         </h3>
-        <p className="text-body/60 mb-4">
+        <p className="text-gray-600 mb-4">
           {whispersError.message ||
             'An unexpected error occurred while loading your inbox.'}
         </p>
         <button
           onClick={() => refetchWhispers()}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-body bg-deep hover:bg-deep/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           Try Again
         </button>
@@ -248,7 +250,7 @@ function InboxContent() {
   if (!whispers || whispers.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-body/40 mb-4">
+        <div className="text-gray-400 mb-4">
           <svg
             className="mx-auto h-12 w-12"
             fill="none"
@@ -263,16 +265,16 @@ function InboxContent() {
             />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-body mb-2">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
           Your inbox is empty
         </h3>
-        <p className="text-body/60 mb-4">
+        <p className="text-gray-600 mb-4">
           You haven&apos;t received any whispers yet. Share your profile to
           start receiving anonymous messages!
         </p>
         <button
           onClick={() => refetchWhispers()}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-body bg-deep hover:bg-deep/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           Check Again
         </button>

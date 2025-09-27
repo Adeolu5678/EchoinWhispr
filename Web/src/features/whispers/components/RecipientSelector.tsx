@@ -24,7 +24,7 @@ export const RecipientSelector = ({
     setIsOpen(!isOpen);
   };
 
-  const handleSelectRecipient = (user: Doc<'users'>) => {
+  const handleSelectRecipient = (user: UserSearchResult) => {
     onRecipientSelect(user);
     setIsOpen(false);
     setQuery(''); // Clear search
@@ -97,7 +97,7 @@ export const RecipientSelector = ({
                 {results.map(user => (
                   <button
                     key={user._id}
-                    onClick={() => handleSelectRecipient(user as Doc<'users'>)}
+                    onClick={() => handleSelectRecipient(user)}
                     className="w-full px-3 py-2 text-left hover:bg-purple-50 border-b border-gray-100 last:border-b-0 transition-colors rounded"
                   >
                     <div className="flex items-center">

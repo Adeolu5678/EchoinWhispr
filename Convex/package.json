@@ -10,6 +10,7 @@
     "clean": "rm -rf .convex"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^5.1.6",
     "convex": "^1.9.0",
     "svix": "^1.76.1"
   },
