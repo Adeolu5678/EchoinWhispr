@@ -1,10 +1,12 @@
+import type { Id } from 'convex/values';
+
 /**
  * User search result interface
  * Represents a user that can be returned from search operations
  */
 export interface UserSearchResult {
   /** Unique user identifier */
-  _id: string;
+  _id: Id<"users">;
   /** Clerk authentication identifier */
   clerkId: string;
   /** User's display username */
