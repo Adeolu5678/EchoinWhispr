@@ -6,7 +6,7 @@ import { EchoRequest } from '../types';
  * This is a foundation placeholder for the CONVERSATION_EVOLUTION feature.
  * Currently returns empty array since the feature is disabled for MVP.
  */
-export const useGetEchoRequests = () => {
+export const useGetEchoRequests = (): { echoRequests: EchoRequest[], isLoading: boolean } => {
   // TODO: Uncomment when CONVERSATION_EVOLUTION feature is enabled
   // const echoRequests = useQuery(api.conversations.getEchoRequests);
 

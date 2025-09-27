@@ -20,7 +20,7 @@ import {
   ERROR_CODES,
 } from '../../../lib/errors';
 import { currentUser } from '@clerk/nextjs/server';
-import type { Id } from 'convex/values';
+import type { Id } from '../../../../../Convex/convex/_generated/dataModel';
 
 /**
  * Service class for whisper operations
