@@ -1,32 +1,38 @@
-'use client'
+'use client';
 
-import { useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useSignUp } from '@clerk/nextjs'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useSignUp } from '@clerk/nextjs';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
 function VerifyEmailAddressContent(): JSX.Element {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  useSignUp()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  useSignUp();
 
   useEffect(() => {
     // Check if we have the required verification parameters
-    const emailAddress = searchParams.get('email_address')
+    const emailAddress = searchParams.get('email_address');
 
     if (!emailAddress) {
       // Redirect back to sign-up if missing required parameters
-      router.push('/sign-up')
-      return
+      router.push('/sign-up');
+      return;
     }
 
     // For email link verification, Clerk handles the verification automatically
     // when the user is redirected back from the email link
     // No manual verification call is needed
-  }, [router, searchParams])
+  }, [router, searchParams]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -54,21 +60,23 @@ function VerifyEmailAddressContent(): JSX.Element {
         </CardContent>
       </Card>
     </main>
-  )
+  );
 }
 
 export default function VerifyEmailAddressPage(): JSX.Element {
   return (
-    <Suspense fallback={
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Loading...</CardTitle>
-          </CardHeader>
-        </Card>
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen flex-col items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold">Loading...</CardTitle>
+            </CardHeader>
+          </Card>
+        </main>
+      }
+    >
       <VerifyEmailAddressContent />
     </Suspense>
-  )
+  );
 }

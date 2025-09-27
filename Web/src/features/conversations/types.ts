@@ -8,7 +8,7 @@
 /**
  * Represents the status of a conversation.
  */
-export type ConversationStatus = "initiated" | "active" | "closed";
+export type ConversationStatus = 'initiated' | 'active' | 'closed';
 
 /**
  * Represents an echo request for identity reveal.
@@ -19,7 +19,7 @@ export interface EchoRequest {
   conversationId: string;
   requesterId: string;
   targetId: string;
-  status: "pending" | "accepted" | "rejected";
+  status: 'pending' | 'accepted' | 'rejected';
   createdAt: number;
   respondedAt?: number;
 }

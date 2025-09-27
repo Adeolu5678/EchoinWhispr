@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import { useState, useCallback, useMemo } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
-import { Menu, X, Home, Send, Inbox } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { NavigationLink } from './NavigationLink'
-import { UserMenu } from './UserMenu'
-import { MobileNavigation } from './MobileNavigation'
+import { useState, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import { Menu, X, Home, Send, Inbox } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { NavigationLink } from './NavigationLink';
+import { UserMenu } from './UserMenu';
+import { MobileNavigation } from './MobileNavigation';
 
 /**
  * Main navigation component for the EchoinWhispr web application.
@@ -27,61 +27,67 @@ import { MobileNavigation } from './MobileNavigation'
  * @returns {JSX.Element} The rendered navigation component
  */
 export const Navigation = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
-  const pathname = usePathname()
-  const { user, isLoaded } = useUser()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const pathname = usePathname();
+  const { user, isLoaded } = useUser();
 
   /**
    * Toggle mobile menu visibility
    * Uses useCallback for performance optimization
    */
   const toggleMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(prev => !prev)
-  }, [])
+    setIsMobileMenuOpen(prev => !prev);
+  }, []);
 
   /**
    * Close mobile menu
    * Uses useCallback for performance optimization
    */
   const closeMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(false)
-  }, [])
+    setIsMobileMenuOpen(false);
+  }, []);
 
   /**
    * Navigation items configuration
    * Memoized to prevent unnecessary re-renders
    */
-  const navigationItems = useMemo(() => [
-    {
-      href: '/',
-      label: 'Home',
-      icon: Home,
-      description: 'View received whispers and home feed'
-    },
-    {
-      href: '/compose',
-      label: 'Compose',
-      icon: Send,
-      description: 'Create and send new whispers'
-    },
-    {
-      href: '/inbox',
-      label: 'Inbox',
-      icon: Inbox,
-      description: 'View all received whispers'
-    }
-  ], [])
+  const navigationItems = useMemo(
+    () => [
+      {
+        href: '/',
+        label: 'Home',
+        icon: Home,
+        description: 'View received whispers and home feed',
+      },
+      {
+        href: '/compose',
+        label: 'Compose',
+        icon: Send,
+        description: 'Create and send new whispers',
+      },
+      {
+        href: '/inbox',
+        label: 'Inbox',
+        icon: Inbox,
+        description: 'View all received whispers',
+      },
+    ],
+    []
+  );
 
   /**
    * Check if current path matches navigation item
    * Uses useCallback for performance optimization
    */
-  const isActiveRoute = useCallback((href: string) => {
-    if (href === '/') {
-      return pathname === '/'
-    }
-    return pathname.startsWith(href)
-  }, [pathname])
+  const isActiveRoute = useCallback(
+    (href: string) => {
+      if (href === '/') {
+        return pathname === '/';
+      }
+      return pathname.startsWith(href);
+    },
+    [pathname]
+  );
 
   // Show loading state while Clerk is loading
   if (!isLoaded) {
@@ -98,12 +104,12 @@ export const Navigation = () => {
           </div>
         </div>
       </nav>
-    )
+    );
   }
 
   // Don't render navigation for unauthenticated users
   if (!user) {
-    return null
+    return null;
   }
 
   return (
@@ -126,7 +132,7 @@ export const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {navigationItems.map((item) => (
+            {navigationItems.map(item => (
               <NavigationLink
                 key={item.href}
                 href={item.href}
@@ -168,5 +174,5 @@ export const Navigation = () => {
         />
       </div>
     </nav>
-  )
-}
+  );
+};

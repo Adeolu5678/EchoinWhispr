@@ -14,5 +14,5 @@ export {
   useSendWhisper,
   useReceivedWhispers,
   useMarkAsRead,
-  useWhispers
+  useWhispers,
 } from './hooks/useWhispers';

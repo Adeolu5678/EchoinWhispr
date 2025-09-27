@@ -48,10 +48,17 @@ export const FEATURE_FLAGS = {
    * Foundation: Code to request location permissions and whispers table schema extension (location field).
    */
   LOCATION_BASED_FEATURES: false,
-} as const
+
+  /**
+   * Enables the ability for users to send and manage friend requests, view friends list,
+   * and interact with other users through the friends system.
+   * Foundation: UI for friends page, search, requests, and list with Convex schema and functions.
+   */
+  FRIENDS: false,
+} as const;
 
 /**
  * Type representing all available feature flag keys.
  * Used for type-safe access to feature flags throughout the application.
  */
-export type FeatureFlag = keyof typeof FEATURE_FLAGS
+export type FeatureFlag = keyof typeof FEATURE_FLAGS;

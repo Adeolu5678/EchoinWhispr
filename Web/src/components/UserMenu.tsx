@@ -1,25 +1,25 @@
-'use client'
+'use client';
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { useUser, useClerk } from '@clerk/nextjs'
-import { User, Settings, LogOut, ChevronDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUser, useClerk } from '@clerk/nextjs';
+import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 /**
  * Props for the UserMenu component
  */
 interface UserMenuProps {
   /** The authenticated user object from Clerk */
-  user: ReturnType<typeof useUser>['user']
+  user: ReturnType<typeof useUser>['user'];
 }
 
 /**
@@ -41,9 +41,9 @@ interface UserMenuProps {
  * @returns {JSX.Element} The rendered user menu
  */
 export const UserMenu = ({ user }: UserMenuProps) => {
-  const [isOpen, setIsOpen] = useState<boolean>(false)
-  const router = useRouter()
-  const { signOut } = useClerk()
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const router = useRouter();
+  const { signOut } = useClerk();
 
   /**
    * Handle user sign out
@@ -51,78 +51,78 @@ export const UserMenu = ({ user }: UserMenuProps) => {
    */
   const handleSignOut = useCallback(async () => {
     try {
-      await signOut()
-      router.push('/sign-in')
+      await signOut();
+      router.push('/sign-in');
     } catch (error) {
-      console.error('Error signing out:', error)
+      console.error('Error signing out:', error);
       // Error handling could be enhanced with toast notifications
     }
-  }, [signOut, router])
+  }, [signOut, router]);
 
   /**
    * Handle menu open/close state
    * Uses useCallback for performance optimization
    */
   const handleMenuToggle = useCallback((open: boolean) => {
-    setIsOpen(open)
-  }, [])
+    setIsOpen(open);
+  }, []);
 
   /**
    * Get user initials for avatar fallback
    * Uses useCallback for performance optimization
    */
   const getUserInitials = useCallback(() => {
-    if (!user) return 'U'
+    if (!user) return 'U';
 
-    const firstName = user.firstName || ''
-    const lastName = user.lastName || ''
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
 
     if (firstName && lastName) {
-      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     }
 
     if (firstName) {
-      return firstName.charAt(0).toUpperCase()
+      return firstName.charAt(0).toUpperCase();
     }
 
     if (lastName) {
-      return lastName.charAt(0).toUpperCase()
+      return lastName.charAt(0).toUpperCase();
     }
 
     // Fallback to first letter of email or username
-    const email = user.emailAddresses?.[0]?.emailAddress || ''
-    const username = user.username || ''
+    const email = user.emailAddresses?.[0]?.emailAddress || '';
+    const username = user.username || '';
 
-    return (email.charAt(0) || username.charAt(0) || 'U').toUpperCase()
-  }, [user])
+    return (email.charAt(0) || username.charAt(0) || 'U').toUpperCase();
+  }, [user]);
 
   /**
    * Get user display name
    * Uses useCallback for performance optimization
    */
   const getDisplayName = useCallback(() => {
-    if (!user) return 'User'
+    if (!user) return 'User';
 
-    const firstName = user.firstName || ''
-    const lastName = user.lastName || ''
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
 
     if (firstName && lastName) {
-      return `${firstName} ${lastName}`
+      return `${firstName} ${lastName}`;
     }
 
     if (firstName) {
-      return firstName
+      return firstName;
     }
 
     if (lastName) {
-      return lastName
+      return lastName;
     }
 
-    return user.username || user.emailAddresses?.[0]?.emailAddress || 'User'
-  }, [user])
+    return user.username || user.emailAddresses?.[0]?.emailAddress || 'User';
+  }, [user]);
 
   if (!user) {
-    return null
+    return null;
   }
 
   return (
@@ -134,10 +134,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
           aria-label="User menu"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage
-              src={user.imageUrl}
-              alt={getDisplayName()}
-            />
+            <AvatarImage src={user.imageUrl} alt={getDisplayName()} />
             <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-600 text-inverse text-sm font-medium">
               {getUserInitials()}
             </AvatarFallback>
@@ -151,7 +148,9 @@ export const UserMenu = ({ user }: UserMenuProps) => {
 
       <DropdownMenuContent align="end" className="w-56">
         <div className="px-2 py-1.5">
-          <p className="text-sm font-medium text-gray-900">{getDisplayName()}</p>
+          <p className="text-sm font-medium text-gray-900">
+            {getDisplayName()}
+          </p>
           <p className="text-xs text-gray-500 truncate">
             {user.emailAddresses?.[0]?.emailAddress}
           </p>
@@ -186,5 +185,5 @@ export const UserMenu = ({ user }: UserMenuProps) => {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
+  );
+};

@@ -3,70 +3,74 @@
  * Provides React-friendly APIs for whisper functionality with real-time updates
  */
 
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { whisperService } from '../services/whisperService'
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { whisperService } from '../services/whisperService';
 import {
   WhisperWithSender,
   SendWhisperRequest,
   SendWhisperResponse,
   WhisperError,
-} from '../types'
-import { ERROR_CODES } from '../../../lib/errors'
-import { useToast } from '../../../hooks/use-toast'
+} from '../types';
+import { ERROR_CODES } from '../../../lib/errors';
+import { useToast } from '../../../hooks/use-toast';
 
 /**
  * Hook for sending whispers with optimistic updates
  * @returns Object with send function, loading state, and error handling
  */
 export function useSendWhisper() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<WhisperError | null>(null)
-  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<WhisperError | null>(null);
+  const { toast } = useToast();
 
   /**
    * Sends a whisper with optimistic updates
    * @param request - The whisper request data
    * @returns Promise resolving to the send response
    */
-  const sendWhisper = useCallback(async (request: SendWhisperRequest): Promise<SendWhisperResponse> => {
-    setIsLoading(true)
-    setError(null)
+  const sendWhisper = useCallback(
+    async (request: SendWhisperRequest): Promise<SendWhisperResponse> => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const result = await whisperService.sendWhisper(request)
+      try {
+        const result = await whisperService.sendWhisper(request);
 
-      // Show success toast
-      toast({
-        title: 'Whisper sent!',
-        description: 'Your anonymous message has been delivered.',
-      })
+        // Show success toast
+        toast({
+          title: 'Whisper sent!',
+          description: 'Your anonymous message has been delivered.',
+        });
 
-      return result
-    } catch (err) {
-      const whisperError = err as WhisperError
-      setError(whisperError)
+        return result;
+      } catch (err) {
+        const whisperError = err as WhisperError;
+        setError(whisperError);
 
-      // Show error toast
-      toast({
-        title: 'Failed to send whisper',
-        description: whisperError.message || 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      })
+        // Show error toast
+        toast({
+          title: 'Failed to send whisper',
+          description:
+            whisperError.message || 'Something went wrong. Please try again.',
+          variant: 'destructive',
+        });
 
-      throw whisperError
-    } finally {
-      setIsLoading(false)
-    }
-  }, [toast])
+        throw whisperError;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [toast]
+  );
 
   return {
     sendWhisper,
     isLoading,
     error,
     clearError: () => setError(null),
-  }
+  };
 }
 
 /**
@@ -74,24 +78,24 @@ export function useSendWhisper() {
  * @returns Object with whispers data, loading state, and error handling
  */
 export function useReceivedWhispers() {
-  const [whispers, setWhispers] = useState<WhisperWithSender[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<WhisperError | null>(null)
-  const { toast } = useToast()
+  const [whispers, setWhispers] = useState<WhisperWithSender[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<WhisperError | null>(null);
+  const { toast } = useToast();
 
   /**
    * Fetches whispers from the service
    */
   const fetchWhispers = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const fetchedWhispers = await whisperService.getReceivedWhispers()
-      setWhispers(fetchedWhispers)
+      const fetchedWhispers = await whisperService.getReceivedWhispers();
+      setWhispers(fetchedWhispers);
     } catch (err) {
-      const whisperError = err as WhisperError
-      setError(whisperError)
+      const whisperError = err as WhisperError;
+      setError(whisperError);
 
       // Only show toast for non-auth errors
       if (whisperError.code !== ERROR_CODES.UNAUTHORIZED) {
@@ -99,26 +103,27 @@ export function useReceivedWhispers() {
           title: 'Failed to load whispers',
           description: whisperError.message || 'Unable to fetch your messages.',
           variant: 'destructive',
-        })
+        });
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [toast])
+  }, [toast]);
 
   // Fetch whispers on mount
   useEffect(() => {
-    fetchWhispers()
-  }, [fetchWhispers])
+    fetchWhispers();
+  }, [fetchWhispers]);
 
   // Computed values
   const unreadCount = useMemo(() => {
-    return whispers.filter((whisper: WhisperWithSender) => !whisper.isRead).length
-  }, [whispers])
+    return whispers.filter((whisper: WhisperWithSender) => !whisper.isRead)
+      .length;
+  }, [whispers]);
 
   const hasUnread = useMemo(() => {
-    return unreadCount > 0
-  }, [unreadCount])
+    return unreadCount > 0;
+  }, [unreadCount]);
 
   return {
     whispers,
@@ -128,7 +133,7 @@ export function useReceivedWhispers() {
     hasUnread,
     refetch: fetchWhispers,
     clearError: () => setError(null),
-  }
+  };
 }
 
 /**
@@ -136,59 +141,62 @@ export function useReceivedWhispers() {
  * @returns Object with markAsRead function, loading state, and error handling
  */
 export function useMarkAsRead() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<WhisperError | null>(null)
-  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<WhisperError | null>(null);
+  const { toast } = useToast();
 
   /**
    * Marks a whisper as read with optimistic updates
    * @param whisperId - The ID of the whisper to mark as read
    */
-  const markAsRead = useCallback(async (whisperId: string): Promise<void> => {
-    setIsLoading(true)
-    setError(null)
+  const markAsRead = useCallback(
+    async (whisperId: string): Promise<void> => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      await whisperService.markWhisperAsRead(whisperId)
+      try {
+        await whisperService.markWhisperAsRead(whisperId);
 
-      // Show success toast
-      toast({
-        title: 'Message marked as read',
-        description: 'The whisper has been marked as read.',
-      })
-    } catch (err) {
-      const whisperError = err as WhisperError
-      setError(whisperError)
+        // Show success toast
+        toast({
+          title: 'Message marked as read',
+          description: 'The whisper has been marked as read.',
+        });
+      } catch (err) {
+        const whisperError = err as WhisperError;
+        setError(whisperError);
 
-      toast({
-        title: 'Failed to mark as read',
-        description: whisperError.message || 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      })
+        toast({
+          title: 'Failed to mark as read',
+          description:
+            whisperError.message || 'Something went wrong. Please try again.',
+          variant: 'destructive',
+        });
 
-      throw whisperError
-    } finally {
-      setIsLoading(false)
-    }
-  }, [toast])
+        throw whisperError;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [toast]
+  );
 
   return {
     markAsRead,
     isLoading,
     error,
     clearError: () => setError(null),
-  }
+  };
 }
-
 
 /**
  * Combined hook that provides all whisper functionality
  * @returns Object with all whisper operations and state
  */
 export function useWhispers() {
-  const sendWhisper = useSendWhisper()
-  const receivedWhispers = useReceivedWhispers()
-  const markAsRead = useMarkAsRead()
+  const sendWhisper = useSendWhisper();
+  const receivedWhispers = useReceivedWhispers();
+  const markAsRead = useMarkAsRead();
 
   return {
     // Send functionality
@@ -211,9 +219,9 @@ export function useWhispers() {
 
     // Utility functions
     clearErrors: () => {
-      sendWhisper.clearError()
-      receivedWhispers.clearError()
-      markAsRead.clearError()
+      sendWhisper.clearError();
+      receivedWhispers.clearError();
+      markAsRead.clearError();
     },
-  }
+  };
 }

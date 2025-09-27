@@ -1,6 +1,6 @@
-import { Suspense } from 'react'
-import { WhisperList } from '@/features/whispers/components/WhisperList'
-import { useWhispers } from '@/features/whispers/hooks/useWhispers'
+import { Suspense } from 'react';
+import { WhisperList } from '@/features/whispers/components/WhisperList';
+import { useWhispers } from '@/features/whispers/hooks/useWhispers';
 
 /**
  * Loading skeleton component for the home page
@@ -22,7 +22,7 @@ function HomePageSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -57,9 +57,7 @@ export default function HomePage() {
       {/* Whispers List */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Your Whispers
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Your Whispers</h2>
           <span className="text-sm text-gray-500">
             Received whispers appear here
           </span>
@@ -70,7 +68,7 @@ export default function HomePage() {
         </Suspense>
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -78,15 +76,11 @@ export default function HomePage() {
  * Separated for better error boundary isolation and suspense handling.
  */
 function WhisperListContent() {
-  const {
-    isLoadingWhispers,
-    whispersError,
-    refetchWhispers
-  } = useWhispers()
+  const { isLoadingWhispers, whispersError, refetchWhispers } = useWhispers();
 
   // Show loading state
   if (isLoadingWhispers) {
-    return <HomePageSkeleton />
+    return <HomePageSkeleton />;
   }
 
   // Show error state
@@ -94,15 +88,26 @@ function WhisperListContent() {
     return (
       <div className="text-center py-12">
         <div className="text-red-500 mb-4">
-          <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          <svg
+            className="mx-auto h-12 w-12"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
           </svg>
         </div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           Unable to load whispers
         </h3>
         <p className="text-gray-600 mb-4">
-          {whispersError.message || 'An unexpected error occurred while loading your whispers.'}
+          {whispersError.message ||
+            'An unexpected error occurred while loading your whispers.'}
         </p>
         <button
           onClick={() => refetchWhispers()}
@@ -111,9 +116,9 @@ function WhisperListContent() {
           Try Again
         </button>
       </div>
-    )
+    );
   }
 
   // Show whispers list (handles empty state internally)
-  return <WhisperList />
+  return <WhisperList />;
 }

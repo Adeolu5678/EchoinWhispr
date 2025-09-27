@@ -1,24 +1,24 @@
-'use client'
+'use client';
 
-import { forwardRef, useCallback } from 'react'
-import Link from 'next/link'
-import { LucideIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { forwardRef, useCallback } from 'react';
+import Link from 'next/link';
+import { LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 /**
  * Props for the NavigationLink component
  */
 interface NavigationLinkProps {
   /** The URL to navigate to */
-  href: string
+  href: string;
   /** The icon component to display */
-  icon: LucideIcon
+  icon: LucideIcon;
   /** The text label for the navigation item */
-  label: string
+  label: string;
   /** Whether this navigation item is currently active */
-  isActive: boolean
+  isActive: boolean;
   /** Optional click handler for additional functionality */
-  onClick?: () => void
+  onClick?: () => void;
 }
 
 /**
@@ -38,37 +38,39 @@ interface NavigationLinkProps {
  * @param props - The component props
  * @returns {JSX.Element} The rendered navigation link
  */
-export const NavigationLink = forwardRef<HTMLAnchorElement, NavigationLinkProps>(
-  ({ href, icon: Icon, label, isActive, onClick }, ref) => {
-    /**
-     * Handle click events with optional callback
-     * Uses useCallback for performance optimization
-     */
-    const handleClick = useCallback(() => {
-      onClick?.()
-    }, [onClick])
+export const NavigationLink = forwardRef<
+  HTMLAnchorElement,
+  NavigationLinkProps
+>(({ href, icon: Icon, label, isActive, onClick }, ref) => {
+  /**
+   * Handle click events with optional callback
+   * Uses useCallback for performance optimization
+   */
+  const handleClick = useCallback(() => {
+    onClick?.();
+  }, [onClick]);
 
-    return (
-      <Link href={href} onClick={handleClick} ref={ref}>
-        <Button
-          variant={isActive ? "secondary" : "ghost"}
-          size="sm"
-          className={`
+  return (
+    <Link href={href} onClick={handleClick} ref={ref}>
+      <Button
+        variant={isActive ? 'secondary' : 'ghost'}
+        size="sm"
+        className={`
             flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-colors
-            ${isActive
-              ? 'bg-primary-700 text-inverse'
-              : 'text-inverse hover:text-inverse hover:bg-primary-700'
+            ${
+              isActive
+                ? 'bg-primary-700 text-inverse'
+                : 'text-inverse hover:text-inverse hover:bg-primary-700'
             }
           `}
-          aria-current={isActive ? 'page' : undefined}
-        >
-          <Icon className="h-4 w-4" />
-          <span className="hidden sm:inline">{label}</span>
-        </Button>
-      </Link>
-    )
-  }
-)
+        aria-current={isActive ? 'page' : undefined}
+      >
+        <Icon className="h-4 w-4" />
+        <span className="hidden sm:inline">{label}</span>
+      </Button>
+    </Link>
+  );
+});
 
 // Set display name for better debugging
-NavigationLink.displayName = 'NavigationLink'
+NavigationLink.displayName = 'NavigationLink';
