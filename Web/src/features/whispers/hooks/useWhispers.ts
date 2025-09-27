@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { whisperService } from '../services/whisperService';
 import {
   WhisperWithSender,
@@ -23,6 +24,7 @@ export function useSendWhisper() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
   const { toast } = useToast();
+  const { user } = useUser();
 
   /**
    * Sends a whisper with optimistic updates
@@ -35,7 +37,7 @@ export function useSendWhisper() {
       setError(null);
 
       try {
-        const result = await whisperService.sendWhisper(request);
+        const result = await whisperService.sendWhisper(request, user?.id || '');
 
         // Show success toast
         toast({
@@ -61,7 +63,7 @@ export function useSendWhisper() {
         setIsLoading(false);
       }
     },
-    [toast]
+    [toast, user?.id]
   );
 
   return {
@@ -81,6 +83,7 @@ export function useReceivedWhispers() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
   const { toast } = useToast();
+  const { user } = useUser();
 
   /**
    * Fetches whispers from the service
@@ -90,7 +93,7 @@ export function useReceivedWhispers() {
     setError(null);
 
     try {
-      const fetchedWhispers = await whisperService.getReceivedWhispers();
+      const fetchedWhispers = await whisperService.getReceivedWhispers(user?.id || '');
       setWhispers(fetchedWhispers);
     } catch (err) {
       const whisperError = err as AppError;
@@ -107,7 +110,7 @@ export function useReceivedWhispers() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, user?.id]);
 
   // Fetch whispers on mount
   useEffect(() => {
@@ -143,6 +146,7 @@ export function useMarkAsRead() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
   const { toast } = useToast();
+  const { user } = useUser();
 
   /**
    * Marks a whisper as read with optimistic updates
@@ -154,7 +158,7 @@ export function useMarkAsRead() {
       setError(null);
 
       try {
-        await whisperService.markWhisperAsRead(whisperId);
+        await whisperService.markWhisperAsRead(whisperId, user?.id || '');
 
         // Show success toast
         toast({
@@ -177,7 +181,7 @@ export function useMarkAsRead() {
         setIsLoading(false);
       }
     },
-    [toast]
+    [toast, user?.id]
   );
 
   return {
