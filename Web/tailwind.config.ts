@@ -62,11 +62,11 @@ const webConfig: Config = {
 
       // Container queries for responsive design
       containers: {
-        'xs': '20rem',
-        'sm': '24rem',
-        'md': '28rem',
-        'lg': '32rem',
-        'xl': '36rem',
+        xs: '20rem',
+        sm: '24rem',
+        md: '28rem',
+        lg: '32rem',
+        xl: '36rem',
         '2xl': '42rem',
       },
     },
@@ -80,11 +80,12 @@ const webConfig: Config = {
     // require('@tailwindcss/container-queries'),
 
     // Custom web-specific utilities
-    function({ addUtilities, theme }: any) {
+    function ({ addUtilities, theme }: any) {
       const webUtilities = {
         // Web-specific focus styles
         '.focus-visible-ring': {
-          '@apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2': {},
+          '@apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2':
+            {},
         },
 
         // Scroll utilities

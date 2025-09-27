@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
 /**
  * Hook for sending echo requests to initiate conversations.
@@ -14,7 +14,7 @@ export const useSendEchoRequest = () => {
    */
   const sendEchoRequest = useCallback(async (whisperId: string) => {
     // TODO: Implement when CONVERSATION_EVOLUTION feature is enabled
-    console.log("Echo request placeholder - whisperId:", whisperId);
+    console.log('Echo request placeholder - whisperId:', whisperId);
   }, []);
 
   return {

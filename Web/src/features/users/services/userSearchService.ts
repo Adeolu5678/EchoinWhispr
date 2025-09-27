@@ -10,7 +10,7 @@ import type {
   SearchFilters,
   SearchResponse,
   SearchError,
-  SearchServiceConfig
+  SearchServiceConfig,
 } from '../types';
 import { SearchErrorType } from '../types';
 
@@ -32,7 +32,10 @@ const DEFAULT_CONFIG: SearchServiceConfig = {
  */
 export class UserSearchService {
   private config: SearchServiceConfig;
-  private searchCache = new Map<string, { results: UserSearchResult[]; timestamp: number }>();
+  private searchCache = new Map<
+    string,
+    { results: UserSearchResult[]; timestamp: number }
+  >();
   private readonly CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor(config: Partial<SearchServiceConfig> = {}) {
@@ -167,24 +170,26 @@ export class UserSearchService {
     }).then(res => res.json());
 
     // Transform results to match our interface
-    return results.map((user: {
-      _id: string;
-      clerkId?: string;
-      username: string;
-      email: string;
-      firstName?: string;
-      lastName?: string;
-      _creationTime?: number;
-    }): UserSearchResult => ({
-      _id: user._id,
-      clerkId: user.clerkId || '',
-      username: user.username,
-      email: user.email,
-      firstName: user.firstName || undefined,
-      lastName: user.lastName || undefined,
-      createdAt: user._creationTime || Date.now(),
-      updatedAt: user._creationTime || Date.now(),
-    }));
+    return results.map(
+      (user: {
+        _id: string;
+        clerkId?: string;
+        username: string;
+        email: string;
+        firstName?: string;
+        lastName?: string;
+        _creationTime?: number;
+      }): UserSearchResult => ({
+        _id: user._id,
+        clerkId: user.clerkId || '',
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+        createdAt: user._creationTime || Date.now(),
+        updatedAt: user._creationTime || Date.now(),
+      })
+    );
   }
 
   /**
@@ -246,10 +251,14 @@ export class UserSearchService {
         };
       }
 
-      if (error.message.includes('network') || error.message.includes('fetch')) {
+      if (
+        error.message.includes('network') ||
+        error.message.includes('fetch')
+      ) {
         return {
           type: SearchErrorType.SERVER_ERROR,
-          message: 'Network error occurred. Please check your connection and try again.',
+          message:
+            'Network error occurred. Please check your connection and try again.',
           context: { query },
         };
       }

@@ -1,21 +1,16 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useUser } from '@clerk/nextjs'
-import { useMutation } from 'convex/react'
-import { api } from '@/lib/convex'
-import { useToast } from '@/hooks/use-toast'
-import { useUsernameValidation } from '../hooks/useUsernameValidation'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { CheckCircle, XCircle, Loader2, User } from 'lucide-react'
+import { useState } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex';
+import { useToast } from '@/hooks/use-toast';
+import { useUsernameValidation } from '../hooks/useUsernameValidation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { CheckCircle, XCircle, Loader2, User } from 'lucide-react';
 
 /**
  * Interface representing the props for the UsernamePickerModal component
@@ -24,15 +19,15 @@ export interface UsernamePickerModalProps {
   /**
    * Whether the modal is open
    */
-  isOpen: boolean
+  isOpen: boolean;
   /**
    * Callback function called when the modal should be closed
    */
-  onClose: () => void
+  onClose: () => void;
   /**
    * Callback function called when username selection is successful
    */
-  onSuccess?: () => void
+  onSuccess?: () => void;
 }
 
 /**
@@ -48,10 +43,14 @@ export interface UsernamePickerModalProps {
  * @param props - The component props
  * @returns JSX.Element
  */
-export function UsernamePickerModal({ isOpen, onClose, onSuccess }: UsernamePickerModalProps): JSX.Element | null {
+export function UsernamePickerModal({
+  isOpen,
+  onClose,
+  onSuccess,
+}: UsernamePickerModalProps): JSX.Element | null {
   // Clerk user data
-  const { user } = useUser()
-  const { toast } = useToast()
+  const { user } = useUser();
+  const { toast } = useToast();
 
   // Username validation hook
   const {
@@ -61,23 +60,23 @@ export function UsernamePickerModal({ isOpen, onClose, onSuccess }: UsernamePick
     validateUsername,
     clearValidation,
     isDebouncing,
-  } = useUsernameValidation()
+  } = useUsernameValidation();
 
   // Local state for form handling
-  const [username, setUsername] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [username, setUsername] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Convex mutation for updating user profile
-  const updateUsername = useMutation(api.users.updateUsername)
+  const updateUsername = useMutation(api.users.updateUsername);
 
   /**
    * Handle username input changes
    * Updates local state and triggers validation
    */
   const handleUsernameChange = (value: string) => {
-    setUsername(value)
-    validateUsername(value)
-  }
+    setUsername(value);
+    validateUsername(value);
+  };
 
   /**
    * Handle form submission
@@ -85,124 +84,126 @@ export function UsernamePickerModal({ isOpen, onClose, onSuccess }: UsernamePick
    */
   const handleSubmit = async () => {
     if (!isValid || !user || !username.trim()) {
-      return
+      return;
     }
 
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
 
       // Update user username
       await updateUsername({
         username: username.trim(),
-      })
+      });
 
       toast({
         title: 'Username set successfully!',
         description: `Welcome to EchoinWhispr, @${username}!`,
-      })
+      });
 
       // Call success callback if provided
-      onSuccess?.()
+      onSuccess?.();
 
       // Close modal
-      handleClose()
+      handleClose();
     } catch (error) {
-      console.error('Error updating username:', error)
+      console.error('Error updating username:', error);
       toast({
         title: 'Error setting username',
-        description: 'There was an issue setting your username. Please try again.',
+        description:
+          'There was an issue setting your username. Please try again.',
         variant: 'destructive',
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   /**
    * Handle modal close
    * Clears validation state and calls onClose callback
    */
   const handleClose = () => {
-    clearValidation()
-    setUsername('')
-    onClose()
-  }
+    clearValidation();
+    setUsername('');
+    onClose();
+  };
 
   /**
    * Get validation icon based on current status
    */
   const getValidationIcon = () => {
     if (isDebouncing || status === 'validating') {
-      return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
     }
 
     if (status === 'available' && isValid) {
-      return <CheckCircle className="h-4 w-4 text-green-500" />
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
     }
 
     if (status === 'unavailable' || status === 'invalid') {
-      return <XCircle className="h-4 w-4 text-red-500" />
+      return <XCircle className="h-4 w-4 text-red-500" />;
     }
 
-    return null
-  }
+    return null;
+  };
 
   /**
    * Get validation message based on current status
    */
   const getValidationMessage = () => {
     if (isDebouncing || status === 'validating') {
-      return 'Checking availability...'
+      return 'Checking availability...';
     }
 
     if (errorMessage) {
-      return errorMessage
+      return errorMessage;
     }
 
     if (status === 'available' && isValid) {
-      return 'Username is available!'
+      return 'Username is available!';
     }
 
     if (status === 'unavailable') {
-      return 'Username is already taken'
+      return 'Username is already taken';
     }
 
-    return ''
-  }
+    return '';
+  };
 
   /**
    * Get input styling based on validation status
    */
   const getInputStyling = () => {
-    const baseClasses = 'pr-10 transition-colors'
+    const baseClasses = 'pr-10 transition-colors';
 
     if (status === 'available' && isValid) {
-      return `${baseClasses} border-green-500 focus:border-green-500`
+      return `${baseClasses} border-green-500 focus:border-green-500`;
     }
 
     if (status === 'unavailable' || status === 'invalid') {
-      return `${baseClasses} border-red-500 focus:border-red-500`
+      return `${baseClasses} border-red-500 focus:border-red-500`;
     }
 
-    return baseClasses
-  }
+    return baseClasses;
+  };
 
   /**
    * Get submit button styling and disabled state
    */
   const getSubmitButtonProps = () => {
-    const isDisabled = !isValid || isSubmitting || isDebouncing || !username.trim()
+    const isDisabled =
+      !isValid || isSubmitting || isDebouncing || !username.trim();
 
     return {
       disabled: isDisabled,
       className: isDisabled
         ? 'bg-muted text-muted-foreground cursor-not-allowed'
         : 'bg-primary hover:bg-primary/90 text-primary-foreground',
-    }
-  }
+    };
+  };
 
   // Don't render if modal is not open
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -242,7 +243,7 @@ export function UsernamePickerModal({ isOpen, onClose, onSuccess }: UsernamePick
                 type="text"
                 placeholder="Enter your username"
                 value={username}
-                onChange={(e) => handleUsernameChange(e.target.value)}
+                onChange={e => handleUsernameChange(e.target.value)}
                 className={getInputStyling()}
                 maxLength={20}
                 autoComplete="username"
@@ -260,8 +261,8 @@ export function UsernamePickerModal({ isOpen, onClose, onSuccess }: UsernamePick
                 status === 'available' && isValid
                   ? 'text-green-600'
                   : status === 'unavailable' || status === 'invalid'
-                  ? 'text-red-600'
-                  : 'text-muted-foreground'
+                    ? 'text-red-600'
+                    : 'text-muted-foreground'
               }`}
             >
               {getValidationMessage()}
@@ -306,5 +307,5 @@ export function UsernamePickerModal({ isOpen, onClose, onSuccess }: UsernamePick
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

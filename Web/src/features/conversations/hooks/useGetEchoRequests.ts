@@ -1,4 +1,4 @@
-import { EchoRequest } from "../types";
+import { EchoRequest } from '../types';
 
 /**
  * Hook for getting pending echo requests for the current user.

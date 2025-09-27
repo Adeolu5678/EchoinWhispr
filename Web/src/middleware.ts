@@ -13,14 +13,14 @@ export default authMiddleware({
     '/api/webhooks/(.*)',
     '/api/test-env(.*)',
     '/test-clerk(.*)',
-    '/test-user-creation(.*)'
+    '/test-user-creation(.*)',
   ],
   // Routes to ignore (static files, assets, etc.)
   ignoredRoutes: [
     '/_next/static/(.*)',
     '/favicon.ico',
     '/robots.txt',
-    '/sitemap.xml'
+    '/sitemap.xml',
   ],
   // Custom redirect behavior
   afterAuth(auth, req) {
@@ -35,10 +35,14 @@ export default authMiddleware({
     }
 
     // If user is authenticated and trying to access auth pages, redirect to main app
-    if (auth.userId && (req.nextUrl.pathname.startsWith('/sign-in') || req.nextUrl.pathname.startsWith('/sign-up'))) {
+    if (
+      auth.userId &&
+      (req.nextUrl.pathname.startsWith('/sign-in') ||
+        req.nextUrl.pathname.startsWith('/sign-up'))
+    ) {
       return Response.redirect(new URL('/', req.url));
     }
-  }
+  },
 });
 
 export const config = {

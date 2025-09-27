@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { useAuthStatus } from '@/features/authentication'
-import Link from 'next/link'
+import { useAuthStatus } from '@/features/authentication';
+import Link from 'next/link';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
 export default function Home(): JSX.Element {
   const {
@@ -12,14 +12,17 @@ export default function Home(): JSX.Element {
     user,
     signOut,
     userCreationError,
-    isCreatingUser
-  } = useAuthStatus()
+    isCreatingUser,
+  } = useAuthStatus();
 
   if (isLoading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-primary">
         <div className="text-center" role="status" aria-live="polite">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4" aria-hidden="true"></div>
+          <div
+            className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"
+            aria-hidden="true"
+          ></div>
           <span className="sr-only">
             {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
           </span>
@@ -28,7 +31,7 @@ export default function Home(): JSX.Element {
           </p>
         </div>
       </main>
-    )
+    );
   }
 
   if (userCreationError) {
@@ -40,12 +43,13 @@ export default function Home(): JSX.Element {
               Account Setup Failed
             </h2>
             <p className="text-body mb-4">
-              There was an error setting up your account. Please try signing out and signing in again.
+              There was an error setting up your account. Please try signing out
+              and signing in again.
             </p>
             <button
               onClick={async () => {
                 try {
-                  await signOut()
+                  await signOut();
                 } catch {
                   /* toast already handled in hook */
                 }
@@ -57,7 +61,7 @@ export default function Home(): JSX.Element {
           </div>
         </div>
       </main>
-    )
+    );
   }
 
   if (!isAuthenticated) {
@@ -84,7 +88,7 @@ export default function Home(): JSX.Element {
           </div>
         </div>
       </main>
-    )
+    );
   }
 
   return (
@@ -96,12 +100,16 @@ export default function Home(): JSX.Element {
             <h1 className="text-2xl font-bold text-body">EchoinWhispr</h1>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-body">
-                Welcome, {user?.firstName?.trim() || user?.fullName?.trim()?.split(/\s+/)[0] || user?.username || 'User'}
+                Welcome,{' '}
+                {user?.firstName?.trim() ||
+                  user?.fullName?.trim()?.split(/\s+/)[0] ||
+                  user?.username ||
+                  'User'}
               </span>
               <button
                 onClick={async () => {
                   try {
-                    await signOut()
+                    await signOut();
                   } catch {
                     /* toast already handled in hook */
                   }
@@ -123,7 +131,8 @@ export default function Home(): JSX.Element {
             Welcome to your Inbox
           </h2>
           <p className="text-lg text-body mb-8">
-            Your whispers will appear here. The whisper functionality will be implemented next.
+            Your whispers will appear here. The whisper functionality will be
+            implemented next.
           </p>
           <div className="bg-white rounded-lg shadow p-8">
             <div className="text-gray-500">
@@ -147,5 +156,5 @@ export default function Home(): JSX.Element {
         </div>
       </div>
     </main>
-  )
+  );
 }

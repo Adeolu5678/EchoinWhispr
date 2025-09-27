@@ -53,13 +53,13 @@ export interface SearchResponse {
  */
 export enum SearchErrorType {
   /** User is not authenticated */
-  UNAUTHENTICATED = "UNAUTHENTICATED",
+  UNAUTHENTICATED = 'UNAUTHENTICATED',
   /** Search query is invalid or malformed */
-  INVALID_QUERY = "INVALID_QUERY",
+  INVALID_QUERY = 'INVALID_QUERY',
   /** Search operation failed due to server error */
-  SERVER_ERROR = "SERVER_ERROR",
+  SERVER_ERROR = 'SERVER_ERROR',
   /** No users found matching the search criteria */
-  NO_RESULTS = "NO_RESULTS",
+  NO_RESULTS = 'NO_RESULTS',
 }
 
 /**
