@@ -1,10 +1,10 @@
-'use client'
+'use client';
 
-import { Suspense } from 'react'
-import { WhisperComposer } from '@/features/whispers/components/WhisperComposer'
-import { useUser } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { Suspense } from 'react';
+import { WhisperComposer } from '@/features/whispers/components/WhisperComposer';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 /**
  * Loading skeleton component for the compose page
@@ -18,7 +18,7 @@ const ComposePageSkeleton = () => (
       <div className="h-12 bg-deep rounded"></div>
     </div>
   </div>
-)
+);
 
 /**
  * Compose page component for sending whispers
@@ -26,24 +26,24 @@ const ComposePageSkeleton = () => (
  * Includes authentication checks and loading states
  */
 export default function ComposePage() {
-  const { user, isLoaded } = useUser()
-  const router = useRouter()
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
 
   // Redirect to sign-in if user is not authenticated
   useEffect(() => {
     if (isLoaded && !user) {
-      router.push('/sign-in')
+      router.push('/sign-in');
     }
-  }, [isLoaded, user, router])
+  }, [isLoaded, user, router]);
 
   // Show loading state while authentication is being determined
   if (!isLoaded) {
-    return <ComposePageSkeleton />
+    return <ComposePageSkeleton />;
   }
 
   // Redirect to sign-in if user is not authenticated
   if (!user) {
-    return <ComposePageSkeleton />
+    return <ComposePageSkeleton />;
   }
 
   return (
@@ -51,7 +51,8 @@ export default function ComposePage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-body mb-2">Compose Whisper</h1>
         <p className="text-body/80">
-          Send an anonymous message to another user. Your identity will remain hidden.
+          Send an anonymous message to another user. Your identity will remain
+          hidden.
         </p>
       </div>
 
@@ -60,12 +61,12 @@ export default function ComposePage() {
           <WhisperComposer
             onWhisperSent={() => {
               // Handle successful whisper sending
-              console.log('Whisper sent successfully')
+              console.log('Whisper sent successfully');
             }}
             placeholder="Write your anonymous whisper..."
           />
         </Suspense>
       </div>
     </div>
-  )
+  );
 }

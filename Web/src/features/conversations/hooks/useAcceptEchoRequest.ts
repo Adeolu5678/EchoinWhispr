@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
 /**
  * Hook for accepting echo requests.
@@ -15,7 +15,7 @@ export const useAcceptEchoRequest = () => {
    */
   const acceptEchoRequest = useCallback(async (requestId: string) => {
     // TODO: Implement when CONVERSATION_EVOLUTION feature is enabled
-    console.log("Accept echo request placeholder - requestId:", requestId);
+    console.log('Accept echo request placeholder - requestId:', requestId);
   }, []);
 
   return {

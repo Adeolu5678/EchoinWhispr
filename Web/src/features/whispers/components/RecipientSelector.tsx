@@ -1,38 +1,38 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { ChevronDown, ChevronUp, Users, Search } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { useUserSearch } from '@/features/users/hooks/useUserSearch'
-import type { Doc } from '../../../../../Convex/convex/_generated/dataModel'
+import { useState } from 'react';
+import { ChevronDown, ChevronUp, Users, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { useUserSearch } from '@/features/users/hooks/useUserSearch';
+import type { Doc } from '../../../../../Convex/convex/_generated/dataModel';
 
 interface RecipientSelectorProps {
-  selectedRecipient: Doc<'users'> | null
-  onRecipientSelect: (recipient: Doc<'users'>) => void
+  selectedRecipient: Doc<'users'> | null;
+  onRecipientSelect: (recipient: Doc<'users'>) => void;
 }
 
 export const RecipientSelector = ({
   selectedRecipient,
   onRecipientSelect,
 }: RecipientSelectorProps) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const { query, results, isLoading, setQuery } = useUserSearch()
+  const [isOpen, setIsOpen] = useState(false);
+  const { query, results, isLoading, setQuery } = useUserSearch();
 
   const handleToggleDropdown = () => {
-    setIsOpen(!isOpen)
-  }
+    setIsOpen(!isOpen);
+  };
 
   const handleSelectRecipient = (user: Doc<'users'>) => {
-    onRecipientSelect(user)
-    setIsOpen(false)
-    setQuery('') // Clear search
-  }
+    onRecipientSelect(user);
+    setIsOpen(false);
+    setQuery(''); // Clear search
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value)
-  }
+    setQuery(e.target.value);
+  };
 
   return (
     <div className="relative w-full">
@@ -56,7 +56,11 @@ export const RecipientSelector = ({
           onClick={handleToggleDropdown}
           className="px-3 bg-purple-600 border-purple-600 text-white hover:bg-purple-700"
         >
-          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {isOpen ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
         </Button>
       </div>
 
@@ -90,7 +94,7 @@ export const RecipientSelector = ({
               </div>
             ) : results.length > 0 ? (
               <div className="max-h-48 overflow-y-auto">
-                {results.map((user) => (
+                {results.map(user => (
                   <button
                     key={user._id}
                     onClick={() => handleSelectRecipient(user as Doc<'users'>)}
@@ -119,11 +123,8 @@ export const RecipientSelector = ({
 
       {/* Overlay to close dropdown when clicking outside */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
       )}
     </div>
-  )
-}
+  );
+};

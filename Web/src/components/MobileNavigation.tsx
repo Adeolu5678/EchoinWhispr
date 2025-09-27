@@ -1,27 +1,27 @@
-'use client'
+'use client';
 
-import { useCallback } from 'react'
-import Link from 'next/link'
-import { LucideIcon } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useCallback } from 'react';
+import Link from 'next/link';
+import { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 /**
  * Props for the MobileNavigation component
  */
 interface MobileNavigationProps {
   /** Whether the mobile navigation is open */
-  isOpen: boolean
+  isOpen: boolean;
   /** Array of navigation items */
   navigationItems: Array<{
-    href: string
-    label: string
-    icon: LucideIcon
-    description: string
-  }>
+    href: string;
+    label: string;
+    icon: LucideIcon;
+    description: string;
+  }>;
   /** Function to check if a route is active */
-  isActiveRoute: (href: string) => boolean
+  isActiveRoute: (href: string) => boolean;
   /** Function to close the mobile navigation */
-  onClose: () => void
+  onClose: () => void;
 }
 
 /**
@@ -46,28 +46,31 @@ export const MobileNavigation = ({
   isOpen,
   navigationItems,
   isActiveRoute,
-  onClose
+  onClose,
 }: MobileNavigationProps) => {
   /**
    * Handle backdrop click to close menu
    * Uses useCallback for performance optimization
    */
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }, [onClose])
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    },
+    [onClose]
+  );
 
   /**
    * Handle navigation link click
    * Uses useCallback for performance optimization
    */
   const handleNavClick = useCallback(() => {
-    onClose()
-  }, [onClose])
+    onClose();
+  }, [onClose]);
 
   if (!isOpen) {
-    return null
+    return null;
   }
 
   return (
@@ -88,16 +91,18 @@ export const MobileNavigation = ({
               <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">EW</span>
               </div>
-              <span className="text-lg font-bold text-inverse">EchoinWhispr</span>
+              <span className="text-lg font-bold text-inverse">
+                EchoinWhispr
+              </span>
             </div>
           </div>
 
           {/* Navigation Links */}
           <nav className="flex-1 px-4 py-6">
             <ul className="space-y-2">
-              {navigationItems.map((item) => {
-                const Icon = item.icon
-                const isActive = isActiveRoute(item.href)
+              {navigationItems.map(item => {
+                const Icon = item.icon;
+                const isActive = isActiveRoute(item.href);
 
                 return (
                   <li key={item.href}>
@@ -114,11 +119,13 @@ export const MobileNavigation = ({
                       <Icon className="h-5 w-5" />
                       <div className="flex-1">
                         <div className="font-medium">{item.label}</div>
-                        <div className="text-xs text-primary-200">{item.description}</div>
+                        <div className="text-xs text-primary-200">
+                          {item.description}
+                        </div>
                       </div>
                     </Link>
                   </li>
-                )
+                );
               })}
             </ul>
           </nav>
@@ -132,5 +139,5 @@ export const MobileNavigation = ({
         </div>
       </div>
     </>
-  )
-}
+  );
+};

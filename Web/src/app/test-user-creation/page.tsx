@@ -1,61 +1,70 @@
-'use client'
+'use client';
 
-import { useAuth, useUser } from '@clerk/nextjs'
-import { useConvexAuth } from 'convex/react'
-import { useMutation } from 'convex/react'
-import { api } from '@/lib/convex'
-import { useState } from 'react'
+import { useAuth, useUser } from '@clerk/nextjs';
+import { useConvexAuth } from 'convex/react';
+import { useMutation } from 'convex/react';
+import { api } from '@/lib/convex';
+import { useState } from 'react';
 
 /**
  * Test component to debug user creation in Convex
  */
 function UserCreationTestComponent() {
-  const { isLoaded: isClerkLoaded, user } = useUser()
-  const { userId } = useAuth()
-  const { isAuthenticated: isConvexAuthenticated, isLoading: isConvexLoading } = useConvexAuth()
-  const [testResult, setTestResult] = useState<string | null>(null)
-  const [isTesting, setIsTesting] = useState(false)
+  const { isLoaded: isClerkLoaded, user } = useUser();
+  const { userId } = useAuth();
+  const { isAuthenticated: isConvexAuthenticated, isLoading: isConvexLoading } =
+    useConvexAuth();
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
 
-  const getOrCreateUser = useMutation(api.users.getOrCreateCurrentUser)
+  const getOrCreateUser = useMutation(api.users.getOrCreateCurrentUser);
 
   const runTest = async () => {
-    setIsTesting(true)
-    setTestResult(null)
+    setIsTesting(true);
+    setTestResult(null);
 
     try {
-      console.log('🧪 [Test] Starting user creation test...')
+      console.log('🧪 [Test] Starting user creation test...');
       console.log('🧪 [Test] Clerk state:', {
         isClerkLoaded,
         userId,
-        user: user ? {
-          id: user.id,
-          email: user.primaryEmailAddress?.emailAddress,
-          username: user.username,
-          firstName: user.firstName,
-          lastName: user.lastName
-        } : null
-      })
+        user: user
+          ? {
+              id: user.id,
+              email: user.primaryEmailAddress?.emailAddress,
+              username: user.username,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            }
+          : null,
+      });
       console.log('🧪 [Test] Convex state:', {
         isConvexAuthenticated,
-        isConvexLoading
-      })
+        isConvexLoading,
+      });
 
       if (!isClerkLoaded || !userId || !isConvexAuthenticated) {
-        throw new Error('Prerequisites not met: Clerk not loaded, no user ID, or Convex not authenticated')
+        throw new Error(
+          'Prerequisites not met: Clerk not loaded, no user ID, or Convex not authenticated'
+        );
       }
 
-      console.log('🧪 [Test] Calling getOrCreateCurrentUser...')
-      const result = await getOrCreateUser()
-      console.log('🧪 [Test] Result:', result)
+      console.log('🧪 [Test] Calling getOrCreateCurrentUser...');
+      const result = await getOrCreateUser();
+      console.log('🧪 [Test] Result:', result);
 
-      setTestResult(`✅ Success! User created/retrieved: ${JSON.stringify(result, null, 2)}`)
+      setTestResult(
+        `✅ Success! User created/retrieved: ${JSON.stringify(result, null, 2)}`
+      );
     } catch (error) {
-      console.error('🧪 [Test] Error:', error)
-      setTestResult(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('🧪 [Test] Error:', error);
+      setTestResult(
+        `❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     } finally {
-      setIsTesting(false)
+      setIsTesting(false);
     }
-  }
+  };
 
   if (!isClerkLoaded) {
     return (
@@ -65,7 +74,7 @@ function UserCreationTestComponent() {
           <p>Loading Clerk...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -76,16 +85,34 @@ function UserCreationTestComponent() {
         <div className="bg-gray-50 p-4 rounded-lg text-left">
           <h2 className="text-lg font-semibold mb-2">Current State:</h2>
           <div className="space-y-1 text-sm">
-            <p><strong>Clerk Loaded:</strong> {isClerkLoaded ? '✅' : '❌'}</p>
-            <p><strong>User ID:</strong> {userId || 'Not signed in'}</p>
-            <p><strong>Convex Authenticated:</strong> {isConvexAuthenticated ? '✅' : '❌'}</p>
-            <p><strong>Convex Loading:</strong> {isConvexLoading ? '⏳' : '✅'}</p>
+            <p>
+              <strong>Clerk Loaded:</strong> {isClerkLoaded ? '✅' : '❌'}
+            </p>
+            <p>
+              <strong>User ID:</strong> {userId || 'Not signed in'}
+            </p>
+            <p>
+              <strong>Convex Authenticated:</strong>{' '}
+              {isConvexAuthenticated ? '✅' : '❌'}
+            </p>
+            <p>
+              <strong>Convex Loading:</strong> {isConvexLoading ? '⏳' : '✅'}
+            </p>
             {user && (
               <div className="mt-2">
-                <p><strong>User Email:</strong> {user.primaryEmailAddress?.emailAddress}</p>
-                <p><strong>Username:</strong> {user.username || 'Not set'}</p>
-                <p><strong>First Name:</strong> {user.firstName || 'Not set'}</p>
-                <p><strong>Last Name:</strong> {user.lastName || 'Not set'}</p>
+                <p>
+                  <strong>User Email:</strong>{' '}
+                  {user.primaryEmailAddress?.emailAddress}
+                </p>
+                <p>
+                  <strong>Username:</strong> {user.username || 'Not set'}
+                </p>
+                <p>
+                  <strong>First Name:</strong> {user.firstName || 'Not set'}
+                </p>
+                <p>
+                  <strong>Last Name:</strong> {user.lastName || 'Not set'}
+                </p>
               </div>
             )}
           </div>
@@ -93,7 +120,9 @@ function UserCreationTestComponent() {
 
         <button
           onClick={runTest}
-          disabled={isTesting || !isClerkLoaded || !userId || !isConvexAuthenticated}
+          disabled={
+            isTesting || !isClerkLoaded || !userId || !isConvexAuthenticated
+          }
           className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isTesting ? 'Testing...' : 'Test User Creation'}
@@ -112,12 +141,12 @@ function UserCreationTestComponent() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 /**
  * Test page to debug user creation issues
  */
 export default function TestUserCreationPage() {
-  return <UserCreationTestComponent />
+  return <UserCreationTestComponent />;
 }
