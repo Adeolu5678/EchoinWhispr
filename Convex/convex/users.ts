@@ -90,6 +90,7 @@ export const searchUsers = query({
     query: v.string(),
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
+    excludeUserId: v.optional(v.id('users')),
   },
   handler: async (ctx, args) => {
     // Validate input parameters
@@ -131,14 +132,19 @@ export const searchUsers = query({
       (user, index, self) => index === self.findIndex(u => u._id === user._id)
     );
 
+    // Filter out excluded user if provided
+    const filteredResults = args.excludeUserId
+      ? uniqueResults.filter(user => user._id !== args.excludeUserId)
+      : uniqueResults;
+
     // Apply pagination
-    const paginatedResults = uniqueResults.slice(offset, offset + limit);
+    const paginatedResults = filteredResults.slice(offset, offset + limit);
 
     // Return results with metadata
     return {
       results: paginatedResults,
-      totalCount: uniqueResults.length,
-      hasMore: uniqueResults.length > offset + limit,
+      totalCount: filteredResults.length,
+      hasMore: filteredResults.length > offset + limit,
     };
   },
 });
