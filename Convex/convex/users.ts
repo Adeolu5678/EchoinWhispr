@@ -111,7 +111,7 @@ export const searchUsers = query({
       .take(limit + offset);
 
     // Search by email (case-insensitive) if no username results or need more results
-    let emailResults: any[] = [];
+    let emailResults: Doc<"users">[] = [];
     if (usernameResults.length < limit + offset) {
       emailResults = await ctx.db
         .query("users")

@@ -20,7 +20,7 @@ import {
   ERROR_CODES,
 } from '../../../lib/errors';
 import { currentUser } from '@clerk/nextjs/server';
-import type { Id } from '../../../../../Convex/convex/_generated/dataModel';
+import type { Id } from 'convex/values';
 
 /**
  * Service class for whisper operations
@@ -85,6 +85,11 @@ class WhisperService {
         throw createWhisperError(ERROR_CODES.UNAUTHORIZED);
       }
 
+      const convexUser = await convex.query(api.users.getCurrentUser);
+      if (!convexUser) {
+        throw createWhisperError(ERROR_CODES.USER_NOT_FOUND);
+      }
+
       // Fetch whispers using Convex query with retry logic
       // Note: getReceivedWhispers doesn't require userId parameter
       const whispers = await withRetry(async () => {
@@ -92,7 +97,7 @@ class WhisperService {
       });
 
       // Transform whispers to include sender information and computed fields
-      return this.transformWhispersForDisplay(whispers, user.id);
+      return this.transformWhispersForDisplay(whispers, convexUser._id);
     } catch (error) {
       const errorCode = mapConvexErrorToErrorCode(error);
       throw createWhisperError(errorCode, error);
@@ -134,7 +139,7 @@ class WhisperService {
    */
   private transformWhispersForDisplay(
     whispers: Whisper[],
-    currentUserId: string
+    currentUserId: Id<"users">
   ): WhisperWithSender[] {
     return whispers.map(whisper => {
       // Determine if this whisper belongs to the current user
