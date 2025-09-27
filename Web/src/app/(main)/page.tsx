@@ -1,3 +1,5 @@
+'use client';
+
 import { Suspense } from 'react';
 import { WhisperList } from '@/features/whispers/components/WhisperList';
 import { useWhispers } from '@/features/whispers/hooks/useWhispers';
