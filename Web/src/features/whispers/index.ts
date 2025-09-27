@@ -15,4 +15,4 @@ export {
   useReceivedWhispers,
   useMarkAsRead,
   useWhispers,
-} from './hooks/useWhispers';
+} from './hooks';

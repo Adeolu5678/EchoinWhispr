@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useUserSearch } from '@/features/users/hooks/useUserSearch';
-import type { Doc } from '../../../../../Convex/convex/_generated/dataModel';
+import { UserSearchResult } from '@/features/users/types';
 
 interface RecipientSelectorProps {
-  selectedRecipient: Doc<'users'> | null;
-  onRecipientSelect: (recipient: Doc<'users'>) => void;
+  selectedRecipient: UserSearchResult | null;
+  onRecipientSelect: (recipient: UserSearchResult) => void;
 }
 
 export const RecipientSelector = ({

@@ -25,7 +25,7 @@ export default authMiddleware({
   // Custom redirect behavior
   afterAuth(auth, req) {
     // Protected routes that require authentication
-    const protectedRoutes = ['/', '/compose', '/inbox'];
+    const protectedRoutes = ['/compose', '/inbox'];
 
     // If user is not authenticated and trying to access protected routes
     if (!auth.userId && protectedRoutes.includes(req.nextUrl.pathname)) {

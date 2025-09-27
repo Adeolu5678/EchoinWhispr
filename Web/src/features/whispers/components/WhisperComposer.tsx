@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSendWhisper } from '../hooks/useWhispers';
 import { WHISPER_LIMITS } from '../types';
 import { RecipientSelector } from './RecipientSelector';
-import type { Doc } from '../../../../../Convex/convex/_generated/dataModel';
+import { UserSearchResult } from '@/features/users/types';
 import { Users, X, Send } from 'lucide-react';
 
 interface WhisperComposerProps {
@@ -43,7 +43,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
 }) => {
   // Component state
   const [content, setContent] = useState('');
-  const [selectedUser, setSelectedUser] = useState<Doc<'users'> | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
   const { sendWhisper, isLoading, error } = useSendWhisper();
 
   /**
