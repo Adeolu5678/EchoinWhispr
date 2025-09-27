@@ -1,20 +1,20 @@
-'use client'
+'use client';
 
-import React, { useState, useCallback, useMemo } from 'react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useSendWhisper } from '../hooks/useWhispers'
-import { WHISPER_LIMITS } from '../types'
-import { RecipientSelector } from './RecipientSelector'
-import type { Doc } from '../../../../../Convex/convex/_generated/dataModel'
-import { Users, X, Send } from 'lucide-react'
+import React, { useState, useCallback, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSendWhisper } from '../hooks/useWhispers';
+import { WHISPER_LIMITS } from '../types';
+import { RecipientSelector } from './RecipientSelector';
+import type { Doc } from '../../../../../Convex/convex/_generated/dataModel';
+import { Users, X, Send } from 'lucide-react';
 
 interface WhisperComposerProps {
-  onWhisperSent?: () => void
-  placeholder?: string
-  maxLength?: number
-  className?: string
+  onWhisperSent?: () => void;
+  placeholder?: string;
+  maxLength?: number;
+  className?: string;
 }
 
 /**
@@ -42,9 +42,9 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
   className = '',
 }) => {
   // Component state
-  const [content, setContent] = useState('')
-  const [selectedUser, setSelectedUser] = useState<Doc<'users'> | null>(null)
-  const { sendWhisper, isLoading, error } = useSendWhisper()
+  const [content, setContent] = useState('');
+  const [selectedUser, setSelectedUser] = useState<Doc<'users'> | null>(null);
+  const { sendWhisper, isLoading, error } = useSendWhisper();
 
   /**
    * Handles content change with character limit validation
@@ -52,30 +52,30 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
    */
   const handleContentChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newContent = e.target.value
+      const newContent = e.target.value;
 
       // Enforce character limit
       if (newContent.length <= maxLength) {
-        setContent(newContent)
+        setContent(newContent);
       }
     },
     [maxLength]
-  )
+  );
 
   /**
    * Handles user selection from search results
    * For single recipient selection, replaces current selection
    */
   const handleUserToggle = useCallback((user: Doc<'users'>) => {
-    setSelectedUser(user)
-  }, [])
+    setSelectedUser(user);
+  }, []);
 
   /**
    * Handles user removal from selected list
    */
   const handleRemoveUser = useCallback(() => {
-    setSelectedUser(null)
-  }, [])
+    setSelectedUser(null);
+  }, []);
 
   /**
    * Handles whisper submission with validation
@@ -83,17 +83,20 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
    */
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
-      e.preventDefault()
+      e.preventDefault();
 
       // Validate content
-      const trimmedContent = content.trim()
-      if (!trimmedContent || trimmedContent.length < WHISPER_LIMITS.MIN_CONTENT_LENGTH) {
-        return
+      const trimmedContent = content.trim();
+      if (
+        !trimmedContent ||
+        trimmedContent.length < WHISPER_LIMITS.MIN_CONTENT_LENGTH
+      ) {
+        return;
       }
 
       // Validate recipients
       if (!selectedUser) {
-        return
+        return;
       }
 
       try {
@@ -101,47 +104,51 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
         await sendWhisper({
           recipientUsername: selectedUser.username,
           content: trimmedContent,
-        })
+        });
 
         // Clear content and selected user, notify parent component
-        setContent('')
-        setSelectedUser(null)
-        onWhisperSent?.()
+        setContent('');
+        setSelectedUser(null);
+        onWhisperSent?.();
       } catch (error) {
         // Error handling is managed by the hook with toast notifications
         // Additional logging for debugging purposes
-        console.error('Failed to send whisper:', error)
+        console.error('Failed to send whisper:', error);
       }
     },
     [content, selectedUser, sendWhisper, onWhisperSent]
-  )
+  );
 
   /**
    * Calculates remaining characters for display
    */
-  const remainingChars = useMemo(() => maxLength - content.length, [maxLength, content])
+  const remainingChars = useMemo(
+    () => maxLength - content.length,
+    [maxLength, content]
+  );
 
   /**
    * Determines if the send button should be disabled
    * Disabled when content is empty, no recipients selected, loading, or exceeds character limit
    */
   const isDisabled = useMemo(() => {
-    const hasValidContent = content.trim().length >= WHISPER_LIMITS.MIN_CONTENT_LENGTH
-    const hasRecipients = selectedUser !== null
-    const withinLimit = content.length <= maxLength
+    const hasValidContent =
+      content.trim().length >= WHISPER_LIMITS.MIN_CONTENT_LENGTH;
+    const hasRecipients = selectedUser !== null;
+    const withinLimit = content.length <= maxLength;
 
-    return !hasValidContent || !hasRecipients || !withinLimit || isLoading
-  }, [content, selectedUser, maxLength, isLoading])
+    return !hasValidContent || !hasRecipients || !withinLimit || isLoading;
+  }, [content, selectedUser, maxLength, isLoading]);
 
   /**
    * Determines the character count color based on remaining characters
    * Red for over limit, yellow for low remaining, gray for normal
    */
   const characterCountColor = useMemo(() => {
-    if (remainingChars < 0) return 'text-red-500'
-    if (remainingChars <= 20) return 'text-yellow-500'
-    return 'text-muted-foreground'
-  }, [remainingChars])
+    if (remainingChars < 0) return 'text-red-500';
+    if (remainingChars <= 20) return 'text-yellow-500';
+    return 'text-muted-foreground';
+  }, [remainingChars]);
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -165,9 +172,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
       {selectedUser && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              Selected Recipient
-            </CardTitle>
+            <CardTitle className="text-base">Selected Recipient</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -197,7 +202,12 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4" role="form" aria-label="Compose whisper">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            role="form"
+            aria-label="Compose whisper"
+          >
             <div className="space-y-2">
               <Textarea
                 value={content}
@@ -245,5 +255,5 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};

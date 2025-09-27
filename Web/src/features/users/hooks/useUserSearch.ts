@@ -1,22 +1,22 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useToast } from '@/hooks/use-toast'
-import { searchUsers, userSearchService } from '../services/userSearchService'
-import type { UserSearchResult, SearchFilters } from '../types'
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { searchUsers, userSearchService } from '../services/userSearchService';
+import type { UserSearchResult, SearchFilters } from '../types';
 
 /**
  * Configuration options for the useUserSearch hook
  */
 interface UseUserSearchConfig {
   /** Minimum query length before triggering search */
-  minQueryLength?: number
+  minQueryLength?: number;
   /** Debounce delay in milliseconds */
-  debounceDelay?: number
+  debounceDelay?: number;
   /** Default search limit */
-  defaultLimit?: number
+  defaultLimit?: number;
   /** Whether to enable search caching */
-  enableCache?: boolean
+  enableCache?: boolean;
 }
 
 /**
@@ -24,25 +24,25 @@ interface UseUserSearchConfig {
  */
 interface UseUserSearchReturn {
   /** Current search query */
-  query: string
+  query: string;
   /** Search results */
-  results: UserSearchResult[]
+  results: UserSearchResult[];
   /** Whether a search is currently in progress */
-  isLoading: boolean
+  isLoading: boolean;
   /** Current error state */
-  error: string | null
+  error: string | null;
   /** Whether there are more results available */
-  hasMore: boolean
+  hasMore: boolean;
   /** Total number of matching results */
-  totalCount: number
+  totalCount: number;
   /** Set the search query and trigger search */
-  setQuery: (query: string) => void
+  setQuery: (query: string) => void;
   /** Manually trigger a search */
-  search: (searchQuery: string) => Promise<void>
+  search: (searchQuery: string) => Promise<void>;
   /** Clear search results */
-  clearResults: () => void
+  clearResults: () => void;
   /** Load more results */
-  loadMore: () => Promise<void>
+  loadMore: () => Promise<void>;
 }
 
 /**
@@ -50,17 +50,17 @@ interface UseUserSearchReturn {
  */
 interface InternalSearchState {
   /** Current search query */
-  query: string
+  query: string;
   /** Search results */
-  results: UserSearchResult[]
+  results: UserSearchResult[];
   /** Whether a search is currently in progress */
-  isLoading: boolean
+  isLoading: boolean;
   /** Current error state (null if no error) */
-  error: string | null
+  error: string | null;
   /** Whether there are more results available */
-  hasMore: boolean
+  hasMore: boolean;
   /** Total number of matching results */
-  totalCount: number
+  totalCount: number;
 }
 
 /**
@@ -104,7 +104,7 @@ interface InternalSearchState {
 export const useUserSearch = (
   config: UseUserSearchConfig = {}
 ): UseUserSearchReturn => {
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   // Configuration with defaults
   const {
@@ -112,7 +112,7 @@ export const useUserSearch = (
     debounceDelay = 300,
     defaultLimit = 20,
     enableCache = true,
-  } = config
+  } = config;
 
   // Internal state
   const [searchState, setSearchState] = useState<InternalSearchState>({
@@ -122,17 +122,22 @@ export const useUserSearch = (
     error: null,
     hasMore: false,
     totalCount: 0,
-  })
+  });
 
   // Debounce timer reference
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   /**
    * Updates the search state
    */
-  const updateSearchState = useCallback((updates: Partial<InternalSearchState>) => {
-    setSearchState(prev => ({ ...prev, ...updates }))
-  }, [])
+  const updateSearchState = useCallback(
+    (updates: Partial<InternalSearchState>) => {
+      setSearchState(prev => ({ ...prev, ...updates }));
+    },
+    []
+  );
 
   /**
    * Performs the actual search operation
@@ -145,17 +150,17 @@ export const useUserSearch = (
           error: null,
           hasMore: false,
           totalCount: 0,
-        })
-        return
+        });
+        return;
       }
 
-      updateSearchState({ isLoading: true, error: null })
+      updateSearchState({ isLoading: true, error: null });
 
       try {
         const response = await searchUsers(searchQuery, {
           ...filters,
           limit: filters.limit || defaultLimit,
-        })
+        });
 
         updateSearchState({
           results: response.results,
@@ -163,12 +168,14 @@ export const useUserSearch = (
           totalCount: response.totalCount,
           isLoading: false,
           error: null,
-        })
+        });
       } catch (error) {
-        console.error('Search error:', error)
+        console.error('Search error:', error);
 
         const errorMessage =
-          error instanceof Error ? error.message : 'An error occurred while searching'
+          error instanceof Error
+            ? error.message
+            : 'An error occurred while searching';
 
         updateSearchState({
           isLoading: false,
@@ -176,18 +183,18 @@ export const useUserSearch = (
           results: [],
           hasMore: false,
           totalCount: 0,
-        })
+        });
 
         // Show toast notification for errors
         toast({
           title: 'Search Error',
           description: errorMessage,
           variant: 'destructive',
-        })
+        });
       }
     },
     [defaultLimit, updateSearchState, toast]
-  )
+  );
 
   /**
    * Debounced search function
@@ -196,35 +203,35 @@ export const useUserSearch = (
     (searchQuery: string) => {
       // Clear existing timer
       if (debounceTimer) {
-        clearTimeout(debounceTimer)
+        clearTimeout(debounceTimer);
       }
 
       // Set new timer
       const timer = setTimeout(() => {
-        performSearch(searchQuery)
-      }, debounceDelay)
+        performSearch(searchQuery);
+      }, debounceDelay);
 
-      setDebounceTimer(timer)
+      setDebounceTimer(timer);
 
       return () => {
         if (timer) {
-          clearTimeout(timer)
+          clearTimeout(timer);
         }
-      }
+      };
     },
     [debounceTimer, debounceDelay, performSearch]
-  )
+  );
 
   /**
    * Sets the search query and triggers debounced search
    */
   const setQuery = useCallback(
     (newQuery: string) => {
-      updateSearchState({ query: newQuery })
+      updateSearchState({ query: newQuery });
 
       // Only search if query meets minimum length
       if (newQuery.trim().length >= minQueryLength) {
-        debouncedSearch(newQuery)
+        debouncedSearch(newQuery);
       } else {
         // Clear results for short queries
         updateSearchState({
@@ -232,11 +239,11 @@ export const useUserSearch = (
           error: null,
           hasMore: false,
           totalCount: 0,
-        })
+        });
       }
     },
     [minQueryLength, debouncedSearch, updateSearchState]
-  )
+  );
 
   /**
    * Manually trigger a search (immediate, no debouncing)
@@ -245,14 +252,14 @@ export const useUserSearch = (
     async (searchQuery: string) => {
       // Clear any pending debounced search
       if (debounceTimer) {
-        clearTimeout(debounceTimer)
-        setDebounceTimer(null)
+        clearTimeout(debounceTimer);
+        setDebounceTimer(null);
       }
 
-      await performSearch(searchQuery)
+      await performSearch(searchQuery);
     },
     [debounceTimer, performSearch]
-  )
+  );
 
   /**
    * Clears search results and state
@@ -260,8 +267,8 @@ export const useUserSearch = (
   const clearResults = useCallback(() => {
     // Clear any pending debounced search
     if (debounceTimer) {
-      clearTimeout(debounceTimer)
-      setDebounceTimer(null)
+      clearTimeout(debounceTimer);
+      setDebounceTimer(null);
     }
 
     updateSearchState({
@@ -271,25 +278,25 @@ export const useUserSearch = (
       error: null,
       hasMore: false,
       totalCount: 0,
-    })
-  }, [debounceTimer, updateSearchState])
+    });
+  }, [debounceTimer, updateSearchState]);
 
   /**
    * Loads more search results
    */
   const loadMore = useCallback(async () => {
     if (!searchState.hasMore || searchState.isLoading) {
-      return
+      return;
     }
 
-    updateSearchState({ isLoading: true })
+    updateSearchState({ isLoading: true });
 
     try {
       const response = await searchUsers(searchState.query, {
         query: searchState.query,
         limit: defaultLimit,
         offset: searchState.results.length,
-      })
+      });
 
       updateSearchState({
         results: [...searchState.results, ...response.results],
@@ -297,25 +304,25 @@ export const useUserSearch = (
         totalCount: response.totalCount,
         isLoading: false,
         error: null,
-      })
+      });
     } catch (error) {
-      console.error('Load more error:', error)
+      console.error('Load more error:', error);
 
       const errorMessage =
-        error instanceof Error ? error.message : 'Failed to load more results'
+        error instanceof Error ? error.message : 'Failed to load more results';
 
       updateSearchState({
         isLoading: false,
         error: errorMessage,
-      })
+      });
 
       toast({
         title: 'Load More Error',
         description: errorMessage,
         variant: 'destructive',
-      })
+      });
     }
-  }, [searchState, defaultLimit, updateSearchState, toast])
+  }, [searchState, defaultLimit, updateSearchState, toast]);
 
   /**
    * Cleanup effect to clear debounce timer on unmount
@@ -323,19 +330,19 @@ export const useUserSearch = (
   useEffect(() => {
     return () => {
       if (debounceTimer) {
-        clearTimeout(debounceTimer)
+        clearTimeout(debounceTimer);
       }
-    }
-  }, [debounceTimer])
+    };
+  }, [debounceTimer]);
 
   /**
    * Configure search service based on props
    */
   useEffect(() => {
     if (!enableCache) {
-      userSearchService.clearCache()
+      userSearchService.clearCache();
     }
-  }, [enableCache])
+  }, [enableCache]);
 
   // Memoized return value to prevent unnecessary re-renders
   return useMemo(
@@ -363,5 +370,5 @@ export const useUserSearch = (
       clearResults,
       loadMore,
     ]
-  )
-}
+  );
+};

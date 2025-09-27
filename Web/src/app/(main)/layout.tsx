@@ -1,12 +1,12 @@
-import { ReactNode } from 'react'
-import { Navigation } from '@/components/Navigation'
+import { ReactNode } from 'react';
+import { Navigation } from '@/components/Navigation';
 
 /**
  * Props for the MainLayout component
  */
 interface MainLayoutProps {
   /** Child components to render within the layout */
-  children: ReactNode
+  children: ReactNode;
 }
 
 /**
@@ -39,5 +39,5 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </div>
       </main>
     </div>
-  )
+  );
 }

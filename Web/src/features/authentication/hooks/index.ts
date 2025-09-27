@@ -1,2 +1,2 @@
 // Authentication hooks exports
-export { useAuthStatus } from './useAuthStatus'
+export { useAuthStatus } from './useAuthStatus';

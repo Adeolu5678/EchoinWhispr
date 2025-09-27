@@ -1,2 +1,2 @@
 // Authentication feature exports
-export * from './hooks'
+export * from './hooks';

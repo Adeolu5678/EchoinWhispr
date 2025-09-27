@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   Toast,
@@ -7,8 +7,8 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@/components/ui/toast"
-import { useToast } from "@/hooks/use-toast"
+} from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * Toaster component that manages and displays all active toast notifications.
@@ -26,7 +26,7 @@ import { useToast } from "@/hooks/use-toast"
  * @returns JSX element containing the toast provider and viewport with all active toasts
  */
 export function Toaster(): JSX.Element {
-  const { toasts } = useToast()
+  const { toasts } = useToast();
 
   return (
     <ToastProvider>
@@ -42,9 +42,9 @@ export function Toaster(): JSX.Element {
             {action}
             <ToastClose />
           </Toast>
-        )
+        );
       })}
       <ToastViewport />
     </ToastProvider>
-  )
+  );
 }
