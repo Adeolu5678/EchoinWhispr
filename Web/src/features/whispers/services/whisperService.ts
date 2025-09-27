@@ -18,7 +18,6 @@ import {
   withRetry,
   ERROR_CODES,
 } from '../../../lib/errors';
-import { currentUser } from '@clerk/nextjs/server';
 import type { GenericId } from 'convex/values';
 
 /**
@@ -29,15 +28,13 @@ class WhisperService {
   /**
    * Sends a whisper to a recipient
    * @param request - The whisper request data
+   * @param userId - The current user's ID from Clerk
    * @returns Promise resolving to the send response
    */
-  async sendWhisper(request: SendWhisperRequest): Promise<SendWhisperResponse> {
+  async sendWhisper(request: SendWhisperRequest, userId: string): Promise<SendWhisperResponse> {
     try {
-      // Get current user ID from Clerk
-      const user = await currentUser();
-
       // Validate input
-      if (!user?.id) {
+      if (!userId) {
         throw createAppError(ERROR_CODES.UNAUTHORIZED);
       }
 
@@ -71,14 +68,12 @@ class WhisperService {
 
   /**
    * Retrieves all whispers received by the current user
+   * @param userId - The current user's ID from Clerk
    * @returns Promise resolving to array of whispers with sender information
    */
-  async getReceivedWhispers(): Promise<WhisperWithSender[]> {
+  async getReceivedWhispers(userId: string): Promise<WhisperWithSender[]> {
     try {
-      // Get current user ID from Clerk
-      const user = await currentUser();
-
-      if (!user?.id) {
+      if (!userId) {
         throw createAppError(ERROR_CODES.UNAUTHORIZED);
       }
 
@@ -109,14 +104,12 @@ class WhisperService {
   /**
    * Marks a whisper as read
    * @param whisperId - The ID of the whisper to mark as read
+   * @param userId - The current user's ID from Clerk
    * @returns Promise resolving when the operation completes
    */
-  async markWhisperAsRead(whisperId: string): Promise<void> {
+  async markWhisperAsRead(whisperId: string, userId: string): Promise<void> {
     try {
-      // Get current user ID from Clerk
-      const user = await currentUser();
-
-      if (!user?.id) {
+      if (!userId) {
         throw createAppError(ERROR_CODES.UNAUTHORIZED);
       }
 
