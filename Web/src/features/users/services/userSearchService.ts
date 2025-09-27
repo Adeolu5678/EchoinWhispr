@@ -5,6 +5,7 @@
  * Integrates with Convex backend for secure user discovery functionality.
  */
 
+import type { GenericId } from 'convex/values';
 import type {
   UserSearchResult,
   SearchFilters,
@@ -180,7 +181,7 @@ export class UserSearchService {
         lastName?: string;
         _creationTime?: number;
       }): UserSearchResult => ({
-        _id: user._id,
+        _id: user._id as GenericId<"users">,
         clerkId: user.clerkId || '',
         username: user.username,
         email: user.email,

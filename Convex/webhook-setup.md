@@ -5,6 +5,7 @@ This guide explains how to configure Clerk webhooks to sync user data with your 
 ## Overview
 
 The webhook integration handles the following Clerk events:
+
 - `user.created` - When a new user signs up
 - `user.updated` - When user profile information is updated
 - `user.deleted` - When a user account is deleted
@@ -12,11 +13,13 @@ The webhook integration handles the following Clerk events:
 ## Webhook Endpoint URL
 
 Your webhook endpoint URL should be:
+
 ```
 https://youthful-sandpiper-909.convex.cloud/actions/webhooks:clerkWebhook
 ```
 
 **Note:** This is your production deployment URL. For development, use:
+
 ```
 https://gregarious-puma-353.convex.cloud/actions/webhooks:clerkWebhook
 ```
@@ -55,6 +58,7 @@ CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret_here
 ## Testing the Integration
 
 1. Deploy your Convex functions:
+
    ```bash
    cd Convex
    npx convex deploy
@@ -94,6 +98,7 @@ CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret_here
 ### Debugging
 
 Enable debug logging by checking the Convex dashboard logs:
+
 ```bash
 npx convex dashboard
 ```
@@ -102,13 +107,13 @@ npx convex dashboard
 
 The webhook maps Clerk user data to Convex users table:
 
-| Clerk Field | Convex Field | Notes |
-|-------------|-------------|-------|
-| `id` | `clerkId` | Clerk's unique user identifier |
-| `email_addresses[0].email_address` | `email` | Primary email address |
-| `username` or generated | `username` | Username (generated from email if not provided) |
-| `first_name` | `firstName` | Optional |
-| `last_name` | `lastName` | Optional |
+| Clerk Field                        | Convex Field | Notes                                           |
+| ---------------------------------- | ------------ | ----------------------------------------------- |
+| `id`                               | `clerkId`    | Clerk's unique user identifier                  |
+| `email_addresses[0].email_address` | `email`      | Primary email address                           |
+| `username` or generated            | `username`   | Username (generated from email if not provided) |
+| `first_name`                       | `firstName`  | Optional                                        |
+| `last_name`                        | `lastName`   | Optional                                        |
 
 ## Production Deployment
 
@@ -122,6 +127,7 @@ For production deployment:
 ## Support
 
 If you encounter issues:
+
 1. Check Convex logs for detailed error messages
 2. Verify webhook configuration in Clerk Dashboard
 3. Ensure environment variables are properly set

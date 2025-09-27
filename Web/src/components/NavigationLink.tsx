@@ -59,8 +59,8 @@ export const NavigationLink = forwardRef<
             flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-colors
             ${
               isActive
-                ? 'bg-primary-700 text-inverse'
-                : 'text-inverse hover:text-inverse hover:bg-primary-700'
+                ? 'bg-primary-700 text-primary-foreground'
+                : 'text-primary-foreground hover:bg-primary-700'
             }
           `}
         aria-current={isActive ? 'page' : undefined}

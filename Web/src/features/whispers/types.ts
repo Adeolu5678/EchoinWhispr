@@ -43,31 +43,6 @@ export interface SendWhisperResponse {
 }
 
 // Hook return types for better type safety
-export interface UseWhispersReturn {
-  whispers: WhisperWithSender[];
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-}
-
-export interface UseSendWhisperReturn {
-  sendWhisper: (request: SendWhisperRequest) => Promise<SendWhisperResponse>;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface UseMarkAsReadReturn {
-  markAsRead: (whisperId: string) => Promise<void>;
-  isLoading: boolean;
-  error: string | null;
-}
-
-// Error types for whisper operations
-export interface WhisperError {
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
-}
 
 // Constants for whisper operations
 export const WHISPER_LIMITS = {

@@ -4,11 +4,12 @@ import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { Menu, X, Home, Send, Inbox } from 'lucide-react';
+import { Menu, Home, Send, Inbox } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NavigationLink } from './NavigationLink';
 import { UserMenu } from './UserMenu';
 import { MobileNavigation } from './MobileNavigation';
+import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 
 /**
  * Main navigation component for the EchoinWhispr web application.
@@ -30,14 +31,6 @@ export const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
-
-  /**
-   * Toggle mobile menu visibility
-   * Uses useCallback for performance optimization
-   */
-  const toggleMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(prev => !prev);
-  }, []);
 
   /**
    * Close mobile menu
@@ -149,29 +142,28 @@ export const Navigation = () => {
             <UserMenu user={user} />
 
             {/* Mobile menu button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden p-2"
-              onClick={toggleMobileMenu}
-              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
+            <Sheet onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="md:hidden p-2"
+                  aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="flex flex-col">
+                <MobileNavigation
+                  user={user}
+                  navigationItems={navigationItems}
+                  isActiveRoute={isActiveRoute}
+                  onClose={closeMobileMenu}
+                />
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        <MobileNavigation
-          isOpen={isMobileMenuOpen}
-          navigationItems={navigationItems}
-          isActiveRoute={isActiveRoute}
-          onClose={closeMobileMenu}
-        />
       </div>
     </nav>
   );

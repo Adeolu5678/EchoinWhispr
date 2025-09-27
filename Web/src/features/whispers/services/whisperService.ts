@@ -13,14 +13,13 @@ import {
   SendWhisperResponse,
 } from '../types';
 import {
-  createWhisperError,
+  createAppError,
   mapConvexErrorToErrorCode,
-  validateWhisperContent,
   withRetry,
   ERROR_CODES,
 } from '../../../lib/errors';
 import { currentUser } from '@clerk/nextjs/server';
-import type { Id } from 'convex/values';
+import type { GenericId } from 'convex/values';
 
 /**
  * Service class for whisper operations
@@ -34,14 +33,12 @@ class WhisperService {
    */
   async sendWhisper(request: SendWhisperRequest): Promise<SendWhisperResponse> {
     try {
-      // Validate input
-      validateWhisperContent(request.content);
-
       // Get current user ID from Clerk
       const user = await currentUser();
 
+      // Validate input
       if (!user?.id) {
-        throw createWhisperError(ERROR_CODES.UNAUTHORIZED);
+        throw createAppError(ERROR_CODES.UNAUTHORIZED);
       }
 
       // Prepare whisper data - sendWhisper expects recipientUsername string
@@ -62,13 +59,13 @@ class WhisperService {
     } catch (error) {
       // Handle specific error types
       if (error instanceof Error && 'code' in error) {
-        // Already a WhisperError
+        // Already an AppError
         throw error;
       }
 
-      // Map unknown errors to WhisperError
+      // Map unknown errors to AppError
       const errorCode = mapConvexErrorToErrorCode(error);
-      throw createWhisperError(errorCode, error);
+      throw createAppError(errorCode, error);
     }
   }
 
@@ -82,12 +79,12 @@ class WhisperService {
       const user = await currentUser();
 
       if (!user?.id) {
-        throw createWhisperError(ERROR_CODES.UNAUTHORIZED);
+        throw createAppError(ERROR_CODES.UNAUTHORIZED);
       }
 
       const convexUser = await convex.query(api.users.getCurrentUser);
       if (!convexUser) {
-        throw createWhisperError(ERROR_CODES.USER_NOT_FOUND);
+        throw createAppError(ERROR_CODES.USER_NOT_FOUND);
       }
 
       // Fetch whispers using Convex query with retry logic
@@ -97,10 +94,15 @@ class WhisperService {
       });
 
       // Transform whispers to include sender information and computed fields
-      return this.transformWhispersForDisplay(whispers, convexUser._id);
-    } catch (error) {
+      const transformedWhispers = this.transformWhispersForDisplay(
+        whispers,
+        convexUser._id
+      );
+
+      return transformedWhispers;
+     } catch (error) {
       const errorCode = mapConvexErrorToErrorCode(error);
-      throw createWhisperError(errorCode, error);
+      throw createAppError(errorCode, error);
     }
   }
 
@@ -115,18 +117,18 @@ class WhisperService {
       const user = await currentUser();
 
       if (!user?.id) {
-        throw createWhisperError(ERROR_CODES.UNAUTHORIZED);
+        throw createAppError(ERROR_CODES.UNAUTHORIZED);
       }
 
       // Mark whisper as read using Convex mutation with retry logic
       await withRetry(async () => {
         return await convex.mutation(api.whispers.markWhisperAsRead, {
-          whisperId: whisperId as Id<'whispers'>,
+          whisperId: whisperId as GenericId<'whispers'>,
         });
       });
     } catch (error) {
       const errorCode = mapConvexErrorToErrorCode(error);
-      throw createWhisperError(errorCode, error);
+      throw createAppError(errorCode, error);
     }
   }
 
@@ -139,7 +141,7 @@ class WhisperService {
    */
   private transformWhispersForDisplay(
     whispers: Whisper[],
-    currentUserId: Id<"users">
+    currentUserId: GenericId<"users">
   ): WhisperWithSender[] {
     return whispers.map(whisper => {
       // Determine if this whisper belongs to the current user

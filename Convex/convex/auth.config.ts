@@ -7,12 +7,15 @@
  * Environment variables are used instead of hardcoded values for security and flexibility.
  */
 
-import type { Auth } from "convex/server";
+import type { Auth } from 'convex/server';
 
 /**
  * Validates that required environment variables are set and normalizes the domain
  */
-function validateEnvironmentVariables(): { normalizedDomain: string; convexApplicationId: string } {
+function validateEnvironmentVariables(): {
+  normalizedDomain: string;
+  convexApplicationId: string;
+} {
   const clerkJwtIssuerDomain = process.env.CLERK_JWT_ISSUER_DOMAIN;
   const convexApplicationId = process.env.CONVEX_APPLICATION_ID;
 
@@ -34,18 +37,21 @@ function validateEnvironmentVariables(): { normalizedDomain: string; convexAppli
     const normalizedDomain = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
     return { normalizedDomain, convexApplicationId };
   } catch (error) {
-    throw new Error(`CLERK_JWT_ISSUER_DOMAIN is not a valid URL: ${clerkJwtIssuerDomain}`);
+    throw new Error(
+      `CLERK_JWT_ISSUER_DOMAIN is not a valid URL: ${clerkJwtIssuerDomain}`
+    );
   }
 }
 
-const { normalizedDomain, convexApplicationId } = validateEnvironmentVariables();
+const { normalizedDomain, convexApplicationId } =
+  validateEnvironmentVariables();
 
 const authConfig = {
   // Configure Convex to use Clerk for authentication
   providers: [
     {
       domain: normalizedDomain,
-      applicationID: "convex",
+      applicationID: 'convex',
     },
   ],
 };

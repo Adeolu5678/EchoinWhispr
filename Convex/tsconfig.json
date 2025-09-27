@@ -18,12 +18,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": [
-    "convex/**/*",
-    "*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    ".convex"
-  ]
+  "include": ["convex/**/*", "*.ts"],
+  "exclude": ["node_modules", ".convex"]
 }
