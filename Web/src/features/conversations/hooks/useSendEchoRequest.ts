@@ -5,7 +5,7 @@ import { useCallback } from 'react';
  *
  * @returns Object containing the sendEchoRequest function and loading state.
  */
-export const useSendEchoRequest = () => {
+export const useSendEchoRequest = (): { sendEchoRequest: (whisperId: string) => Promise<void>, isLoading: boolean } => {
   /**
    * Placeholder function for sending echo requests.
    * Currently does nothing since CONVERSATION_EVOLUTION is disabled.
