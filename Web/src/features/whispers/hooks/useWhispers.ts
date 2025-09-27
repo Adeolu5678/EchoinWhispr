@@ -11,9 +11,8 @@ import {
   WhisperWithSender,
   SendWhisperRequest,
   SendWhisperResponse,
-  WhisperError,
 } from '../types';
-import { ERROR_CODES } from '../../../lib/errors';
+import { ERROR_CODES, AppError } from '../../../lib/errors';
 import { useToast } from '../../../hooks/use-toast';
 
 /**
@@ -22,7 +21,7 @@ import { useToast } from '../../../hooks/use-toast';
  */
 export function useSendWhisper() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<WhisperError | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
   const { toast } = useToast();
 
   /**
@@ -46,7 +45,7 @@ export function useSendWhisper() {
 
         return result;
       } catch (err) {
-        const whisperError = err as WhisperError;
+        const whisperError = err as AppError;
         setError(whisperError);
 
         // Show error toast
@@ -80,7 +79,7 @@ export function useSendWhisper() {
 export function useReceivedWhispers() {
   const [whispers, setWhispers] = useState<WhisperWithSender[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<WhisperError | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
   const { toast } = useToast();
 
   /**
@@ -94,7 +93,7 @@ export function useReceivedWhispers() {
       const fetchedWhispers = await whisperService.getReceivedWhispers();
       setWhispers(fetchedWhispers);
     } catch (err) {
-      const whisperError = err as WhisperError;
+      const whisperError = err as AppError;
       setError(whisperError);
 
       // Only show toast for non-auth errors
@@ -142,7 +141,7 @@ export function useReceivedWhispers() {
  */
 export function useMarkAsRead() {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<WhisperError | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
   const { toast } = useToast();
 
   /**
@@ -163,7 +162,7 @@ export function useMarkAsRead() {
           description: 'The whisper has been marked as read.',
         });
       } catch (err) {
-        const whisperError = err as WhisperError;
+        const whisperError = err as AppError;
         setError(whisperError);
 
         toast({

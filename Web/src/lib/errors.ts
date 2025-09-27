@@ -3,7 +3,12 @@
  * Provides consistent error types and user-friendly error messages
  */
 
-import { WhisperError } from '../features/whispers/types';
+// Error interface for application-wide errors
+export interface AppError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
 
 // Error codes for different types of failures
 export const ERROR_CODES = {
@@ -29,6 +34,9 @@ export const ERROR_CODES = {
   RECIPIENT_NOT_FOUND: 'RECIPIENT_NOT_FOUND',
   WHISPER_SEND_FAILED: 'WHISPER_SEND_FAILED',
   WHISPER_MARK_READ_FAILED: 'WHISPER_MARK_READ_FAILED',
+
+  // User errors
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
 
   // Generic errors
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
@@ -67,6 +75,8 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.WHISPER_MARK_READ_FAILED]:
     'Failed to mark whisper as read. Please try again.',
 
+  [ERROR_CODES.USER_NOT_FOUND]: 'User not found.',
+
   [ERROR_CODES.UNKNOWN_ERROR]:
     'An unexpected error occurred. Please try again.',
   [ERROR_CODES.RETRY_FAILED]:
@@ -80,17 +90,17 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
  * @param customMessage - Custom error message to override default (optional)
  * @returns WhisperError object
  */
-export function createWhisperError(
+export function createAppError(
   code: ErrorCode,
   originalError?: unknown,
   customMessage?: string
-): WhisperError {
+): AppError {
   const message =
     customMessage ||
     ERROR_MESSAGES[code] ||
     ERROR_MESSAGES[ERROR_CODES.UNKNOWN_ERROR];
 
-  const error: WhisperError = {
+  const error: AppError = {
     code,
     message,
     details: originalError
@@ -100,7 +110,7 @@ export function createWhisperError(
 
   // Log error for debugging in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('WhisperError:', error, originalError);
+    console.error('AppError:', error, originalError);
   }
 
   return error;
@@ -169,7 +179,7 @@ export function mapConvexErrorToErrorCode(error: unknown): ErrorCode {
  * @param error - The error to check
  * @returns True if the error can be retried
  */
-export function isRetryableError(error: WhisperError): boolean {
+export function isRetryableError(error: AppError): boolean {
   const retryableCodes: ErrorCode[] = [
     ERROR_CODES.NETWORK_ERROR,
     ERROR_CODES.TIMEOUT_ERROR,
@@ -210,7 +220,7 @@ export async function withRetry<T>(
     }
   }
 
-  throw createWhisperError(ERROR_CODES.RETRY_FAILED, lastError);
+  throw createAppError(ERROR_CODES.RETRY_FAILED, lastError);
 }
 
 /**
@@ -222,11 +232,11 @@ export function validateWhisperContent(content: string): boolean {
   const trimmedContent = content.trim();
 
   if (trimmedContent.length < 1) {
-    throw createWhisperError(ERROR_CODES.CONTENT_TOO_SHORT);
+    throw createAppError(ERROR_CODES.CONTENT_TOO_SHORT);
   }
 
   if (trimmedContent.length > 280) {
-    throw createWhisperError(ERROR_CODES.CONTENT_TOO_LONG);
+    throw createAppError(ERROR_CODES.CONTENT_TOO_LONG);
   }
 
   return true;

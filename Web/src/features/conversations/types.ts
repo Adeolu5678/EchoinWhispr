@@ -1,4 +1,4 @@
-import type { Id } from 'convex/values';
+import type { GenericId } from 'convex/values';
 
 /**
  * Type definitions for the Conversation Evolution feature.
@@ -17,10 +17,10 @@ export type ConversationStatus = 'initiated' | 'active' | 'closed';
  * Using string types for MVP foundation since Id types are generated.
  */
 export interface EchoRequest {
-  _id: Id<"echoRequests">;
-  conversationId: Id<"conversations">;
-  requesterId: Id<"users">;
-  targetId: Id<"users">;
+  _id: GenericId<"echoRequests">;
+  conversationId: GenericId<"conversations">;
+  requesterId: GenericId<"users">;
+  targetId: GenericId<"users">;
   status: 'pending' | 'accepted' | 'rejected';
   createdAt: number;
   respondedAt?: number;
