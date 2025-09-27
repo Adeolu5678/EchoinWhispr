@@ -48,6 +48,8 @@ export class ClerkErrorBoundary extends Component<
   ClerkErrorBoundaryProps,
   ClerkErrorBoundaryState
 > {
+  private retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
   constructor(props: ClerkErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -171,6 +173,11 @@ export class ClerkErrorBoundary extends Component<
     const { retryCount } = this.state;
     if (retryCount >= 3) return;
 
+    // Clear any existing timeout before scheduling a new one
+    if (this.retryTimeoutId) {
+      clearTimeout(this.retryTimeoutId);
+    }
+
     // Implement exponential backoff for retries
     const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
 
@@ -178,7 +185,7 @@ export class ClerkErrorBoundary extends Component<
       `🔄 Retrying Clerk authentication (attempt ${retryCount + 1})...`
     );
 
-    setTimeout(() => {
+    this.retryTimeoutId = setTimeout(() => {
       this.setState(prevState => ({
         hasError: false,
         error: undefined,
@@ -186,6 +193,8 @@ export class ClerkErrorBoundary extends Component<
         retryCount: prevState.retryCount + 1,
         showTechnicalDetails: false,
       }));
+      // Clear the timeout ID after execution
+      this.retryTimeoutId = null;
     }, delay);
   };
 
@@ -197,6 +206,13 @@ export class ClerkErrorBoundary extends Component<
       showTechnicalDetails: !prevState.showTechnicalDetails,
     }));
   };
+
+  componentWillUnmount() {
+    // Clear any pending timeout to prevent memory leaks
+    if (this.retryTimeoutId) {
+      clearTimeout(this.retryTimeoutId);
+    }
+  }
 
   render() {
     const { hasError, error, retryCount, showTechnicalDetails } = this.state;
