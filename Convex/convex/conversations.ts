@@ -1,65 +1,61 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
 
 /**
- * Send an echo request to initiate conversation evolution.
- * Recipients can send echo requests from whisper cards with optional message (max 280 chars).
- * Creates a conversation record with status 'pending'.
+ * Initiate a conversation from a whisper.
+ * This creates a conversation record with status 'initiated'.
  */
-export const sendEchoRequest = mutation({
+export const initiateConversation = mutation({
   args: {
-    whisperId: v.id("whispers"),
-    message: v.optional(v.string()),
+    whisperId: v.id('whispers'),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Unauthorized: User must be authenticated");
-    }
-
-    // Validate message length if provided
-    if (args.message && args.message.length > 280) {
-      throw new Error("Message must be 280 characters or less");
+      throw new Error('Unauthorized: User must be authenticated');
     }
 
     // Get the user
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
     if (!user) {
-      throw new Error("User not found");
+      throw new Error('User not found');
     }
 
     // Get the whisper to ensure it exists and user is the recipient
     const whisper = await ctx.db.get(args.whisperId);
     if (!whisper) {
-      throw new Error("Whisper not found");
+      throw new Error('Whisper not found');
     }
 
     if (whisper.recipientId !== user._id) {
-      throw new Error("Unauthorized: Only the recipient can send echo requests");
+      throw new Error(
+        'Unauthorized: Only the recipient can initiate a conversation'
+      );
     }
 
-    // Check if echo request already exists for this whisper
-    const existingRequest = await ctx.db
-      .query("conversations")
-      .withIndex("by_whisper", (q) => q.eq("whisperId", args.whisperId))
+    // Check if a conversation already exists for this whisper
+    const existingConversation = await ctx.db
+      .query('conversations')
+      .withIndex('by_initial_whisper', q => q.eq('initialWhisperId', args.whisperId))
       .first();
 
-    if (existingRequest) {
-      throw new Error("Echo request already exists for this whisper");
+    if (existingConversation) {
+      throw new Error('Conversation already exists for this whisper');
     }
 
-    // Create the echo request
-    const conversationId = await ctx.db.insert("conversations", {
-      senderId: whisper.recipientId, // The recipient becomes the sender of the echo
-      recipientId: whisper.senderId, // The original sender becomes the recipient
-      whisperId: args.whisperId,
-      status: "pending",
-      message: args.message || undefined,
-      createdAt: Date.now(),
+    const now = Date.now();
+
+    // Create the conversation
+    const conversationId = await ctx.db.insert('conversations', {
+      participantIds: [whisper.senderId, whisper.recipientId],
+      initialWhisperId: args.whisperId,
+      status: 'initiated',
+      createdAt: now,
+      updatedAt: now,
     });
 
     return conversationId;
@@ -67,171 +63,61 @@ export const sendEchoRequest = mutation({
 });
 
 /**
- * Accept an echo request to reveal identities and start conversation.
- * Senders can accept echo requests, which sets status to 'accepted' and records acceptedAt.
+ * Get initiated conversations for the current user.
  */
-export const acceptEchoRequest = mutation({
-  args: {
-    conversationId: v.id("conversations"),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized: User must be authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Get the conversation
-    const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
-    // Only the recipient (original whisper sender) can accept
-    if (conversation.recipientId !== user._id) {
-      throw new Error("Unauthorized: Only the recipient can accept echo requests");
-    }
-
-    // Must be pending
-    if (conversation.status !== "pending") {
-      throw new Error("Echo request is not pending");
-    }
-
-    // Update to accepted
-    await ctx.db.patch(args.conversationId, {
-      status: "accepted",
-      acceptedAt: Date.now(),
-    });
-
-    return args.conversationId;
-  },
-});
-
-/**
- * Reject an echo request to decline conversation evolution.
- * Senders can reject echo requests, which sets status to 'rejected'.
- */
-export const rejectEchoRequest = mutation({
-  args: {
-    conversationId: v.id("conversations"),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Unauthorized: User must be authenticated");
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Get the conversation
-    const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
-    // Only the recipient (original whisper sender) can reject
-    if (conversation.recipientId !== user._id) {
-      throw new Error("Unauthorized: Only the recipient can reject echo requests");
-    }
-
-    // Must be pending
-    if (conversation.status !== "pending") {
-      throw new Error("Echo request is not pending");
-    }
-
-    // Update to rejected
-    await ctx.db.patch(args.conversationId, {
-      status: "rejected",
-    });
-
-    return args.conversationId;
-  },
-});
-
-/**
- * Get pending echo requests for the current user.
- * Returns echo requests where the user is the recipient (original whisper sender).
- */
-export const getEchoRequests = query({
+export const getInitiatedConversations = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       return [];
     }
 
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
     if (!user) {
       return [];
     }
 
-    // Get pending echo requests where user is the recipient
-    const requests = await ctx.db
-      .query("conversations")
-      .withIndex("by_recipient_status", (q) =>
-        q.eq("recipientId", user._id).eq("status", "pending")
-      )
-      .collect();
-
-    return requests;
-  },
-});
-
-/**
- * Get accepted conversations for the current user.
- * Returns conversations where the user is a participant and status is 'accepted'.
- */
-export const getConversations = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return [];
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-      .first();
-
-    if (!user) {
-      return [];
-    }
-
-    // Get accepted conversations where user is sender or recipient
+    // Get initiated conversations where user is a participant
     const conversations = await ctx.db
-      .query("conversations")
-      .withIndex("by_sender_status", (q) =>
-        q.eq("senderId", user._id).eq("status", "accepted")
-      )
+      .query('conversations')
+      .filter(q => q.eq(q.field('status'), 'initiated'))
       .collect();
 
-    const conversationsAsRecipient = await ctx.db
-      .query("conversations")
-      .withIndex("by_recipient_status", (q) =>
-        q.eq("recipientId", user._id).eq("status", "accepted")
-      )
+    return conversations.filter(c => c.participantIds.includes(user._id));
+  },
+});
+
+/**
+ * Get active conversations for the current user.
+ */
+export const getActiveConversations = query({
+  args: {},
+  handler: async ctx => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    // Get active conversations where user is a participant
+    const conversations = await ctx.db
+      .query('conversations')
+      .filter(q => q.eq(q.field('status'), 'active'))
       .collect();
 
-    return [...conversations, ...conversationsAsRecipient];
+    return conversations.filter(c => c.participantIds.includes(user._id));
   },
 });

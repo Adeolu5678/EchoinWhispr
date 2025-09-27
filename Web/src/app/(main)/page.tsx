@@ -76,7 +76,7 @@ export default function HomePage() {
  * Separated for better error boundary isolation and suspense handling.
  */
 function WhisperListContent() {
-  const { isLoadingWhispers, whispersError, refetchWhispers } = useWhispers();
+  const { isLoadingWhispers, whispersError, refetchWhispers, markAsRead } = useWhispers();
 
   // Show loading state
   if (isLoadingWhispers) {
@@ -120,5 +120,5 @@ function WhisperListContent() {
   }
 
   // Show whispers list (handles empty state internally)
-  return <WhisperList />;
+  return <WhisperList showMarkAsRead onWhisperMarkAsRead={markAsRead} />;
 }

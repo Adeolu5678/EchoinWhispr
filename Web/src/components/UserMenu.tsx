@@ -130,7 +130,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center space-x-2 px-2 py-2 h-auto bg-primary-600 hover:bg-primary-700 text-inverse"
+          className="flex items-center space-x-2 px-2 py-2 h-auto"
           aria-label="User menu"
         >
           <Avatar className="h-8 w-8">
