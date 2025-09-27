@@ -221,7 +221,7 @@ export const WhisperList: React.FC<WhisperListProps> = React.memo(
 
         <div className="space-y-4" role="list" aria-label="Whispers list">
           {whispers.map(whisper => (
-            <div key={whisper._id} role="listitem">
+            <div key={whisper._id.toString()} role="listitem">
               <WhisperCard
                 whisper={whisper}
                 showMarkAsRead={showMarkAsRead}
