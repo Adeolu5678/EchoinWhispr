@@ -58,8 +58,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate pagination parameters
-    const parsedLimit = Math.min(Math.max(1, limit), 50); // 1-50
-    const parsedOffset = Math.max(0, offset);
+    const parsedLimit = Number(limit);
+    let parsedOffset = Number(offset);
+
+    if (!Number.isFinite(parsedLimit) || !Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 50) {
+      return NextResponse.json(
+        { error: 'Limit must be an integer between 1 and 50' },
+        { status: 400 }
+      );
+    }
+
+    if (!Number.isFinite(parsedOffset) || parsedOffset < 0) {
+      return NextResponse.json(
+        { error: 'Offset must be a non-negative number' },
+        { status: 400 }
+      );
+    }
+
+    parsedOffset = Math.floor(parsedOffset);
 
     // Initialize Convex client
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
