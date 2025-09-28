@@ -71,52 +71,55 @@ export function UsernamePickerModal({
 
   /**
    * Handle username input changes
-   * Updates local state and triggers validation
-   */
-  const handleUsernameChange = (value: string) => {
-    setUsername(value);
-    validateUsername(value);
-  };
+    * Updates local state and triggers validation
+    */
+   const handleUsernameChange = (value: string) => {
+     const normalizedValue = value.toLowerCase();
+     setUsername(normalizedValue);
+     validateUsername(normalizedValue);
+   };
 
   /**
    * Handle form submission
-   * Updates the user's username in the database
-   */
-  const handleSubmit = async () => {
-    if (!isValid || !user || !username.trim()) {
-      return;
-    }
+    * Updates the user's username in the database
+    */
+   const handleSubmit = async () => {
+     const normalizedUsername = username.trim().toLowerCase();
 
-    try {
-      setIsSubmitting(true);
+     if (!isValid || !user || !normalizedUsername) {
+       return;
+     }
 
-      // Update user username
-      await updateUsername({
-        username: username.trim(),
-      });
+     try {
+       setIsSubmitting(true);
 
-      toast({
-        title: 'Username set successfully!',
-        description: `Welcome to EchoinWhispr, @${username}!`,
-      });
+       // Update user username
+       await updateUsername({
+         username: normalizedUsername,
+       });
 
-      // Call success callback if provided
-      onSuccess?.();
+       toast({
+         title: 'Username set successfully!',
+         description: `Welcome to EchoinWhispr, @${normalizedUsername}!`,
+       });
 
-      // Close modal
-      handleClose();
-    } catch (error) {
-      console.error('Error updating username:', error);
-      toast({
-        title: 'Error setting username',
-        description:
-          'There was an issue setting your username. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+       // Call success callback if provided
+       onSuccess?.();
+
+       // Close modal
+       handleClose();
+     } catch (error) {
+       console.error('Error updating username:', error);
+       toast({
+         title: 'Error setting username',
+         description:
+           'There was an issue setting your username. Please try again.',
+         variant: 'destructive',
+       });
+     } finally {
+       setIsSubmitting(false);
+     }
+   };
 
   /**
    * Handle modal close
