@@ -5,10 +5,9 @@
  * Includes Next.js specific optimizations and web-only utilities.
  */
 
-import type { Config } from 'tailwindcss';
-import baseConfig from '../design-system/tailwind.config';
+const baseConfig = require('../design-system/tailwind.config');
 
-const webConfig: Config = {
+const webConfig = {
   ...baseConfig,
 
   // Web-specific content paths
@@ -80,7 +79,7 @@ const webConfig: Config = {
     // require('@tailwindcss/container-queries'),
 
     // Custom web-specific utilities
-    function ({ addUtilities, theme }: any) {
+    function ({ addUtilities, theme }) {
       const webUtilities = {
         // Web-specific focus styles
         '.focus-visible-ring': {
@@ -129,4 +128,4 @@ const webConfig: Config = {
   ],
 };
 
-export default webConfig;
+module.exports = webConfig;
