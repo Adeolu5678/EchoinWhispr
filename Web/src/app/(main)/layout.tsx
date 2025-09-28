@@ -10,21 +10,12 @@ interface MainLayoutProps {
 }
 
 /**
- * Main application layout for authenticated users.
+ * Layout wrapper for authenticated pages that provides the main navigation and a centered, padded content area.
  *
- * This layout provides the structure for all authenticated pages in the application,
- * including the main navigation header and proper layout structure. It ensures
- * consistent navigation and layout across all main application pages.
+ * Renders the top navigation and a responsive container that constrains width and applies horizontal and vertical padding for the page content.
  *
- * Features:
- * - Main navigation header for authenticated users
- * - Proper layout structure with consistent spacing
- * - Responsive design that works on all screen sizes
- * - Integration with Clerk authentication for user state
- * - Clean, minimal design following project guidelines
- *
- * @param props - The component props
- * @returns {JSX.Element} The rendered main layout
+ * @param children - Content to be rendered inside the layout's main content area
+ * @returns The layout element containing the navigation and the provided children
  */
 export default function MainLayout({ children }: MainLayoutProps) {
   return (

@@ -72,12 +72,20 @@ export interface UseAuthStatusReturn {
 const MAX_RETRY_ATTEMPTS = 3
 
 /**
- * Custom hook for managing authentication status and user information
- * Uses a state machine pattern to prevent circular dependencies and infinite re-renders
- * Provides unified access to Clerk and Convex authentication state
- * Automatically creates user in Convex when authenticated with Clerk
+ * Manages authentication and user state across Clerk and Convex.
  *
- * @returns Object containing authentication state, user data, and actions
+ * Coordinates Clerk sign-in state with Convex user provisioning, exposes derived
+ * authentication flags, the current user shape, retry and error status for Convex
+ * provisioning, controls for a username selection flow, and actions for signing out
+ * and resetting retry state.
+ *
+ * @returns An object containing:
+ * - Authentication flags: `isAuthenticated`, `isLoading`, `isSignedIn`, `isConvexAuthenticated`
+ * - User data: `user`
+ * - Creation/status: `isProcessing`, `isCreatingUser`, `userCreationError`, `retryCount`
+ * - Username picker controls: `isUsernameSelectionOpen`, `showUsernamePicker`, `hideUsernamePicker`, `onUsernameSelected`
+ * - Actions: `signOut`, `resetRetryState`
+ * - Raw values: `clerkUser`, `isClerkLoaded`, `isConvexLoading`
  */
 export function useAuthStatus(): UseAuthStatusReturn {
   // Clerk authentication state

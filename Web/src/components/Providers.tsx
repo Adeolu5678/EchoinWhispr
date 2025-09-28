@@ -8,7 +8,11 @@ import { Toaster } from '@/components/ui/toaster';
 import { ClerkErrorBoundary } from '@/components/ClerkErrorBoundary';
 
 /**
- * Validates that the Clerk publishable key environment variable is set
+ * Retrieve and validate the Clerk publishable key from environment variables.
+ *
+ * @returns The validated publishable key (a string that starts with `pk_`).
+ * @throws Error if `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is not set.
+ * @throws Error if the publishable key does not start with `pk_`.
  */
 function validateClerkPublishableKey(): string {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -40,6 +44,14 @@ interface ProvidersProps {
   children: ReactNode;
 }
 
+/**
+ * Wraps application UI with authentication and data providers, initializing Clerk and Convex.
+ *
+ * Renders a centered error message if the Clerk publishable key cannot be validated; otherwise returns the children wrapped with ClerkErrorBoundary, ClerkProvider (configured for sign-in/up navigation), ConvexProviderWithClerk (wired to Clerk auth and the Convex client), and a Toaster.
+ *
+ * @param children - React nodes to render inside the configured providers
+ * @returns A React element containing either the provider-wrapped children or an initialization error UI
+ */
 export function Providers({ children }: ProvidersProps) {
   const clerkPublishableKey = useMemo(() => {
     try {

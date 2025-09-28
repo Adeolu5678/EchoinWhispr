@@ -1,5 +1,10 @@
 import { View, Text, StyleSheet } from 'react-native';
 
+/**
+ * Renders the app's Home screen with title and subtitle text.
+ *
+ * @returns The root JSX element containing the Home screen layout.
+ */
 export default function HomeScreen() {
   return (
     <View style={styles.container}>

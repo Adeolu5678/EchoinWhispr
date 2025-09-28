@@ -7,7 +7,11 @@ import { ReactNode, useMemo } from 'react';
 import convex from '../lib/convex';
 
 /**
- * Validates that the Clerk publishable key environment variable is set
+ * Retrieve and validate the Clerk publishable key from environment variables.
+ *
+ * @returns The publishable key from `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+ * @throws Error if `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` is not set.
+ * @throws Error if the publishable key does not start with `"pk_"`.
  */
 function validateClerkPublishableKey(): string {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -39,6 +43,12 @@ interface ProvidersProps {
   children: ReactNode;
 }
 
+/**
+ * Wraps the app `children` with Clerk authentication and Convex context providers.
+ *
+ * @param children - The React nodes to render inside the provider hierarchy
+ * @returns A React element that renders `children` wrapped with ClerkProvider and ConvexProviderWithClerk
+ */
 export function Providers({ children }: ProvidersProps) {
   const publishableKey = useMemo(() => validateClerkPublishableKey(), []);
 

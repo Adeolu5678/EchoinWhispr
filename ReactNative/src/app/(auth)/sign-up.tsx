@@ -1,5 +1,10 @@
 import { View, Text, StyleSheet } from 'react-native';
 
+/**
+ * Renders a simple sign-up screen placeholder showing a title and subtitle.
+ *
+ * @returns The root React element containing a container View with a title Text ("Sign Up") and subtitle Text ("Sign up screen placeholder").
+ */
 export default function SignUpScreen() {
   return (
     <View style={styles.container}>

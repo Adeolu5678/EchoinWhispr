@@ -3,7 +3,12 @@
 import { useAuth } from '@clerk/nextjs';
 
 /**
- * Simple test component to verify Clerk initialization
+ * Render a centered test UI that verifies Clerk initialization and displays user status.
+ *
+ * Shows a spinner and "Loading Clerk..." while Clerk is initializing. Once loaded,
+ * displays whether Clerk is loaded and the current user ID or "Not signed in".
+ *
+ * @returns A React element that shows a loading state until Clerk is initialized, then displays Clerk load status and the current user ID.
  */
 function ClerkTestComponent() {
   const { isLoaded, userId } = useAuth();

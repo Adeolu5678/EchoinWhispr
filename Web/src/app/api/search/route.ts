@@ -5,10 +5,12 @@ import { api } from '../../../../../Convex/convex/_generated/api';
 import { auth } from '@clerk/nextjs/server';
 
 /**
- * POST /api/search
+ * Handle authenticated user search requests and return matching users.
  *
- * Handles user search requests for the compose page.
- * Searches for users by username or email with authentication and validation.
+ * Validates the search query and pagination parameters, verifies the caller via Clerk,
+ * queries Convex for the current user and performs a user search excluding the requester.
+ *
+ * @returns A JSON response with the matched users array on success; an error object and an appropriate HTTP status on failure.
  */
 export async function POST(request: NextRequest) {
   try {

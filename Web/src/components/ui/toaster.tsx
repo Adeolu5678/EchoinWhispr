@@ -11,19 +11,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 /**
- * Toaster component that manages and displays all active toast notifications.
+ * Renders active toast notifications provided by `useToast` inside a toast provider and viewport.
  *
- * This component provides the toast context and renders all currently active toasts
- * in a designated viewport. It should be placed at the root level of the application
- * to ensure toasts can be displayed from anywhere in the component tree.
+ * Each toast is rendered with its title, description, optional action element, and a close button.
  *
- * The toaster automatically handles:
- * - Toast positioning and stacking
- * - Auto-dismissal after the configured timeout
- * - Manual dismissal via close button
- * - Toast animations and transitions
- *
- * @returns JSX element containing the toast provider and viewport with all active toasts
+ * @returns The root JSX element containing the toast provider and viewport with all active toasts
  */
 export function Toaster(): JSX.Element {
   const { toasts } = useToast();

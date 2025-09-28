@@ -7,7 +7,11 @@ import { api } from '@/lib/convex';
 import { useState } from 'react';
 
 /**
- * Test component to debug user creation in Convex
+ * UI component that provides controls and diagnostics to test creating or retrieving the current user in Convex using Clerk authentication.
+ *
+ * Renders the current Clerk and Convex authentication state, a button that invokes the server-side `getOrCreateCurrentUser` mutation, and a panel showing the test result. The test action logs detailed debug information to the browser console and disables the button until Clerk is loaded, a Clerk user ID is present, and Convex is authenticated.
+ *
+ * @returns A React element containing the test UI: current state display, a "Test User Creation" button (disabled when prerequisites are not met or a test is running), and a test result output area.
  */
 function UserCreationTestComponent() {
   const { isLoaded: isClerkLoaded, user } = useUser();
@@ -145,7 +149,11 @@ function UserCreationTestComponent() {
 }
 
 /**
- * Test page to debug user creation issues
+ * Page that renders the user-creation test UI for debugging Clerk and Convex integration.
+ *
+ * Renders the UserCreationTestComponent which exposes controls and logs to diagnose user creation flow.
+ *
+ * @returns The page element that displays the user creation test interface.
  */
 export default function TestUserCreationPage() {
   return <UserCreationTestComponent />;

@@ -5,6 +5,13 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Render the application's homepage and its conditional authentication states.
+ *
+ * Renders a loading screen while auth is initializing, an account-setup error UI if account creation failed, a landing page for unauthenticated visitors, or the authenticated inbox UI with header, welcome message, and sign-out control.
+ *
+ * @returns The homepage JSX element representing the current authentication state UI.
+ */
 export default function Home(): JSX.Element {
   const {
     isAuthenticated,

@@ -2,8 +2,11 @@ import { ConvexReactClient } from 'convex/react';
 import { api } from '../../../Convex/convex/_generated/api';
 
 /**
- * Validates that the Convex URL environment variable is set and is an absolute URL
- * Enhanced with diagnostic logging for debugging purposes
+ * Validate that NEXT_PUBLIC_CONVEX_URL is set and is an absolute HTTP or HTTPS URL.
+ *
+ * @returns The Convex URL string read from `NEXT_PUBLIC_CONVEX_URL`.
+ * @throws Error if `NEXT_PUBLIC_CONVEX_URL` is not set.
+ * @throws Error if `NEXT_PUBLIC_CONVEX_URL` is not an absolute URL starting with `http://` or `https://`.
  */
 function validateConvexUrl(): string {
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -35,7 +38,10 @@ function validateConvexUrl(): string {
 }
 
 /**
- * Creates and configures the Convex client with diagnostic logging
+ * Create a ConvexReactClient configured from the NEXT_PUBLIC_CONVEX_URL environment variable.
+ *
+ * @returns The constructed ConvexReactClient instance.
+ * @throws Rethrows the original error if client creation fails; an error is logged to the console before rethrowing.
  */
 function createConvexClient(): ConvexReactClient {
   try {

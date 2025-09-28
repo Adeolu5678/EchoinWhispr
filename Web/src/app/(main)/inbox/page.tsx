@@ -7,7 +7,9 @@ import { useWhispers } from '@/features/whispers/hooks/useWhispers';
 export const dynamic = 'force-dynamic';
 
 /**
- * Loading skeleton component for the inbox page
+ * Renders a visual loading skeleton for the inbox page layout.
+ *
+ * @returns A JSX element that displays placeholder UI for the inbox header and list while content is loading.
  */
 function InboxPageSkeleton() {
   return (
@@ -38,22 +40,12 @@ function InboxPageSkeleton() {
 }
 
 /**
- * Inbox page component for authenticated users.
+ * Render the inbox page for authenticated users, showing received whispers and controls to manage them.
  *
- * This page displays all whispers that have been sent to the current user.
- * It provides a clean interface for viewing received messages with the ability
- * to mark them as read and manage the inbox.
+ * Displays a page header, controls for unread count and refresh, a content area that loads whispers and
+ * presents loading, error, or empty states, and a tips panel with inbox guidance.
  *
- * Features:
- * - Display all received whispers in chronological order
- * - Mark whispers as read/unread functionality
- * - Real-time updates when new whispers arrive
- * - Responsive design that works on all screen sizes
- * - Loading states and error handling
- * - Performance optimizations with React Suspense
- * - Empty state when no whispers have been received
- *
- * @returns {JSX.Element} The rendered inbox page
+ * @returns The rendered inbox page element
  */
 export default function InboxPage() {
   return (
@@ -140,7 +132,9 @@ function UnreadCountBadge() {
 }
 
 /**
- * Component for the refresh button
+ * Renders a "Refresh" button that triggers refetching whispers and visualizes loading state.
+ *
+ * @returns The button element which calls `refetchWhispers` when clicked; displays a spinner and "Refreshing..." while `isLoadingWhispers` is true and is disabled during loading.
  */
 function RefreshButton() {
   const { refetchWhispers, isLoadingWhispers } = useWhispers();
@@ -193,8 +187,12 @@ function RefreshButton() {
 }
 
 /**
- * Content component that handles the inbox logic.
- * Separated for better error boundary isolation and suspense handling.
+ * Renders the inbox content and switches between loading, error, empty, and list states.
+ *
+ * Displays a skeleton while whispers are loading, an error view with retry when loading fails,
+ * an empty-state view with retry when there are no whispers, and the WhisperList when whispers exist.
+ *
+ * @returns The inbox content UI corresponding to the current whispers state.
  */
 function InboxContent() {
   const {

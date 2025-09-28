@@ -54,7 +54,13 @@ export const clerkWebhook = action({
   },
 });
 
-// Verify webhook signature using Clerk's signing secret
+/**
+ * Verify a Clerk webhook by validating Svix signatures and return the parsed event.
+ *
+ * @param body - The raw request body used for signature verification
+ * @param headers - Request headers expected to include `svix-id`, `svix-timestamp`, and `svix-signature`
+ * @returns The verified `WebhookEvent` when the webhook secret is configured and the Svix headers and signature are valid, `null` otherwise
+ */
 async function verifyWebhookSignature(
   body: string,
   headers: Record<string, string | string[] | undefined>
@@ -88,7 +94,14 @@ async function verifyWebhookSignature(
   }
 }
 
-// Handle user creation event
+/**
+ * Create or update an application user from Clerk 'user.created' webhook data.
+ *
+ * If the Clerk payload lacks a primary email address the function logs an error and returns without creating a user.
+ *
+ * @param userData - Clerk user payload (contains `id`, `email_addresses`, `first_name`, `last_name`, `username`) from the webhook event
+ * @throws Rethrows any error encountered while running the mutation to create or update the user
+ */
 async function handleUserCreated(ctx: ActionCtx, userData: UserJSON) {
   try {
     const {
@@ -124,7 +137,16 @@ async function handleUserCreated(ctx: ActionCtx, userData: UserJSON) {
   }
 }
 
-// Handle user update event
+/**
+ * Processes a Clerk user update event and creates or updates the corresponding application user record.
+ *
+ * Extracts the primary email from the Clerk user data, derives a username from the email if none is provided,
+ * and calls the back-end mutation to create or update the user. If no primary email is present, the function logs
+ * and returns without making changes.
+ *
+ * @param userData - Clerk `UserJSON` payload containing user fields such as `id`, `email_addresses`, `first_name`, `last_name`, and `username`
+ * @throws Rethrows any error encountered while running the create-or-update mutation or during processing
+ */
 async function handleUserUpdated(ctx: ActionCtx, userData: UserJSON) {
   try {
     const {
@@ -166,7 +188,17 @@ interface UserDeletedEventData {
   deleted: boolean;
 }
 
-// Handle user deletion event
+/**
+ * Handle a Clerk user deletion event by locating the local user and logging a deletion request.
+ *
+ * Validates that the webhook payload contains a Clerk user ID, looks up the corresponding local
+ * user by that Clerk ID, logs when no matching user is found, and logs a deletion request when
+ * a matching user is present. This function does not perform any deletion by itself.
+ *
+ * @param userData - Event data from Clerk; expected to include `id` (the Clerk user ID)
+ * @throws Error when the Clerk user ID (`id`) is undefined in `userData`
+ * @throws Any error encountered while querying or processing the user lookup
+ */
 async function handleUserDeleted(
   ctx: ActionCtx,
   userData: UserDeletedEventData
@@ -196,7 +228,12 @@ async function handleUserDeleted(
   }
 }
 
-// Generate username from email address
+/**
+ * Create a username derived from an email address.
+ *
+ * @param email - The email address to derive the username from
+ * @returns The local part of `email` with all non-alphanumeric characters removed and converted to lowercase
+ */
 function generateUsernameFromEmail(email: string): string {
   const [localPart] = email.split('@');
   // Remove special characters and ensure uniqueness
