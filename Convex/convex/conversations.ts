@@ -115,7 +115,7 @@ export const getActiveConversations = query({
     // Get active conversations where user is a participant
     const conversations = await ctx.db
       .query('conversations')
-      .filter(q => q.eq(q.field('status'), 'active'))
+      .withIndex('by_status', q => q.eq('status', 'active'))
       .collect();
 
     return conversations.filter(c => c.participantIds.includes(user._id));
