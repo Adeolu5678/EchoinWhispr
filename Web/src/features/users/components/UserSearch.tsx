@@ -82,17 +82,20 @@ export const UserSearch = memo<UserSearchProps>(
      */
     const handleUserToggle = useCallback(
       (user: UserSearchResultType) => {
-        const newSelectedUsers = new Set(selectedUsers);
-        if (newSelectedUsers.has(user._id)) {
-          newSelectedUsers.delete(user._id);
-        } else {
-          newSelectedUsers.add(user._id);
-        }
+        if (disabled) return;
 
-        setSelectedUsers(newSelectedUsers);
+        setSelectedUsers(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(user._id)) {
+            newSet.delete(user._id);
+          } else {
+            newSet.add(user._id);
+          }
+          return newSet;
+        });
         onUserToggle?.(user);
       },
-      [selectedUsers, onUserToggle]
+      [disabled, onUserToggle]
     );
 
     /**
@@ -117,18 +120,22 @@ export const UserSearch = memo<UserSearchProps>(
      * Handles "Select All" functionality
      */
     const handleSelectAll = useCallback(() => {
+      if (disabled) return;
+
       const allUserIds = new Set(results.map(user => user._id));
       setSelectedUsers(allUserIds);
       onUserSelect?.(results);
-    }, [results, onUserSelect]);
+    }, [disabled, results, onUserSelect]);
 
     /**
      * Handles "Clear Selection" functionality
      */
     const handleClearSelection = useCallback(() => {
+      if (disabled) return;
+
       setSelectedUsers(new Set());
       onUserSelect?.([]);
-    }, [onUserSelect]);
+    }, [disabled, onUserSelect]);
 
     /**
      * Handles Enter key press in search input
@@ -143,7 +150,7 @@ export const UserSearch = memo<UserSearchProps>(
       [handleSearch]
     );
 
-    const displayResults = results.slice(0, maxResults);
+    const displayResults = showLoadMore || typeof maxResults !== 'number' ? results : results.slice(0, maxResults);
     const hasSelection = selectedUsers.size > 0;
 
     return (
@@ -161,6 +168,7 @@ export const UserSearch = memo<UserSearchProps>(
                   variant="ghost"
                   size="sm"
                   onClick={handleClearSelection}
+                  disabled={disabled}
                   className="h-auto p-1"
                 >
                   Clear
@@ -222,6 +230,7 @@ export const UserSearch = memo<UserSearchProps>(
                   variant="ghost"
                   size="sm"
                   onClick={handleSelectAll}
+                  disabled={disabled}
                   className="h-auto p-1 text-xs"
                 >
                   Select All
@@ -245,7 +254,7 @@ export const UserSearch = memo<UserSearchProps>(
                   key={user._id}
                   user={user}
                   isSelected={selectedUsers.has(user._id)}
-                  isSelectable={true}
+                  isSelectable={!disabled}
                   onToggleSelection={handleUserToggle}
                 />
               ))}
@@ -258,7 +267,7 @@ export const UserSearch = memo<UserSearchProps>(
               <Button
                 variant="outline"
                 onClick={loadMore}
-                disabled={isLoading}
+                disabled={disabled || isLoading}
                 className="w-full"
               >
                 {isLoading ? (
