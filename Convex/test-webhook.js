@@ -29,7 +29,16 @@ const testPayload = {
   data: testUserData,
 };
 
-// Simulate webhook signature generation
+/**
+ * Create a Svix-style test webhook signature and corresponding header values for a payload.
+ * @param {Object} payload - The webhook payload to be serialized and signed.
+ * @param {string} secret - The secret used to compute the HMAC-SHA256 signature.
+ * @returns {{signature: string, svixId: string, svixTimestamp: string, body: string}} Object with:
+ *  - `signature`: header-ready signature in the format `v1,<base64_signature>`,
+ *  - `svixId`: fixed message id used in the signed content,
+ *  - `svixTimestamp`: Unix timestamp (seconds) used in the signed content,
+ *  - `body`: JSON stringified payload used to compute the signature.
+ */
 function generateTestSignature(payload, secret) {
   const svixId = 'msg_1234567890';
   const svixTimestamp = Math.floor(Date.now() / 1000).toString();
@@ -49,7 +58,11 @@ function generateTestSignature(payload, secret) {
   };
 }
 
-// Test the webhook signature generation
+/**
+ * Log a simulated Clerk webhook signature, its verification result, and the corresponding test headers and body to the console.
+ *
+ * Reads CLERK_WEBHOOK_SECRET from the environment (falls back to a test key) to generate and verify the signature, then prints the payload, generated signature components, expected signature, verification status, headers for manual testing, and the JSON body.
+ */
 function testWebhookSignature() {
   const secret = process.env.CLERK_WEBHOOK_SECRET || 'test_secret_key';
 
@@ -90,7 +103,11 @@ function testWebhookSignature() {
   console.log(body);
 }
 
-// Instructions for testing
+/**
+ * Print step-by-step instructions for running the webhook test and using the generated headers and body to manually invoke the endpoint.
+ *
+ * Logs guidance for setting the CLERK_WEBHOOK_SECRET environment variable, running the test script, a curl example with header placeholders, and how to check Convex logs.
+ */
 function printInstructions() {
   console.log('=== Testing Instructions ===');
   console.log('');

@@ -6,6 +6,16 @@ import { UsernamePickerModal } from '@/features/authentication/components/Userna
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Render the sign-up page containing Clerk's SignUp flow and a username picker modal.
+ *
+ * The component mounts the Clerk SignUp UI configured for path-based routing and renders
+ * a UsernamePickerModal controlled by local state. It logs component mount/unmount,
+ * current URL/search params, detection of a `redirect_url` query param, and changes to
+ * the modal visibility to the console for debugging.
+ *
+ * @returns The page JSX element that hosts the Clerk SignUp component and the username picker modal
+ */
 export default function SignUpPage(): JSX.Element {
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 

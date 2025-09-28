@@ -1,5 +1,12 @@
 import { View, Text, StyleSheet } from 'react-native';
 
+/**
+ * Screen component that renders a centered placeholder UI for composing a whisper.
+ *
+ * Renders a container with a title ("Compose Whisper") and a subtitle ("Compose screen placeholder") centered vertically and horizontally.
+ *
+ * @returns The rendered JSX elements for the Compose screen
+ */
 export default function ComposeScreen() {
   return (
     <View style={styles.container}>

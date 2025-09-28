@@ -1,5 +1,10 @@
 import { View, Text, StyleSheet } from 'react-native';
 
+/**
+ * Renders a placeholder sign-in screen.
+ *
+ * @returns A React element containing a centered container with a title ("Sign In") and a subtitle ("Sign in screen placeholder").
+ */
 export default function SignInScreen() {
   return (
     <View style={styles.container}>

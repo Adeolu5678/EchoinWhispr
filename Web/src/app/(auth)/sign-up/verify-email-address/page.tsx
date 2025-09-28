@@ -14,6 +14,15 @@ import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Displays a verification UI and enforces the presence of the email verification query parameter.
+ *
+ * If the `email_address` search param is missing, redirects the user to `/sign-up`. When the parameter
+ * is present, the component relies on Clerk to complete email-link verification after the redirect and
+ * renders a centered card with a progress indicator and a "Back to Sign Up" button.
+ *
+ * @returns A JSX.Element containing the email verification UI
+ */
 function VerifyEmailAddressContent(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -63,6 +72,11 @@ function VerifyEmailAddressContent(): JSX.Element {
   );
 }
 
+/**
+ * Page component that renders the email verification UI with a Suspense fallback.
+ *
+ * @returns The React element containing a loading fallback and the VerifyEmailAddressContent component.
+ */
 export default function VerifyEmailAddressPage(): JSX.Element {
   return (
     <Suspense

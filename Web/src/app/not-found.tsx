@@ -2,6 +2,11 @@
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Render a centered 404 page with a call-to-action link to the homepage.
+ *
+ * @returns A JSX element representing a styled "404 - Page Not Found" page with explanatory text and a "Go Home" link.
+ */
 export default function NotFound(): JSX.Element {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">

@@ -26,20 +26,12 @@ function HomePageSkeleton() {
 }
 
 /**
- * Home page component for authenticated users.
+ * Render the main landing page for authenticated users, showing a header and the user's whispers section.
  *
- * This is the main landing page for authenticated users, displaying their whispers.
- * It integrates with the whispers feature module to fetch and display user data.
+ * The page includes a centered title and subtitle and a Whispers container that delegates data loading
+ * and UI states (loading, error, empty, success) to its inner content.
  *
- * Features:
- * - Display user's received whispers in a clean list format
- * - Show empty state when no whispers exist
- * - Real-time updates using Convex live queries
- * - Responsive design that works on all screen sizes
- * - Loading states and error handling
- * - Performance optimizations with React Suspense
- *
- * @returns {JSX.Element} The rendered home page
+ * @returns The page JSX element containing the header and the whispers section
  */
 export default function HomePage() {
   return (
@@ -72,8 +64,9 @@ export default function HomePage() {
 }
 
 /**
- * Content component that handles the whisper list logic.
- * Separated for better error boundary isolation and suspense handling.
+ * Renders the whispers content area, showing a loading skeleton, an error message with retry, or the WhisperList when data is available.
+ *
+ * @returns The JSX element for the whispers content: a HomePageSkeleton while loading, an error UI with the error message and a retry button if loading failed, or the WhisperList when data is loaded.
  */
 function WhisperListContent() {
   const { isLoadingWhispers, whispersError, refetchWhispers, markAsRead } = useWhispers();

@@ -17,8 +17,13 @@ import { ERROR_CODES, AppError } from '../../../lib/errors';
 import { useToast } from '../../../hooks/use-toast';
 
 /**
- * Hook for sending whispers with optimistic updates
- * @returns Object with send function, loading state, and error handling
+ * Provides utilities to send a whisper and track send state and errors.
+ *
+ * @returns An object with:
+ * - `sendWhisper(request)`: Sends a whisper for the current user and resolves with the send response; may reject with `AppError`.
+ * - `isLoading`: `true` while a send is in progress.
+ * - `error`: the last `AppError` encountered, or `null`.
+ * - `clearError()`: resets `error` to `null`.
  */
 export function useSendWhisper() {
   const [isLoading, setIsLoading] = useState(false);
@@ -75,8 +80,19 @@ export function useSendWhisper() {
 }
 
 /**
- * Hook for receiving whispers with real-time subscriptions
- * @returns Object with whispers data, loading state, and error handling
+ * Manages fetching and local state for received whispers, including unread counts.
+ *
+ * Provides the current list of received whispers, loading and error state, derived
+ * unread metadata, and utilities to refetch or clear errors.
+ *
+ * @returns An object with:
+ * - `whispers`: Array of received whispers with sender information.
+ * - `isLoading`: `true` while whispers are being fetched, `false` otherwise.
+ * - `error`: The last `AppError` encountered or `null` if none.
+ * - `unreadCount`: Number of whispers where `isRead` is `false`.
+ * - `hasUnread`: `true` if `unreadCount` is greater than zero, `false` otherwise.
+ * - `refetch`: Function that re-fetches the received whispers.
+ * - `clearError`: Function that resets the stored `error` to `null`.
  */
 export function useReceivedWhispers() {
   const [whispers, setWhispers] = useState<WhisperWithSender[]>([]);
@@ -139,8 +155,13 @@ export function useReceivedWhispers() {
 }
 
 /**
- * Hook for marking whispers as read
- * @returns Object with markAsRead function, loading state, and error handling
+ * Provides functionality to mark a whisper as read and track operation state.
+ *
+ * @returns An object with:
+ * - `markAsRead(whisperId)`: function that marks the whisper with the given ID as read.
+ * - `isLoading`: `true` while the mark-as-read request is in progress, `false` otherwise.
+ * - `error`: the last `AppError` encountered or `null` if none.
+ * - `clearError()`: function that clears the stored error.
  */
 export function useMarkAsRead() {
   const [isLoading, setIsLoading] = useState(false);
@@ -193,8 +214,22 @@ export function useMarkAsRead() {
 }
 
 /**
- * Combined hook that provides all whisper functionality
- * @returns Object with all whisper operations and state
+ * Exposes sending, receiving, and mark-as-read whisper functionality as a single unified hook.
+ *
+ * @returns An object exposing:
+ * - `sendWhisper`: function to send a whisper
+ * - `isSending`: loading state for sending
+ * - `sendError`: error from sending
+ * - `whispers`: received whispers array
+ * - `isLoadingWhispers`: loading state for fetching whispers
+ * - `whispersError`: error from fetching whispers
+ * - `unreadCount`: number of unread whispers
+ * - `hasUnread`: `true` if there are unread whispers, `false` otherwise
+ * - `refetchWhispers`: function to refetch received whispers
+ * - `markAsRead`: function to mark a whisper as read
+ * - `isMarkingAsRead`: loading state for marking as read
+ * - `markAsReadError`: error from marking as read
+ * - `clearErrors`: clears errors from all underlying whisper operations
  */
 export function useWhispers() {
   const sendWhisper = useSendWhisper();

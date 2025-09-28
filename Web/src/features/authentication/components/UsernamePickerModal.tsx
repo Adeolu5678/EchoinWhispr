@@ -31,17 +31,12 @@ export interface UsernamePickerModalProps {
 }
 
 /**
- * UsernamePickerModal component for selecting a unique username after account creation
+ * Renders a modal UI for selecting and setting a unique username for the current user.
  *
- * Features:
- * - Real-time username validation with visual feedback
- * - Debounced validation to prevent excessive API calls
- * - Purple theme styling consistent with the app design
- * - Responsive design with proper accessibility
- * - Loading states and error handling
+ * The component provides real-time, debounced validation feedback, enforces simple username rules,
+ * and submits the chosen username via a server mutation; it resets validation and input when closed.
  *
- * @param props - The component props
- * @returns JSX.Element
+ * @returns A JSX modal element when `isOpen` is true, or `null` when closed.
  */
 export function UsernamePickerModal({
   isOpen,

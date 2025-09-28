@@ -7,9 +7,11 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex';
 
 /**
- * Component that handles the integration of UsernamePickerModal into the authentication flow
- * This component should be placed in the main layout or authentication flow to handle
- * username selection when needed for new users
+ * Orchestrates automatic display of the username picker modal for authenticated users who need to select a username.
+ *
+ * Shows the UsernamePickerModal when the current user requires a username, wires the modal's open/close handlers, and reloads the page after a successful selection to refresh user data.
+ *
+ * @returns The UsernamePickerModal element when it should be shown, otherwise `null`.
  */
 export function UsernameSelectionHandler(): JSX.Element | null {
   const {

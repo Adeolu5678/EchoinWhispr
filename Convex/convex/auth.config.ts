@@ -10,7 +10,10 @@
 import type { Auth } from 'convex/server';
 
 /**
- * Validates that required environment variables are set and normalizes the domain
+ * Validates required environment variables and returns a normalized Clerk issuer origin and the Convex application ID.
+ *
+ * @returns An object with `normalizedDomain` set to the issuer origin (scheme, host, and optional port) and `convexApplicationId` set to the `CONVEX_APPLICATION_ID` value.
+ * @throws Error if `CLERK_JWT_ISSUER_DOMAIN` or `CONVEX_APPLICATION_ID` is missing, if `CLERK_JWT_ISSUER_DOMAIN` is not a valid URL, or if its protocol is not HTTPS.
  */
 function validateEnvironmentVariables(): {
   normalizedDomain: string;

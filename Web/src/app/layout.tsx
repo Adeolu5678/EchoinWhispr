@@ -24,6 +24,13 @@ export const metadata: Metadata = {
   description: 'Anonymous messaging platform',
 };
 
+/**
+ * Root application layout that provides global context, renders the username selection UI,
+ * site navigation, and the page content inside a full-height main area.
+ *
+ * @param children - Page content to render inside the layout's main element
+ * @returns The root HTML element containing providers, username selection handler, navigation, and the main content area
+ */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">

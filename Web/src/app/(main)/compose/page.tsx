@@ -21,9 +21,11 @@ const ComposePageSkeleton = () => (
 );
 
 /**
- * Compose page component for sending whispers
- * Provides a form interface for users to compose and send anonymous messages
- * Includes authentication checks and loading states
+ * Render the compose page that lets authenticated users write and send anonymous whispers.
+ *
+ * Renders a loading skeleton while authentication state is determined and redirects unauthenticated users to /sign-in.
+ *
+ * @returns The page's root JSX element containing the header and whisper composer.
  */
 export default function ComposePage() {
   const { user, isLoaded } = useUser();

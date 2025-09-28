@@ -84,11 +84,12 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
 };
 
 /**
- * Creates a standardized error object with user-friendly message
- * @param code - The error code
- * @param originalError - The original error object (optional)
- * @param customMessage - Custom error message to override default (optional)
- * @returns WhisperError object
+ * Create a standardized AppError containing a user-facing message and optional original error details.
+ *
+ * @param code - The canonical error code to classify the error
+ * @param originalError - Optional original error or value; when provided its string form is included in `details.originalError`
+ * @param customMessage - Optional message to override the default user-facing message for the given code
+ * @returns The constructed AppError with `code`, `message`, and optional `details` containing the original error string
  */
 export function createAppError(
   code: ErrorCode,
@@ -117,9 +118,10 @@ export function createAppError(
 }
 
 /**
- * Maps HTTP status codes to error codes
- * @param status - HTTP status code
- * @returns Corresponding error code
+ * Map an HTTP status code to a standardized ErrorCode.
+ *
+ * @param status - The HTTP status code to map.
+ * @returns The corresponding ErrorCode; `UNKNOWN_ERROR` when there is no specific mapping.
  */
 export function mapHttpStatusToErrorCode(status: number): ErrorCode {
   switch (status) {
@@ -144,9 +146,12 @@ export function mapHttpStatusToErrorCode(status: number): ErrorCode {
 }
 
 /**
- * Maps Convex errors to standardized error codes
- * @param error - Convex error object
- * @returns Corresponding error code
+ * Derives a standardized ErrorCode from a Convex error value.
+ *
+ * Inspects the string representation of `error` and maps common keywords to an appropriate ErrorCode.
+ *
+ * @param error - The Convex error value whose string form will be inspected for keywords
+ * @returns `NETWORK_ERROR` if the text includes "network" or "fetch", `TIMEOUT_ERROR` if it includes "timeout", `UNAUTHORIZED` if it includes "unauthorized" or "auth", `FORBIDDEN` if it includes "forbidden", `VALIDATION_ERROR` if it includes "validation" or "invalid", `UNKNOWN_ERROR` otherwise
  */
 export function mapConvexErrorToErrorCode(error: unknown): ErrorCode {
   const errorString = String(error).toLowerCase();
@@ -175,9 +180,10 @@ export function mapConvexErrorToErrorCode(error: unknown): ErrorCode {
 }
 
 /**
- * Determines if an error is retryable
- * @param error - The error to check
- * @returns True if the error can be retried
+ * Checks whether an AppError's code indicates the error is retryable.
+ *
+ * @param error - The AppError to evaluate
+ * @returns `true` if the error's code indicates it is retryable, `false` otherwise.
  */
 export function isRetryableError(error: AppError): boolean {
   const retryableCodes: ErrorCode[] = [
@@ -191,11 +197,13 @@ export function isRetryableError(error: AppError): boolean {
 }
 
 /**
- * Creates a retry function with exponential backoff
- * @param fn - The function to retry
- * @param maxAttempts - Maximum number of retry attempts
- * @param baseDelay - Base delay in milliseconds
- * @returns Promise that resolves when retry succeeds or fails permanently
+ * Retries an asynchronous operation with exponential backoff and jitter until it succeeds or the maximum attempts are exhausted.
+ *
+ * @param fn - The asynchronous operation to execute
+ * @param maxAttempts - Maximum number of attempts to try the operation (default: 3)
+ * @param baseDelay - Initial delay in milliseconds used for exponential backoff (default: 1000)
+ * @returns The resolved value from a successful `fn` invocation
+ * @throws AppError with code `RETRY_FAILED` when all attempts fail; the error's `details` includes the last encountered error
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
@@ -224,9 +232,14 @@ export async function withRetry<T>(
 }
 
 /**
- * Validates whisper content length
- * @param content - The whisper content to validate
- * @returns True if content length is valid
+ * Validate whisper content length and throw a standardized AppError on violation.
+ *
+ * Leading and trailing whitespace are trimmed before validation.
+ *
+ * @param content - The whisper text to validate; whitespace at both ends is ignored.
+ * @returns `true` if the trimmed content length is between 1 and 280 characters inclusive.
+ * @throws AppError with code `CONTENT_TOO_SHORT` if the trimmed content is empty.
+ * @throws AppError with code `CONTENT_TOO_LONG` if the trimmed content exceeds 280 characters.
  */
 export function validateWhisperContent(content: string): boolean {
   const trimmedContent = content.trim();

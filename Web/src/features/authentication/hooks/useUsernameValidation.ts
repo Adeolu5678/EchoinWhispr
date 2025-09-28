@@ -43,10 +43,20 @@ const USERNAME_RULES = {
 } as const;
 
 /**
- * Custom hook for validating usernames with real-time feedback
- * Provides debounced validation, availability checking, and comprehensive error handling
+ * Provides real-time username validation with debounced format checks and availability queries.
  *
- * @returns Object containing validation state, actions, and debounced username
+ * Performs format validation against configured rules, debounces input before checking availability,
+ * and exposes state, error messages, and actions for UI integration.
+ *
+ * @returns The validation state and actions:
+ * - `status`: current validation status (`'idle' | 'validating' | 'available' | 'unavailable' | 'invalid'`)
+ * - `errorMessage`: human-readable validation error or `null`
+ * - `isValid`: `true` when the username is available, `false` otherwise
+ * - `isAvailable`: `true` if available, `false` if unavailable, `null` while undecided
+ * - `validateUsername`: function to validate and set a username input
+ * - `clearValidation`: function to reset validation state
+ * - `debouncedUsername`: the username value after debounce delay
+ * - `isDebouncing`: `true` while waiting for the debounce timer
  */
 export function useUsernameValidation(): UseUsernameValidationReturn {
   // Local state for validation
