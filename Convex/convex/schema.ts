@@ -67,6 +67,7 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
+    message: v.optional(v.string()),
   })
     .index('by_user_id', ['userId'])
     .index('by_friend_id', ['friendId'])
