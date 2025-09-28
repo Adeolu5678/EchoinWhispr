@@ -12,8 +12,8 @@ import type {
   SearchResponse,
   SearchError,
   SearchServiceConfig,
-} from '../types';
-import { SearchErrorType } from '../types';
+} from '@/types/user';
+import { SearchErrorType } from '@/types/user';
 
 /**
  * Default configuration for the user search service

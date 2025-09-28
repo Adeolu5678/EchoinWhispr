@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check, User } from 'lucide-react';
-import type { UserSearchResult as UserSearchResultType } from '../types';
+import type { UserSearchResult as UserSearchResultType } from '@/types/user';
 
 /**
  * Props for the UserSearchResult component
