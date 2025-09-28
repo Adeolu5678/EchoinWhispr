@@ -101,6 +101,7 @@ export const searchUsers = query({
 
     const limit = Math.min(args.limit || 20, 50); // Max 50 results
     const offset = args.offset || 0;
+    const fetchSize = limit + offset + 1;
 
     // Use database indexes for efficient searching
     // Search by username (case-insensitive)
@@ -111,11 +112,11 @@ export const searchUsers = query({
           .gte('username', searchQuery.toLowerCase())
           .lte('username', searchQuery.toLowerCase() + '\uffff')
       )
-      .take(limit + offset);
+      .take(fetchSize);
 
     // Search by email (case-insensitive) if no username results or need more results
     let emailResults: Doc<'users'>[] = [];
-    if (usernameResults.length < limit + offset) {
+    if (usernameResults.length < fetchSize) {
       emailResults = await ctx.db
         .query('users')
         .withIndex('by_email', q =>
@@ -123,7 +124,7 @@ export const searchUsers = query({
             .gte('email', searchQuery.toLowerCase())
             .lte('email', searchQuery.toLowerCase() + '\uffff')
         )
-        .take(limit + offset);
+        .take(fetchSize);
     }
 
     // Combine and deduplicate results
