@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useMutation } from 'convex/react';
 import { api } from '@/lib/convex';
@@ -31,6 +31,38 @@ export interface UsernamePickerModalProps {
 }
 
 /**
+ * Username validation rules
+ */
+const USERNAME_RULES = {
+  MIN_LENGTH: 3,
+  MAX_LENGTH: 20,
+  PATTERN: /^[a-z0-9_]+$/,
+} as const;
+
+/**
+ * Get format error for username
+ * Pure function that validates username format without side effects
+ *
+ * @param username - The username to validate
+ * @returns Error message or null if valid
+ */
+function getFormatError(username: string): string | null {
+  if (username.length < USERNAME_RULES.MIN_LENGTH) {
+    return `Username must be at least ${USERNAME_RULES.MIN_LENGTH} characters long`;
+  }
+
+  if (username.length > USERNAME_RULES.MAX_LENGTH) {
+    return `Username must be no more than ${USERNAME_RULES.MAX_LENGTH} characters long`;
+  }
+
+  if (!USERNAME_RULES.PATTERN.test(username)) {
+    return 'Username can only contain lowercase letters, numbers, and underscores';
+  }
+
+  return null;
+}
+
+/**
  * UsernamePickerModal component for selecting a unique username after account creation
  *
  * Features:
@@ -54,8 +86,8 @@ export function UsernamePickerModal({
 
   // Username validation hook
   const {
-    status,
-    errorMessage,
+    status: hookStatus,
+    errorMessage: hookErrorMessage,
     isValid,
     validateUsername,
     clearValidation,
@@ -65,6 +97,21 @@ export function UsernamePickerModal({
   // Local state for form handling
   const [username, setUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+
+  // Compute format error
+  const formatError = useMemo(() => getFormatError(username), [username]);
+
+  // Combine format and availability errors
+  const combinedErrorMessage = useMemo(() => {
+    return formatError || hookErrorMessage;
+  }, [formatError, hookErrorMessage]);
+
+  // Compute overall status considering format validation
+  const overallStatus = useMemo(() => {
+    if (formatError) return 'invalid';
+    return hookStatus;
+  }, [formatError, hookStatus]);
 
   // Convex mutation for updating user profile
   const updateUsername = useMutation(api.users.updateUsername);
@@ -135,15 +182,15 @@ export function UsernamePickerModal({
    * Get validation icon based on current status
    */
   const getValidationIcon = () => {
-    if (isDebouncing || status === 'validating') {
+    if (isDebouncing || overallStatus === 'validating') {
       return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
     }
 
-    if (status === 'available' && isValid) {
+    if (overallStatus === 'available' && isValid) {
       return <CheckCircle className="h-4 w-4 text-green-500" />;
     }
 
-    if (status === 'unavailable' || status === 'invalid') {
+    if (overallStatus === 'unavailable' || overallStatus === 'invalid') {
       return <XCircle className="h-4 w-4 text-red-500" />;
     }
 
@@ -154,19 +201,19 @@ export function UsernamePickerModal({
    * Get validation message based on current status
    */
   const getValidationMessage = () => {
-    if (isDebouncing || status === 'validating') {
+    if (isDebouncing || overallStatus === 'validating') {
       return 'Checking availability...';
     }
 
-    if (errorMessage) {
-      return errorMessage;
+    if (combinedErrorMessage) {
+      return combinedErrorMessage;
     }
 
-    if (status === 'available' && isValid) {
+    if (overallStatus === 'available' && isValid) {
       return 'Username is available!';
     }
 
-    if (status === 'unavailable') {
+    if (overallStatus === 'unavailable') {
       return 'Username is already taken';
     }
 
@@ -179,11 +226,11 @@ export function UsernamePickerModal({
   const getInputStyling = () => {
     const baseClasses = 'pr-10 transition-colors';
 
-    if (status === 'available' && isValid) {
+    if (overallStatus === 'available' && isValid) {
       return `${baseClasses} border-green-500 focus:border-green-500`;
     }
 
-    if (status === 'unavailable' || status === 'invalid') {
+    if (overallStatus === 'unavailable' || overallStatus === 'invalid') {
       return `${baseClasses} border-red-500 focus:border-red-500`;
     }
 
@@ -261,9 +308,9 @@ export function UsernamePickerModal({
             <div
               id="username-validation"
               className={`text-sm transition-colors ${
-                status === 'available' && isValid
+                overallStatus === 'available' && isValid
                   ? 'text-green-600'
-                  : status === 'unavailable' || status === 'invalid'
+                  : overallStatus === 'unavailable' || overallStatus === 'invalid'
                     ? 'text-red-600'
                     : 'text-muted-foreground'
               }`}

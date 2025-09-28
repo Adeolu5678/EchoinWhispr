@@ -33,14 +33,7 @@ export interface UseUsernameValidationReturn {
   isDebouncing: boolean;
 }
 
-/**
- * Username validation rules
- */
-const USERNAME_RULES = {
-  MIN_LENGTH: 3,
-  MAX_LENGTH: 20,
-  PATTERN: /^[a-z0-9_]+$/,
-} as const;
+
 
 /**
  * Custom hook for validating usernames with real-time feedback
@@ -72,32 +65,7 @@ export function useUsernameValidation(): UseUsernameValidationReturn {
     return () => clearTimeout(timer);
   }, [username]);
 
-  // Validate username format
-  const validateFormat = useCallback((inputUsername: string): boolean => {
-    if (inputUsername.length < USERNAME_RULES.MIN_LENGTH) {
-      setErrorMessage(
-        `Username must be at least ${USERNAME_RULES.MIN_LENGTH} characters long`
-      );
-      return false;
-    }
-
-    if (inputUsername.length > USERNAME_RULES.MAX_LENGTH) {
-      setErrorMessage(
-        `Username must be no more than ${USERNAME_RULES.MAX_LENGTH} characters long`
-      );
-      return false;
-    }
-
-    if (!USERNAME_RULES.PATTERN.test(inputUsername)) {
-      setErrorMessage(
-        'Username can only contain lowercase letters, numbers, and underscores'
-      );
-      return false;
-    }
-
-    setErrorMessage(null);
-    return true;
-  }, []);
+  // Note: Format validation is now handled in the component to avoid render-phase state updates
 
   // Determine validation status based on current state
   const status = useMemo<UsernameValidationStatus>(() => {
@@ -105,14 +73,12 @@ export function useUsernameValidation(): UseUsernameValidationReturn {
 
     if (isDebouncing) return 'validating';
 
-    if (!validateFormat(username)) return 'invalid';
-
     if (checkUsernameAvailability === undefined) return 'validating';
 
     if (checkUsernameAvailability === null) return 'available';
 
     return 'unavailable';
-  }, [username, isDebouncing, checkUsernameAvailability, validateFormat]);
+  }, [username, isDebouncing, checkUsernameAvailability]);
 
   // Determine if username is valid and available
   const isValid = useMemo(() => {
@@ -127,30 +93,22 @@ export function useUsernameValidation(): UseUsernameValidationReturn {
 
   /**
    * Validate a username with real-time feedback
-   * Updates internal state and triggers validation checks
-   *
-   * @param inputUsername - The username to validate
-   */
-  const validateUsername = useCallback(
-    (inputUsername: string) => {
-      const trimmedUsername = inputUsername.trim().toLowerCase();
-      setUsername(trimmedUsername);
+    * Updates internal state and triggers validation checks
+    *
+    * @param inputUsername - The username to validate
+    */
+   const validateUsername = useCallback(
+     (inputUsername: string) => {
+       const trimmedUsername = inputUsername.trim().toLowerCase();
+       setUsername(trimmedUsername);
 
-      // Clear previous error messages
-      setErrorMessage(null);
+       // Clear previous error messages
+       setErrorMessage(null);
 
-      // Immediate format validation
-      if (trimmedUsername && !validateFormat(trimmedUsername)) {
-        return;
-      }
-
-      // Show validation feedback for valid format
-      if (trimmedUsername && validateFormat(trimmedUsername)) {
-        // Validation will continue via the debounced effect
-      }
-    },
-    [validateFormat]
-  );
+       // Validation will continue via the debounced effect
+     },
+     []
+   );
 
   /**
    * Clear all validation state
