@@ -15,8 +15,13 @@ export const useRejectEchoRequest = (): { rejectEchoRequest: (requestId: Generic
    * @param requestId - The ID of the echo request to reject
    */
   const rejectEchoRequest = useCallback(async (requestId: GenericId<"echoRequests">) => {
-    // TODO: Implement when CONVERSATION_EVOLUTION feature is enabled
-    console.log('Reject echo request placeholder - requestId:', requestId);
+    try {
+      // TODO: Implement when CONVERSATION_EVOLUTION feature is enabled
+      console.log('Reject echo request placeholder - requestId:', requestId);
+    } catch (error) {
+      console.error('Failed to reject echo request', { requestId, error });
+      throw error;
+    }
   }, []);
 
   return {
