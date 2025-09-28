@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSendWhisper } from '../hooks/useWhispers';
 import { WHISPER_LIMITS } from '../types';
 import { RecipientSelector } from './RecipientSelector';
-import { UserSearchResult } from '@/features/users/types';
+import { UserSearchResult } from '@/types/user';
 import { Users, X, Send } from 'lucide-react';
 
 

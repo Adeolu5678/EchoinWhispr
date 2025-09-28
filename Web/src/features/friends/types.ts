@@ -3,6 +3,8 @@
  * Defines interfaces for friend-related data structures used throughout the application.
  */
 
+import type { UserSearchResult } from '../../types/user';
+
 // Using string types for MVP foundation since Id types are generated.
 export type FriendId = string;
 export type UserId = string;
@@ -44,17 +46,6 @@ export interface SentFriendRequest {
   createdAt: number;
   updatedAt: number;
   recipient?: FriendUser; // Populated by query
-}
-
-/**
- * Search result for user search functionality.
- */
-export interface UserSearchResult {
-  _id: UserId;
-  username: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
 }
 
 /**

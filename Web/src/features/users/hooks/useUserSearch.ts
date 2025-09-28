@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { searchUsers, userSearchService } from '../services/userSearchService';
-import type { UserSearchResult, SearchFilters } from '../types';
+import type { UserSearchResult, SearchFilters } from '@/types/user';
 
 /**
  * Configuration options for the useUserSearch hook

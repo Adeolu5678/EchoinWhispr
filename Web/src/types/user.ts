@@ -1,4 +1,27 @@
-import type { UserSearchResult } from '../../types/user';
+import type { GenericId } from 'convex/values';
+
+/**
+ * User search result interface
+ * Represents a user that can be returned from search operations
+ */
+export interface UserSearchResult {
+  /** Unique user identifier */
+  _id: GenericId<"users">;
+  /** Clerk authentication identifier */
+  clerkId: string;
+  /** User's display username */
+  username: string;
+  /** User's email address */
+  email: string;
+  /** User's first name (optional) */
+  firstName?: string;
+  /** User's last name (optional) */
+  lastName?: string;
+  /** Account creation timestamp */
+  createdAt: number;
+  /** Last update timestamp */
+  updatedAt: number;
+}
 
 /**
  * Search filters for user discovery
