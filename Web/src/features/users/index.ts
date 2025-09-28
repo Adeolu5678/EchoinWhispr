@@ -32,4 +32,4 @@ export { UserSearch } from './components/UserSearch';
 export { UserSearchResult } from './components/UserSearchResult';
 
 // Re-export commonly used types for convenience
-export type { UserSearchResult as User } from '@/types/user';
+export type { UserSearchResult as User } from './types';
