@@ -48,10 +48,13 @@ export const initiateConversation = mutation({
     }
 
     const now = Date.now();
+    const participantIds = [whisper.senderId, whisper.recipientId];
+    const participantKey = participantIds.sort().join('-');
 
     // Create the conversation
     const conversationId = await ctx.db.insert('conversations', {
-      participantIds: [whisper.senderId, whisper.recipientId],
+      participantIds,
+      participantKey,
       initialWhisperId: args.whisperId,
       status: 'initiated',
       createdAt: now,

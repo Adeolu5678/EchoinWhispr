@@ -35,12 +35,13 @@ export default defineSchema({
   // Conversations table - deferred feature for conversation evolution
   conversations: defineTable({
     participantIds: v.array(v.id("users")),
+    participantKey: v.string(),
     initialWhisperId: v.id("whispers"),
     status: v.union(v.literal("initiated"), v.literal("active"), v.literal("closed")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_participants", ["participantIds"])
+    .index("by_participant_key", ["participantKey"])
     .index("by_initial_whisper", ["initialWhisperId"])
     .index("by_status", ["status"]),
 
