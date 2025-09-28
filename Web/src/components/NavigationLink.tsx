@@ -3,7 +3,8 @@
 import { forwardRef, useCallback } from 'react';
 import Link from 'next/link';
 import { LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 /**
  * Props for the NavigationLink component
@@ -50,24 +51,23 @@ export const NavigationLink = forwardRef<
     onClick?.();
   }, [onClick]);
 
+  const linkClassName = cn(
+    buttonVariants({ variant: isActive ? 'secondary' : 'ghost', size: 'sm' }),
+    isActive ? 'bg-primary-700 text-primary-foreground' : 'text-primary-foreground hover:bg-primary-700'
+  );
+
   return (
-    <Link href={href} onClick={handleClick} ref={ref}>
-      <Button
-        variant={isActive ? 'secondary' : 'ghost'}
-        size="sm"
-        className={`
-            flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-colors
-            ${
-              isActive
-                ? 'bg-primary-700 text-primary-foreground'
-                : 'text-primary-foreground hover:bg-primary-700'
-            }
-          `}
-        aria-current={isActive ? 'page' : undefined}
-      >
+    <Link
+      href={href}
+      onClick={handleClick}
+      ref={ref}
+      aria-current={isActive ? 'page' : undefined}
+      className={linkClassName}
+    >
+      <span className="flex items-center space-x-2">
         <Icon className="h-4 w-4" />
         <span className="hidden sm:inline">{label}</span>
-      </Button>
+      </span>
     </Link>
   );
 });

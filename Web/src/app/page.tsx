@@ -20,7 +20,7 @@ export default function Home(): JSX.Element {
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="text-center" role="status" aria-live="polite">
           <div
-            className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"
+            className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"
             aria-hidden="true"
           ></div>
           <span className="sr-only">

@@ -306,8 +306,7 @@ export class AuthErrorBoundary extends Component<
    */
   private showMaxRetriesToast = () => {
     // Import toast dynamically to avoid circular dependencies
-    import('@/hooks/use-toast').then(({ useToast }) => {
-      const { toast } = useToast();
+    import('@/hooks/use-toast').then(({ toast }) => {
       toast({
         title: 'Maximum Retries Reached',
         description:
@@ -322,8 +321,7 @@ export class AuthErrorBoundary extends Component<
    */
   private showNonRecoverableErrorToast = () => {
     // Import toast dynamically to avoid circular dependencies
-    import('@/hooks/use-toast').then(({ useToast }) => {
-      const { toast } = useToast();
+    import('@/hooks/use-toast').then(({ toast }) => {
       toast({
         title: 'Non-Recoverable Error',
         description:
@@ -345,11 +343,17 @@ export class AuthErrorBoundary extends Component<
    */
   private handleSignOut = async () => {
     try {
-      // Import Clerk signOut dynamically to avoid circular dependencies
-      const { useAuth } = await import('@clerk/nextjs');
-      const { signOut } = useAuth();
+      const clerk =
+        (typeof window !== 'undefined' &&
+          (window as typeof window & {
+            Clerk?: { signOut: (opts?: { redirectUrl?: string }) => Promise<void> };
+          }).Clerk) ||
+        null;
 
-      await signOut();
+      if (clerk) {
+        await clerk.signOut({ redirectUrl: '/' });
+      }
+
       window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
