@@ -258,9 +258,11 @@ export const updateUsername = mutation({
       throw new Error('Not authenticated');
     }
 
+    const normalizedUsername = args.username.trim().toLowerCase();
+
     // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
     const usernameRegex = /^[a-z0-9_]{3,20}$/;
-    if (!usernameRegex.test(args.username)) {
+    if (!usernameRegex.test(normalizedUsername)) {
       throw new Error(
         'Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores'
       );
@@ -278,7 +280,7 @@ export const updateUsername = mutation({
     // Check if username is already taken by another user
     const existingUser = await ctx.db
       .query('users')
-      .withIndex('by_username', q => q.eq('username', args.username))
+      .withIndex('by_username', q => q.eq('username', normalizedUsername))
       .first();
 
     if (existingUser && existingUser._id !== user._id) {
@@ -287,7 +289,8 @@ export const updateUsername = mutation({
 
     // Update username
     await ctx.db.patch(user._id, {
-      username: args.username,
+      username: normalizedUsername,
+      needsUsernameSelection: false,
       updatedAt: Date.now(),
     });
 
