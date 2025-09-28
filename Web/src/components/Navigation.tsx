@@ -142,7 +142,7 @@ export const Navigation = () => {
             <UserMenu user={user} />
 
             {/* Mobile menu button */}
-            <Sheet onOpenChange={setIsMobileMenuOpen}>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
