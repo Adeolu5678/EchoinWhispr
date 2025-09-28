@@ -70,6 +70,7 @@ export const sendFriendRequest = mutation({
       status: 'pending',
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      ...(args.message && { message: args.message }),
     });
   },
 });
