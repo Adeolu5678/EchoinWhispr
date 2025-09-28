@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Search, X, Users, Loader2 } from 'lucide-react';
 import { useUserSearch } from '../hooks/useUserSearch';
 import { UserSearchResult } from './UserSearchResult';
-import type { UserSearchResult as UserSearchResultType } from '@/types/user';
+import type { UserSearchResult as UserSearchResultType } from '../types';
 
 /**
  * Props for the UserSearch component
