@@ -28,6 +28,12 @@ export const sendFriendRequest = mutation({
       throw new Error('User not found');
     }
 
+    // Check if friend exists
+    const friend = await ctx.db.get(args.friendId);
+    if (!friend) {
+      throw new Error('Friend not found');
+    }
+
     // Prevent self-friending
     if (user._id === args.friendId) {
       throw new Error('Cannot send friend request to yourself');
