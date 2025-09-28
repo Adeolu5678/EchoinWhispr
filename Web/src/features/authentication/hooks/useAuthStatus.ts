@@ -228,6 +228,7 @@ export function useAuthStatus(): UseAuthStatusReturn {
         await getOrCreateUser();
 
         // Success - user is fully authenticated
+        isProcessingRef.current = false;
         transitionToState('authenticated');
         setRetryCount(0);
         setUserCreationError(null);
