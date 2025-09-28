@@ -1,14 +1,11 @@
 'use client';
 
 import { SignUp } from '@clerk/nextjs';
-import { useState, useEffect } from 'react';
-import { UsernamePickerModal } from '@/features/authentication/components/UsernamePickerModal';
+import { useEffect } from 'react';
 
 export const dynamic = 'force-dynamic';
 
 export default function SignUpPage(): JSX.Element {
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
-
   // Debug logging for authentication flow
   useEffect(() => {
     console.log('🔍 [DEBUG] SignUpPage: Component mounted');
@@ -34,14 +31,6 @@ export default function SignUpPage(): JSX.Element {
     };
   }, []);
 
-  // Debug logging for username modal state
-  useEffect(() => {
-    console.log(
-      '🔍 [DEBUG] SignUpPage: Username modal state changed:',
-      showUsernameModal
-    );
-  }, [showUsernameModal]);
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <SignUp
@@ -59,13 +48,6 @@ export default function SignUpPage(): JSX.Element {
           },
         }}
         afterSignInUrl="/"
-      />
-      <UsernamePickerModal
-        isOpen={showUsernameModal}
-        onClose={() => {
-          console.log('🔍 [DEBUG] SignUpPage: Username modal closed');
-          setShowUsernameModal(false);
-        }}
       />
     </main>
   );

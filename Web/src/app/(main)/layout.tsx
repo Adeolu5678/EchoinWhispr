@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Navigation } from '@/components/Navigation';
+import { UsernameSelectionHandler } from '@/features/authentication/components/UsernameSelectionHandler';
 
 /**
  * Props for the MainLayout component
@@ -18,6 +19,7 @@ interface MainLayoutProps {
  *
  * Features:
  * - Main navigation header for authenticated users
+ * - Username selection handler for new users
  * - Proper layout structure with consistent spacing
  * - Responsive design that works on all screen sizes
  * - Integration with Clerk authentication for user state
@@ -29,6 +31,9 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen">
+      {/* Username Selection Handler - must be at root level for modal overlay */}
+      <UsernameSelectionHandler />
+
       {/* Main Navigation */}
       <Navigation />
 
