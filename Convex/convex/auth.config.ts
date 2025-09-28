@@ -51,7 +51,7 @@ const authConfig = {
   providers: [
     {
       domain: normalizedDomain,
-      applicationID: 'convex',
+      applicationID: convexApplicationId,
     },
   ],
 };
