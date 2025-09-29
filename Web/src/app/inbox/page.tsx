@@ -126,7 +126,7 @@ export default function InboxPage() {
               <ul className="list-disc list-inside space-y-1">
                 <li>Mark whispers as read to keep your inbox organized</li>
                 <li>
-                  All whispers are anonymous - you won&apos;t know who sent them
+                  All whispers are anonymous - you will not know who sent them
                 </li>
                 <li>Whispers are automatically sorted by newest first</li>
                 <li>Use the refresh button to check for new messages</li>
@@ -138,5 +138,3 @@ export default function InboxPage() {
     </div>
   );
 }
-
-
