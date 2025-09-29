@@ -109,7 +109,7 @@ function testWebhookSignature(): void {
     .digest('base64');
 
   console.log('Verification Test:');
-  console.log('- Expected Signature:', expectedSignature);
+  console.log('- Signature Valid:', signature === `v1,${expectedSignature}`);
   console.log('- Signature Valid:', signature.includes(expectedSignature));
   console.log('');
 
