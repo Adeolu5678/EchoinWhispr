@@ -35,7 +35,7 @@ export class UserSearchService {
   private config: SearchServiceConfig;
   private searchCache = new Map<
     string,
-    { results: UserSearchResult[]; timestamp: number }
+    { response: SearchResponse; timestamp: number }
   >();
   private readonly CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -67,16 +67,12 @@ export class UserSearchService {
       }
 
       // Perform search with retry logic
-      const results = await this.performSearchWithRetry(query, filters);
+      const response = await this.performSearchWithRetry(query, filters);
 
       // Cache successful results
-      this.setCacheResult(cacheKey, results);
+      this.setCacheResult(cacheKey, response);
 
-      return {
-        results,
-        totalCount: results.length,
-        hasMore: results.length >= (filters.limit || this.config.defaultLimit),
-      };
+      return response;
     } catch (error) {
       console.error('User search error:', error);
       throw this.handleSearchError(error, query);
@@ -129,7 +125,7 @@ export class UserSearchService {
   private async performSearchWithRetry(
     query: string,
     filters: SearchFilters
-  ): Promise<UserSearchResult[]> {
+  ): Promise<SearchResponse> {
     let lastError: Error;
 
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -154,11 +150,11 @@ export class UserSearchService {
   private async performSearch(
     query: string,
     filters: SearchFilters
-  ): Promise<UserSearchResult[]> {
+  ): Promise<SearchResponse> {
     const searchQuery = query.trim();
 
     // Call Convex search function
-    const results = await fetch('/api/search', {
+    const response = await fetch('/api/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -168,11 +164,14 @@ export class UserSearchService {
         limit: filters.limit || this.config.defaultLimit,
         offset: filters.offset || 0,
       }),
-    }).then(res => res.json());
+    });
 
-    // Transform results to match our interface
-    return results.map(
-      (user: {
+    if (!response.ok) {
+      throw new Error(`Search request failed with status ${response.status}`);
+    }
+
+    const payload = (await response.json()) as SearchResponse & {
+      results: Array<{
         _id: string;
         clerkId?: string;
         username: string;
@@ -180,17 +179,33 @@ export class UserSearchService {
         firstName?: string;
         lastName?: string;
         _creationTime?: number;
-      }): UserSearchResult => ({
-        _id: user._id as GenericId<"users">,
-        clerkId: user.clerkId || '',
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName || undefined,
-        lastName: user.lastName || undefined,
-        createdAt: user._creationTime || Date.now(),
-        updatedAt: user._creationTime || Date.now(),
-      })
-    );
+      }>;
+    };
+
+    return {
+      results: payload.results.map(
+        (user: {
+          _id: string;
+          clerkId?: string;
+          username: string;
+          email: string;
+          firstName?: string;
+          lastName?: string;
+          _creationTime?: number;
+        }): UserSearchResult => ({
+          _id: user._id as GenericId<'users'>,
+          clerkId: user.clerkId || '',
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName || undefined,
+          lastName: user.lastName || undefined,
+          createdAt: user._creationTime || Date.now(),
+          updatedAt: user._creationTime || Date.now(),
+        })
+      ),
+      totalCount: payload.totalCount,
+      hasMore: payload.hasMore,
+    };
   }
 
   /**
@@ -213,17 +228,13 @@ export class UserSearchService {
       return null;
     }
 
-    return {
-      results: cached.results,
-      totalCount: cached.results.length,
-      hasMore: false,
-    };
+    return cached.response;
   }
 
   /**
    * Caches search results
    */
-  private setCacheResult(cacheKey: string, results: UserSearchResult[]): void {
+  private setCacheResult(cacheKey: string, response: SearchResponse): void {
     // Limit cache size to prevent memory issues
     if (this.searchCache.size >= 100) {
       const firstKey = this.searchCache.keys().next().value;
@@ -233,7 +244,7 @@ export class UserSearchService {
     }
 
     this.searchCache.set(cacheKey, {
-      results,
+      response,
       timestamp: Date.now(),
     });
   }
