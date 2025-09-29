@@ -88,23 +88,13 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
             {/* Header with sender info and timestamp */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="w-4 h-4" aria-hidden="true" />
                 <span>
                   {FEATURE_FLAGS.CONVERSATION_EVOLUTION &&
                   whisper.conversationId
                     ? whisper.senderName || 'Anonymous'
                     : 'Anonymous'}
                 </span>
-                <User className="w-4 h-4" aria-hidden="true" />
-                <span>{whisper.senderName || 'Anonymous'}</span>
-                {!whisper.isRead && (
-                  <div className="flex items-center gap-1">
-                    <div
-                      className="w-2 h-2 bg-blue-500 rounded-full"
-                      aria-label="Unread message"
-                    />
-                    <span className="sr-only">Unread</span>
-                  </div>
-                )}
               </div>
 
               <div className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Return the search results
-    return NextResponse.json(searchResult.results);
+    return NextResponse.json(searchResult);
 
   } catch (error) {
     console.error('User search API error:', error);
