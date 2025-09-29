@@ -144,7 +144,7 @@ export const useUserSearch = (
    */
   const performSearch = useCallback(
     async (searchQuery: string, filters: SearchFilters = { query: '' }) => {
-      if (!searchQuery.trim()) {
+      if (!searchQuery) {
         updateSearchState({
           results: [],
           error: null,
@@ -227,7 +227,8 @@ export const useUserSearch = (
    */
   const setQuery = useCallback(
     (newQuery: string) => {
-      updateSearchState({ query: newQuery });
+      const trimmedQuery = newQuery.trim();
+      updateSearchState({ query: trimmedQuery });
 
       // Only search if query meets minimum length
       if (newQuery.trim().length >= minQueryLength) {
@@ -256,9 +257,11 @@ export const useUserSearch = (
         setDebounceTimer(null);
       }
 
-      await performSearch(searchQuery);
+      const normalizedQuery = searchQuery.trim();
+      updateSearchState({ query: normalizedQuery });
+      await performSearch(normalizedQuery);
     },
-    [debounceTimer, performSearch]
+    [debounceTimer, performSearch, updateSearchState]
   );
 
   /**
