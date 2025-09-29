@@ -3,6 +3,18 @@ import { mutation, query } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
 
 /**
+ * Safe user projection type to prevent data leakage.
+ * Only includes non-sensitive fields required for friend operations.
+ */
+type SafeUser = {
+  _id: Id<'users'>;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+};
+
+/**
  * Send a friend request to another user.
  * Validates that the user is not sending a request to themselves,
  * that no existing friendship exists, and that no pending request exists.
@@ -251,7 +263,19 @@ export const getFriendsList = query({
     const friends = await Promise.all(
       friendIds.map(async friendId => {
         const user = await ctx.db.get(friendId);
-        return user ? { ...user, friendshipId: '' } : null; // Will be set below
+        if (!user) return null;
+        const profile = await ctx.db
+          .query('profiles')
+          .withIndex('by_user_id', q => q.eq('userId', friendId))
+          .first();
+        const safeUser: SafeUser = {
+          _id: user._id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          avatarUrl: profile?.avatarUrl,
+        };
+        return safeUser;
       })
     );
 
@@ -303,7 +327,23 @@ export const getPendingRequests = query({
     const requestsWithSenders = await Promise.all(
       requests.map(async request => {
         const sender = await ctx.db.get(request.userId);
-        return sender ? { ...request, sender } : null;
+        if (!sender) return null;
+        const profile = await ctx.db
+          .query('profiles')
+          .withIndex('by_user_id', q => q.eq('userId', request.userId))
+          .first();
+        const safeSender: SafeUser = {
+          _id: sender._id,
+          username: sender.username,
+          firstName: sender.firstName,
+          lastName: sender.lastName,
+          avatarUrl: profile?.avatarUrl,
+        };
+        return {
+          ...request,
+          sender: safeSender,
+          friendshipId: request._id,
+        };
       })
     );
 
@@ -344,7 +384,23 @@ export const getSentRequests = query({
     const requestsWithRecipients = await Promise.all(
       requests.map(async request => {
         const recipient = await ctx.db.get(request.friendId);
-        return recipient ? { ...request, recipient } : null;
+        if (!recipient) return null;
+        const profile = await ctx.db
+          .query('profiles')
+          .withIndex('by_user_id', q => q.eq('userId', request.friendId))
+          .first();
+        const safeRecipient: SafeUser = {
+          _id: recipient._id,
+          username: recipient.username,
+          firstName: recipient.firstName,
+          lastName: recipient.lastName,
+          avatarUrl: profile?.avatarUrl,
+        };
+        return {
+          ...request,
+          recipient: safeRecipient,
+          friendshipId: request._id,
+        };
       })
     );
 
