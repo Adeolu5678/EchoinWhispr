@@ -1,151 +1,126 @@
-'use client'
+'use client';
 
-import { useAuthStatus } from '@/features/authentication'
-import Link from 'next/link'
+import { Suspense } from 'react';
+import { WhisperList } from '@/features/whispers/components/WhisperList';
+import { useWhispers } from '@/features/whispers/hooks/useWhispers';
 
-export const dynamic = 'force-dynamic'
-
-export default function Home(): JSX.Element {
-  const {
-    isAuthenticated,
-    isLoading,
-    user,
-    signOut,
-    userCreationError,
-    isCreatingUser
-  } = useAuthStatus()
-
-  if (isLoading) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center">
-        <div className="text-center" role="status" aria-live="polite">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4" aria-hidden="true"></div>
-          <span className="sr-only">
-            {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
-          </span>
-          <p className="text-gray-600">
-            {isCreatingUser ? 'Setting up your account...' : 'Loading...'}
-          </p>
-        </div>
-      </main>
-    )
-  }
-
-  if (userCreationError) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">
-              Account Setup Failed
-            </h2>
-            <p className="text-red-700 mb-4">
-              There was an error setting up your account. Please try signing out and signing in again.
-            </p>
-            <button
-              onClick={async () => {
-                try {
-                  await signOut()
-                } catch {
-                  /* toast already handled in hook */
-                }
-              }}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-            >
-              Sign Out & Try Again
-            </button>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">EchoinWhispr</h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Send and receive anonymous messages in a safe, private environment.
-          </p>
-          <div className="space-y-4">
-            <Link
-              href="/sign-up"
-              className="block w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Get Started
-            </Link>
-            <Link
-              href="/sign-in"
-              className="block w-full bg-gray-100 text-gray-900 py-3 px-6 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-            >
-              Sign In
-            </Link>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
+/**
+ * Loading skeleton component for the home page
+ */
+function HomePageSkeleton() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">EchoinWhispr</h1>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Welcome, {user?.firstName?.trim() || user?.fullName?.trim()?.split(/\s+/)[0] || user?.username || 'User'}
-              </span>
-              <button
-                onClick={async () => {
-                  try {
-                    await signOut()
-                  } catch {
-                    /* toast already handled in hook */
-                  }
-                }}
-                type="button"
-                className="text-sm bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
-              >
-                Sign Out
-              </button>
+    <div className="space-y-8">
+      {/* Whisper list skeleton */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="border rounded-lg p-4">
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/4"></div>
             </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Welcome to your Inbox
-          </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Your whispers will appear here. The whisper functionality will be implemented next.
-          </p>
-          <div className="bg-white rounded-lg shadow p-8">
-            <div className="text-gray-500">
-              <svg
-                className="mx-auto h-12 w-12 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              <p className="text-lg font-medium mb-2">No whispers yet</p>
-              <p>Your inbox is empty. Whispers you receive will appear here.</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
-    </main>
-  )
+    </div>
+  );
+}
+
+/**
+ * Home page component for authenticated users.
+ *
+ * This is the main landing page for authenticated users, displaying their whispers.
+ * It integrates with the whispers feature module to fetch and display user data.
+ *
+ * Features:
+ * - Display user's received whispers in a clean list format
+ * - Show empty state when no whispers exist
+ * - Real-time updates using Convex live queries
+ * - Responsive design that works on all screen sizes
+ * - Loading states and error handling
+ * - Performance optimizations with React Suspense
+ *
+ * @returns {JSX.Element} The rendered home page
+ */
+export default function HomePage() {
+  return (
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Welcome to EchoinWhispr
+        </h1>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Send and receive anonymous whispers. Your thoughts, shared privately.
+        </p>
+      </div>
+
+      {/* Whispers List */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">Your Whispers</h2>
+          <span className="text-sm text-gray-500">
+            Received whispers appear here
+          </span>
+        </div>
+
+        <Suspense fallback={<HomePageSkeleton />}>
+          <WhisperListContent />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Content component that handles the whisper list logic.
+ * Separated for better error boundary isolation and suspense handling.
+ */
+function WhisperListContent() {
+  const { isLoadingWhispers, whispersError, refetchWhispers, markAsRead } = useWhispers();
+
+  // Show loading state
+  if (isLoadingWhispers) {
+    return <HomePageSkeleton />;
+  }
+
+  // Show error state
+  if (whispersError) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-500 mb-4">
+          <svg
+            className="mx-auto h-12 w-12"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Unable to load whispers
+        </h3>
+        <p className="text-gray-600 mb-4">
+          {whispersError.message ||
+            'An unexpected error occurred while loading your whispers.'}
+        </p>
+        <button
+          onClick={() => refetchWhispers()}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  // Show whispers list (handles empty state internally)
+  return <WhisperList showMarkAsRead onWhisperMarkAsRead={markAsRead} />;
 }

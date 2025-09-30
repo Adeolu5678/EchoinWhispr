@@ -139,7 +139,7 @@ export const animationUtils = {
 // Validation utilities
 export const validationUtils = {
   // Check if color meets contrast requirements
-  meetsContrastRatio: (foreground: string, background: string, ratio: number = 4.5): boolean => {
+  meetsContrastRatio: (_foreground: string, _background: string): boolean => {
     // Simplified contrast check - in production, use a proper contrast library
     // This is a placeholder implementation
     return true;
@@ -148,7 +148,7 @@ export const validationUtils = {
   // Validate spacing values
   isValidSpacing: (value: string): boolean => {
     const validSpacing = Object.values(spacing);
-    return validSpacing.includes(value as any);
+    return validSpacing.includes(value as string);
   },
 };
 

@@ -1,4 +1,18 @@
-// Whispers feature exports
-// Components and hooks will be exported here when implemented
-// export * from './components'
-// export * from './hooks'
+/**
+ * Whispers feature exports
+ * Export all whisper-related types, services, and hooks
+ */
+
+// Types
+export * from './types';
+
+// Services
+export { whisperService } from './services/whisperService';
+
+// Hooks
+export {
+  useSendWhisper,
+  useReceivedWhispers,
+  useMarkAsRead,
+  useWhispers,
+} from './hooks';

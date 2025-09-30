@@ -1,2 +1,5 @@
 // Whispers components exports
-// WhisperCard, ComposeWhisper components will be exported here
+export { WhisperComposer } from './WhisperComposer';
+export { WhisperCard } from './WhisperCard';
+export { WhisperList } from './WhisperList';
+export { EmptyWhisperState } from './EmptyWhisperState';

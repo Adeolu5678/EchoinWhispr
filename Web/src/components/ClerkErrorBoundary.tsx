@@ -1,28 +1,34 @@
-'use client'
+'use client';
 
-import { Component, ErrorInfo, ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Component, ErrorInfo, ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ClerkErrorBoundaryProps {
-  children: ReactNode
+  children: ReactNode;
   /**
    * Optional fallback component to render instead of the default error UI
    */
-  fallback?: ReactNode
+  fallback?: ReactNode;
   /**
    * Optional callback when an error occurs
    */
-  onError?: (error: Error, errorInfo: ErrorInfo) => void
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface ClerkErrorBoundaryState {
-  hasError: boolean
-  error?: Error
-  errorInfo?: ErrorInfo
-  retryCount: number
-  showTechnicalDetails: boolean
+  hasError: boolean;
+  error?: Error;
+  errorInfo?: ErrorInfo;
+  retryCount: number;
+  showTechnicalDetails: boolean;
 }
 
 /**
@@ -38,62 +44,67 @@ interface ClerkErrorBoundaryState {
  * - Collapsible technical details for advanced users
  * - Toast notifications for better UX
  */
-export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, ClerkErrorBoundaryState> {
+export class ClerkErrorBoundary extends Component<
+  ClerkErrorBoundaryProps,
+  ClerkErrorBoundaryState
+> {
+  private retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
   constructor(props: ClerkErrorBoundaryProps) {
-    super(props)
+    super(props);
     this.state = {
       hasError: false,
       error: undefined,
       errorInfo: undefined,
       retryCount: 0,
       showTechnicalDetails: false,
-    }
+    };
   }
 
   static getDerivedStateFromError(error: Error) {
     return {
       hasError: true,
       error,
-    }
+    };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Store error info for technical details
     this.setState({
       errorInfo,
-    })
+    });
 
     // Call optional error callback
-    this.props.onError?.(error, errorInfo)
+    this.props.onError?.(error, errorInfo);
 
     // Comprehensive error logging
-    console.group('🔐 Clerk Authentication Error')
-    console.error('Error:', error)
-    console.error('Error Info:', errorInfo)
-    console.error('Component Stack:', errorInfo.componentStack)
-    console.groupEnd()
+    console.group('🔐 Clerk Authentication Error');
+    console.error('Error:', error);
+    console.error('Error Info:', errorInfo);
+    console.error('Component Stack:', errorInfo.componentStack);
+    console.groupEnd();
 
     // Detect specific error types for better user messaging
-    const isNetworkError = this.isNetworkError(error)
-    const isConfigurationError = this.isConfigurationError(error)
-    const isAuthError = this.isAuthError(error)
+    const isNetworkError = this.isNetworkError(error);
+    const isConfigurationError = this.isConfigurationError(error);
+    const isAuthError = this.isAuthError(error);
 
     if (isNetworkError) {
-      console.warn('🌐 Network connectivity issue detected in Clerk SDK')
+      console.warn('🌐 Network connectivity issue detected in Clerk SDK');
     }
 
     if (isConfigurationError) {
-      console.warn('⚙️ Configuration issue detected in Clerk SDK')
+      console.warn('⚙️ Configuration issue detected in Clerk SDK');
     }
 
     if (isAuthError) {
-      console.warn('🔑 Authentication-specific error detected')
+      console.warn('🔑 Authentication-specific error detected');
     }
 
     // Log to external service in production (placeholder for future integration)
     if (process.env.NODE_ENV === 'production') {
       // TODO: Integrate with error logging service (e.g., Sentry, LogRocket)
-      console.log('Production error logged (placeholder)')
+      console.log('Production error logged (placeholder)');
     }
   }
 
@@ -110,11 +121,11 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
       'offline',
       'net::',
       'failed to fetch',
-    ]
+    ];
 
     return networkErrorPatterns.some(pattern =>
       error.message?.toLowerCase().includes(pattern.toLowerCase())
-    )
+    );
   }
 
   /**
@@ -129,11 +140,11 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
       'invalid',
       'missing',
       'undefined',
-    ]
+    ];
 
     return configErrorPatterns.some(pattern =>
       error.message?.toLowerCase().includes(pattern.toLowerCase())
-    )
+    );
   }
 
   /**
@@ -148,35 +159,44 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
       'jwt',
       'unauthorized',
       'forbidden',
-    ]
+    ];
 
     return authErrorPatterns.some(pattern =>
       error.message?.toLowerCase().includes(pattern.toLowerCase())
-    )
+    );
   }
 
   /**
    * Handles retry functionality with exponential backoff
    */
   private handleRetry = () => {
-    const { retryCount } = this.state
-    if (retryCount >= 3) return
+    const { retryCount } = this.state;
+    if (retryCount >= 3) return;
+
+    // Clear any existing timeout before scheduling a new one
+    if (this.retryTimeoutId) {
+      clearTimeout(this.retryTimeoutId);
+    }
 
     // Implement exponential backoff for retries
-    const delay = Math.min(1000 * Math.pow(2, retryCount), 5000)
+    const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
 
-    console.log(`🔄 Retrying Clerk authentication (attempt ${retryCount + 1})...`)
+    console.log(
+      `🔄 Retrying Clerk authentication (attempt ${retryCount + 1})...`
+    );
 
-    setTimeout(() => {
+    this.retryTimeoutId = setTimeout(() => {
       this.setState(prevState => ({
         hasError: false,
         error: undefined,
         errorInfo: undefined,
         retryCount: prevState.retryCount + 1,
         showTechnicalDetails: false,
-      }))
-    }, delay)
-  }
+      }));
+      // Clear the timeout ID after execution
+      this.retryTimeoutId = null;
+    }, delay);
+  };
 
   /**
    * Toggles technical details visibility
@@ -184,39 +204,53 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
   private toggleTechnicalDetails = () => {
     this.setState(prevState => ({
       showTechnicalDetails: !prevState.showTechnicalDetails,
-    }))
+    }));
+  };
+
+  componentWillUnmount() {
+    // Clear any pending timeout to prevent memory leaks
+    if (this.retryTimeoutId) {
+      clearTimeout(this.retryTimeoutId);
+    }
   }
 
   render() {
-    const { hasError, error, retryCount, showTechnicalDetails } = this.state
+    const { hasError, error, retryCount, showTechnicalDetails } = this.state;
 
     if (hasError && error) {
       // Use custom fallback if provided
       if (this.props.fallback) {
-        return this.props.fallback
+        return this.props.fallback;
       }
 
-      const isNetworkError = this.isNetworkError(error)
-      const isConfigurationError = this.isConfigurationError(error)
-      const isAuthError = this.isAuthError(error)
+      const isNetworkError = this.isNetworkError(error);
+      const isConfigurationError = this.isConfigurationError(error);
+      const isAuthError = this.isAuthError(error);
 
       // Determine error message based on error type
-      let errorTitle = 'Authentication Error'
-      let errorDescription = 'There was a problem loading the authentication system.'
+      let errorTitle = 'Authentication Error';
+      let errorDescription =
+        'There was a problem loading the authentication system.';
 
       if (isNetworkError) {
-        errorTitle = 'Connection Error'
-        errorDescription = 'Unable to connect to the authentication service. Please check your internet connection and try again.'
+        errorTitle = 'Connection Error';
+        errorDescription =
+          'Unable to connect to the authentication service. Please check your internet connection and try again.';
       } else if (isConfigurationError) {
-        errorTitle = 'Configuration Error'
-        errorDescription = 'There seems to be a configuration issue with the authentication system.'
+        errorTitle = 'Configuration Error';
+        errorDescription =
+          'There seems to be a configuration issue with the authentication system.';
       } else if (isAuthError) {
-        errorTitle = 'Authentication Service Error'
-        errorDescription = 'The authentication service encountered an unexpected error.'
+        errorTitle = 'Authentication Service Error';
+        errorDescription =
+          'The authentication service encountered an unexpected error.';
       }
 
       return (
-        <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50" aria-live="assertive">
+        <main
+          className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50"
+          aria-live="assertive"
+        >
           <Card className="w-full max-w-md" role="alert">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
@@ -237,7 +271,9 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
                   disabled={retryCount >= 3}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  {retryCount === 0 ? 'Try Again' : `Try Again (${retryCount}/3)`}
+                  {retryCount === 0
+                    ? 'Try Again'
+                    : `Try Again (${retryCount}/3)`}
                 </Button>
 
                 {retryCount >= 3 && (
@@ -265,7 +301,10 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
                 </Button>
 
                 {showTechnicalDetails && (
-                  <div id="clerk-error-technical-details" className="mt-2 rounded-md bg-gray-100 p-3">
+                  <div
+                    id="clerk-error-technical-details"
+                    className="mt-2 rounded-md bg-gray-100 p-3"
+                  >
                     <div className="text-xs text-gray-700">
                       <div className="mb-2 font-medium">Error Message:</div>
                       <div className="mb-3 font-mono break-all">
@@ -287,9 +326,9 @@ export class ClerkErrorBoundary extends Component<ClerkErrorBoundaryProps, Clerk
             </CardContent>
           </Card>
         </main>
-      )
+      );
     }
 
-    return this.props.children
+    return this.props.children;
   }
 }
