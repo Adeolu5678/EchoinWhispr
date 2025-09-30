@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import { SignIn } from '@clerk/nextjs'
+import { SignIn } from '@clerk/nextjs';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
 export default function SignInPage(): JSX.Element {
   return (
@@ -14,7 +14,8 @@ export default function SignInPage(): JSX.Element {
         redirectUrl="/"
         appearance={{
           elements: {
-            formButtonPrimary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+            formButtonPrimary:
+              'bg-blue-600 text-white hover:bg-blue-700',
             card: 'shadow-lg',
             headerTitle: 'text-2xl font-bold',
             headerSubtitle: 'text-muted-foreground',
@@ -22,5 +23,5 @@ export default function SignInPage(): JSX.Element {
         }}
       />
     </main>
-  )
+  );
 }

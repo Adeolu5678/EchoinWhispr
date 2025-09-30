@@ -19,7 +19,6 @@ export const Button: React.FC<ButtonProps> = ({
   textStyle,
   fullWidth = false,
 }) => {
-
   const baseClasses = `
     inline-flex items-center justify-center
     border rounded-md
@@ -61,7 +60,8 @@ export const Button: React.FC<ButtonProps> = ({
     }
   };
 
-  const combinedClasses = `${baseClasses} ${getVariantClasses()} ${getSizeClasses()}`.trim();
+  const combinedClasses =
+    `${baseClasses} ${getVariantClasses()} ${getSizeClasses()}`.trim();
 
   return (
     <button

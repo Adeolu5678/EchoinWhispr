@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
   return (
@@ -6,7 +6,7 @@ export default function HomeScreen() {
       <Text style={styles.title}>EchoinWhispr</Text>
       <Text style={styles.subtitle}>Home Screen</Text>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -26,4 +26,4 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 8,
   },
-})
+});

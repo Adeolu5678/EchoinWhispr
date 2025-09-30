@@ -1,19 +1,19 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { Doc, Id } from "./_generated/dataModel";
+import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
+import { Doc, Id } from './_generated/dataModel';
 
 // Get current user or create if doesn't exist
 export const getCurrentUser = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       return null;
     }
 
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
     return user;
@@ -31,8 +31,8 @@ export const createOrUpdateUser = mutation({
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
       .first();
 
     const now = Date.now();
@@ -49,7 +49,7 @@ export const createOrUpdateUser = mutation({
       return existing._id;
     } else {
       // Create new user
-      return await ctx.db.insert("users", {
+      return await ctx.db.insert('users', {
         clerkId: args.clerkId,
         username: args.username,
         email: args.email,
@@ -67,8 +67,8 @@ export const getUserByUsername = query({
   args: { username: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
-      .query("users")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', args.username))
       .first();
   },
 });
@@ -78,9 +78,75 @@ export const getUserByClerkId = query({
   args: { clerkId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
       .first();
+  },
+});
+
+// Search users by username or email with pagination and security
+export const searchUsers = query({
+  args: {
+    query: v.string(),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    excludeUserId: v.optional(v.id('users')),
+  },
+  handler: async (ctx, args) => {
+    // Validate input parameters
+    const searchQuery = args.query.trim();
+    if (searchQuery.length < 2) {
+      throw new Error('Search query must be at least 2 characters long');
+    }
+
+    const limit = Math.min(args.limit || 20, 50); // Max 50 results
+    const offset = args.offset || 0;
+    const fetchSize = limit + offset + 1;
+
+    // Use database indexes for efficient searching
+    // Search by username (case-insensitive)
+    const usernameResults = await ctx.db
+      .query('users')
+      .withIndex('by_username', q =>
+        q
+          .gte('username', searchQuery.toLowerCase())
+          .lte('username', searchQuery.toLowerCase() + '\uffff')
+      )
+      .take(fetchSize);
+
+    // Search by email (case-insensitive) if no username results or need more results
+    let emailResults: Doc<'users'>[] = [];
+    if (usernameResults.length < fetchSize) {
+      emailResults = await ctx.db
+        .query('users')
+        .withIndex('by_email', q =>
+          q
+            .gte('email', searchQuery.toLowerCase())
+            .lte('email', searchQuery.toLowerCase() + '\uffff')
+        )
+        .take(fetchSize);
+    }
+
+    // Combine and deduplicate results
+    const allResults = [...usernameResults, ...emailResults];
+    const uniqueResults = allResults.filter(
+      (user, index, self) => index === self.findIndex(u => u._id === user._id)
+    );
+
+    // Filter out excluded user if provided
+    const filteredResults = args.excludeUserId
+      ? uniqueResults.filter(user => user._id !== args.excludeUserId)
+      : uniqueResults;
+
+    // Apply pagination
+    const paginatedResults = filteredResults.slice(offset, offset + limit);
+
+    // Return results with metadata
+    return {
+      results: paginatedResults,
+      totalCount: filteredResults.length,
+      hasMore: filteredResults.length > offset + limit,
+    };
   },
 });
 
@@ -94,16 +160,16 @@ export const updateUserProfile = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Not authenticated");
+      throw new Error('Not authenticated');
     }
 
     const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
     if (!user) {
-      throw new Error("User not found");
+      throw new Error('User not found');
     }
 
     await ctx.db.patch(user._id, {
@@ -115,64 +181,161 @@ export const updateUserProfile = mutation({
   },
 });
 
-// Get or create current user (client-side fallback)
+// Get current user or create if doesn't exist
 export const getOrCreateCurrentUser = mutation({
   args: {},
-  handler: async (ctx): Promise<Doc<"users"> | null> => {
+  handler: async (ctx): Promise<Doc<'users'> | null> => {
     try {
       const identity = await ctx.auth.getUserIdentity();
       if (!identity) {
-        throw new Error("Not authenticated");
+        throw new Error('Not authenticated');
       }
 
       // Validate required Clerk identity fields
       if (!identity.subject || !identity.email) {
-        throw new Error("Invalid identity: missing required fields");
+        throw new Error('Invalid identity: missing required fields');
       }
 
       // Check if user already exists
       const existingUser = await ctx.db
-        .query("users")
-        .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+        .query('users')
+        .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
         .first();
 
       if (existingUser) {
+        console.log(
+          'DEBUG: Found existing user:',
+          existingUser._id,
+          'needsUsernameSelection:',
+          existingUser.needsUsernameSelection
+        );
         return existingUser;
       }
 
-      // Generate unique username with better fallback
-      let username = identity.nickname || identity.name || identity.email?.split("@")[0];
-      if (!username) {
-        username = `user_${identity.subject.slice(-8)}`;
-      }
+      // User doesn't exist - create immediately with Clerk-assigned username
+      const username =
+        identity.nickname ||
+        identity.givenName ||
+        `user_${identity.subject.slice(0, 8)}`;
 
-      // Ensure username uniqueness
-      const existingUsername = await ctx.db
-        .query("users")
-        .withIndex("by_username", (q) => q.eq("username", username))
-        .first();
+      console.log('DEBUG: Creating new user with needsUsernameSelection: true');
 
-      if (existingUsername) {
-        username = `${username}_${Date.now()}`;
-      }
-
-      // Create new user from Clerk identity
-      const now = Date.now();
-      const userId = await ctx.db.insert("users", {
+      const newUserId = await ctx.db.insert('users', {
         clerkId: identity.subject,
-        username,
+        username: username,
         email: identity.email,
-        firstName: identity.givenName || undefined,
-        lastName: identity.familyName || undefined,
-        createdAt: now,
-        updatedAt: now,
+        firstName: identity.givenName,
+        lastName: identity.familyName,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        needsUsernameSelection: true,
       });
 
       // Return the newly created user
-      return await ctx.db.get(userId);
+      const newUser = await ctx.db.get(newUserId);
+      console.log(
+        'DEBUG: Created new user:',
+        newUserId,
+        'needsUsernameSelection:',
+        newUser?.needsUsernameSelection
+      );
+      return newUser;
     } catch (error) {
-      console.error("Error in getOrCreateCurrentUser:", error);
+      console.error('Error in getOrCreateCurrentUser:', error);
       throw error;
     }
+  },
+});
+
+// Update user username
+export const updateUsername = mutation({
+  args: {
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const normalizedUsername = args.username.trim().toLowerCase();
+
+    // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
+    const usernameRegex = /^[a-z0-9_]{3,20}$/;
+    if (!usernameRegex.test(normalizedUsername)) {
+      throw new Error(
+        'Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores'
+      );
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check if username is already taken by another user
+    const existingUser = await ctx.db
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', normalizedUsername))
+      .first();
+
+    if (existingUser && existingUser._id !== user._id) {
+      throw new Error('Username is already taken');
+    }
+
+    // Update username
+    await ctx.db.patch(user._id, {
+      username: normalizedUsername,
+      needsUsernameSelection: false,
+      updatedAt: Date.now(),
+    });
+
+    return user._id;
+  },
+});
+
+// Check if username is available for registration
+export const checkUsernameAvailability = query({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
+    const usernameRegex = /^[a-z0-9_]{3,20}$/;
+    if (!usernameRegex.test(args.username)) {
+      return false;
+    }
+
+    // Check if username already exists
+    const existingUser = await ctx.db
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', args.username))
+      .first();
+
+    return !existingUser; // Return true if username is available (no existing user)
+  },
+});
+
+// Get current user's username selection status
+export const getUserNeedsUsernameSelection = query({
+  args: {},
+  handler: async ctx => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return null;
+    }
+
+    return user.needsUsernameSelection ?? false;
   },
 });

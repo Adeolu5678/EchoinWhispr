@@ -6,19 +6,19 @@
  */
 
 export const colors = {
-  // Primary Brand Colors
+  // Primary Brand Colors (Purple Theme)
   primary: {
-    50: '#f0f9ff',
-    100: '#e0f2fe',
-    200: '#bae6fd',
-    300: '#7dd3fc',
-    400: '#38bdf8',
-    500: '#0ea5e9', // Main primary color
-    600: '#0284c7',
-    700: '#0369a1',
-    800: '#075985',
-    900: '#0c4a6e',
-    950: '#082f49',
+    50: '#faf5ff',
+    100: '#f3e8ff',
+    200: '#e9d5ff',
+    300: '#d8b4fe', // Light purple for input backgrounds
+    400: '#c084fc',
+    500: '#a855f7', // Main primary color
+    600: '#9333ea', // Deep purple for headers
+    700: '#7c3aed',
+    800: '#6b21a8',
+    900: '#581c87',
+    950: '#3b0764',
   },
 
   // Neutral Colors (Grays)
@@ -101,7 +101,7 @@ export const colors = {
     light: '#e5e5e5', // neutral-200
     medium: '#d4d4d4', // neutral-300
     dark: '#a3a3a3', // neutral-400
-    focus: '#0ea5e9', // primary-500
+    focus: '#a855f7', // primary-500 (purple theme)
   },
 
   // Shadow Colors
@@ -109,7 +109,7 @@ export const colors = {
     light: 'rgba(0, 0, 0, 0.05)',
     medium: 'rgba(0, 0, 0, 0.1)',
     dark: 'rgba(0, 0, 0, 0.15)',
-    colored: 'rgba(14, 165, 233, 0.15)', // primary-500 with opacity
+    colored: 'rgba(168, 85, 247, 0.15)', // primary-500 (purple) with opacity
   },
 } as const;
 
@@ -126,7 +126,7 @@ export const getColor = (token: ColorToken, scale?: string) => {
     return colorGroup;
   }
   if (scale && typeof colorGroup === 'object') {
-    return colorGroup[scale as keyof typeof colorGroup] || (colorGroup as any)['500'];
+    return colorGroup[scale as keyof typeof colorGroup] || (colorGroup as Record<string, string>)['500'];
   }
-  return (colorGroup as any)['500'];
-};
+                  return (colorGroup as Record<string, string>)['500'];
+};;
