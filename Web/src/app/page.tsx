@@ -1,6 +1,9 @@
 'use client';
 
 import { Suspense } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@clerk/nextjs';
+import { Button } from '@/components/ui/button';
 import { WhisperList } from '@/features/whispers/components/WhisperList';
 import { useWhispers } from '@/features/whispers/hooks/useWhispers';
 
@@ -28,6 +31,37 @@ function HomePageSkeleton() {
 }
 
 /**
+ * Landing page component for unauthenticated users.
+ *
+ * Displays a welcome message and prompts users to sign in.
+ *
+ * @returns {JSX.Element} The rendered landing page
+ */
+function LandingPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 text-center">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Welcome to EchoinWhispr
+          </h1>
+          <p className="text-lg text-gray-600 mb-8">
+            Send and receive anonymous whispers. Your thoughts, shared privately.
+          </p>
+        </div>
+        <div>
+          <Link href="/sign-in">
+            <Button size="lg" className="w-full">
+              Get Started
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Home page component for authenticated users.
  *
  * This is the main landing page for authenticated users, displaying their whispers.
@@ -43,7 +77,7 @@ function HomePageSkeleton() {
  *
  * @returns {JSX.Element} The rendered home page
  */
-export default function HomePage() {
+function AuthenticatedHomePage() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -71,6 +105,25 @@ export default function HomePage() {
       </div>
     </div>
   );
+}
+
+/**
+ * Root page component.
+ *
+ * Checks authentication status and renders appropriate content.
+ * For unauthenticated users, displays a landing page with sign-in prompt.
+ * For authenticated users, displays the home page with whispers.
+ *
+ * @returns {JSX.Element} The rendered page
+ */
+export default function HomePage() {
+  const { isSignedIn } = useAuth();
+
+  if (!isSignedIn) {
+    return <LandingPage />;
+  }
+
+  return <AuthenticatedHomePage />;
 }
 
 /**
