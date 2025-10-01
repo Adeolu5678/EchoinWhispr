@@ -35,17 +35,6 @@ export function UsernameSelectionHandler(): JSX.Element | null {
   // Note: Modal visibility is controlled by isUsernameSelectionOpen state
   const shouldShowModal = needsUsernameSelection === true;
 
-  console.log(
-    'DEBUG: UsernameSelectionHandler - needsUsernameSelection:',
-    needsUsernameSelection,
-    'isUsernameSelectionOpen:',
-    isUsernameSelectionOpen,
-    'shouldShowModal:',
-    shouldShowModal,
-    'hasTriggeredModal:',
-    hasTriggeredModal.current
-  );
-
   // Reset the trigger flag when modal state changes
   useEffect(() => {
     if (!isUsernameSelectionOpen) {
@@ -56,22 +45,12 @@ export function UsernameSelectionHandler(): JSX.Element | null {
   // If user needs username selection but modal is not open, show it
   // Use useEffect with proper guards to prevent infinite re-renders
   useEffect(() => {
-    console.log(
-      'DEBUG: UsernameSelectionHandler useEffect - needsUsernameSelection:',
-      needsUsernameSelection,
-      'isUsernameSelectionOpen:',
-      isUsernameSelectionOpen,
-      'hasTriggeredModal:',
-      hasTriggeredModal.current
-    );
-
     // Only trigger if user needs username selection and modal is not already open
     if (
       needsUsernameSelection === true &&
       !isUsernameSelectionOpen &&
       !hasTriggeredModal.current
     ) {
-      console.log('DEBUG: UsernameSelectionHandler - Triggering modal display');
       hasTriggeredModal.current = true;
       showUsernamePicker();
     }
@@ -94,9 +73,6 @@ export function UsernameSelectionHandler(): JSX.Element | null {
         isOpen={isUsernameSelectionOpen}
         onClose={hideUsernamePicker}
         onSuccess={() => {
-          console.log(
-            'DEBUG: UsernameSelectionHandler - Username selection successful'
-          );
           // Refresh user data after successful username selection
           // The modal handles the username update internally
           setTimeout(() => {
