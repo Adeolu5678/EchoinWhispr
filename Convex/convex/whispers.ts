@@ -7,6 +7,8 @@ export const sendWhisper = mutation({
   args: {
     recipientUsername: v.string(),
     content: v.string(),
+    imageUrl: v.optional(v.string()),
+    location: v.optional(v.object({ latitude: v.number(), longitude: v.number() })),
   },
   handler: async (ctx, args) => {
     // Validate content length (max 280 characters as per SSD)
@@ -55,6 +57,8 @@ export const sendWhisper = mutation({
       senderId: sender._id,
       recipientId: recipient._id,
       content: args.content.trim(),
+      imageUrl: args.imageUrl,
+      location: args.location,
       isRead: false,
       createdAt: now,
     });

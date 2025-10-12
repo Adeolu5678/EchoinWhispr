@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { WhisperWithSender } from '../types';
 import { useMarkAsRead } from '../hooks/useWhispers';
 import { formatDistanceToNow } from 'date-fns';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
-import { CheckCircle2, Clock, User } from 'lucide-react';
+import { CheckCircle2, Clock, User, MapPin } from 'lucide-react';
 
 interface WhisperCardProps {
   whisper: WhisperWithSender;
@@ -109,6 +110,34 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
             <div className={`text-sm leading-relaxed ${contentClassName}`}>
               {whisper.content}
             </div>
+            {/* Image display */}
+            {FEATURE_FLAGS.IMAGE_UPLOADS && whisper.imageUrl && (
+              <div className="mt-3">
+                <Image
+                  src={whisper.imageUrl}
+                  alt="Whisper image"
+                  width={400}
+                  height={300}
+                  className="w-full max-w-sm h-auto rounded-lg object-cover"
+                  priority={false}
+                  onError={(e) => {
+                    console.error('Failed to load image:', whisper.imageUrl);
+                    // Hide the image on error
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Location display */}
+            {FEATURE_FLAGS.LOCATION_BASED_FEATURES && whisper.location && (
+              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-4 h-4" aria-hidden="true" />
+                <span>
+                  Location: {whisper.location.latitude.toFixed(4)}, {whisper.location.longitude.toFixed(4)}
+                </span>
+              </div>
+            )}
 
             {/* Action buttons */}
             {showMarkAsRead && !whisper.isRead && (

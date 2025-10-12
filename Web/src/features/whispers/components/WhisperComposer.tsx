@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,8 +8,12 @@ import { useSendWhisper } from '../hooks/useWhispers';
 import { WHISPER_LIMITS } from '../types';
 import { RecipientSelector } from './RecipientSelector';
 import { UserSearchResult } from '@/features/users/types';
-import { Users, X, Send } from 'lucide-react';
-
+import { Users, X, Send, Image } from 'lucide-react';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { validateFile } from '@/lib/fileValidation';
+import { ImagePreview } from '@/components/ui/image-preview';
+import { useToast } from '@/hooks/use-toast';
 
 interface WhisperComposerProps {
   onWhisperSent?: () => void;
@@ -45,7 +49,11 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
   // Component state
   const [content, setContent] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { sendWhisper, isLoading, error } = useSendWhisper();
+  const { upload, isUploading, error: uploadError } = useFileUpload();
+  const { toast } = useToast();
 
   /**
    * Handles content change with character limit validation
@@ -79,6 +87,52 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
   }, []);
 
   /**
+   * Handles file selection and validation
+   */
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const validation = await validateFile(file);
+      if (!validation.isValid) {
+        toast({
+          title: 'Invalid file',
+          description: validation.error,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setSelectedImage(file);
+    } catch (error) {
+      console.error('File validation error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to validate file',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
+
+  /**
+   * Handles image removal
+   */
+  const handleRemoveImage = useCallback(() => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
+  /**
+   * Triggers file input click
+   */
+  const handleImageButtonClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  /**
    * Handles whisper submission with validation
    * Prevents empty or whitespace-only whispers from being sent
    */
@@ -101,15 +155,28 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
       }
 
       try {
+        let imageUrl: string | undefined;
+
+        // Upload image if selected
+        if (selectedImage) {
+          const uploadResult = await upload(selectedImage);
+          imageUrl = uploadResult.url;
+        }
+
         // Send whisper using the hook
         await sendWhisper({
           recipientUsername: selectedUser.username,
           content: trimmedContent,
+          imageUrl,
         });
 
-        // Clear content and selected user, notify parent component
+        // Clear content, selected user, and image, notify parent component
         setContent('');
         setSelectedUser(null);
+        setSelectedImage(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
         onWhisperSent?.();
       } catch (error) {
         // Error handling is managed by the hook with toast notifications
@@ -117,7 +184,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
         console.error('Failed to send whisper:', error);
       }
     },
-    [content, selectedUser, sendWhisper, onWhisperSent]
+    [content, selectedUser, selectedImage, sendWhisper, upload, onWhisperSent]
   );
 
   /**
@@ -137,9 +204,10 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
       content.trim().length >= WHISPER_LIMITS.MIN_CONTENT_LENGTH;
     const hasRecipients = selectedUser !== null;
     const withinLimit = content.length <= maxLength;
+    const uploading = isUploading;
 
-    return !hasValidContent || !hasRecipients || !withinLimit || isLoading;
-  }, [content, selectedUser, maxLength, isLoading]);
+    return !hasValidContent || !hasRecipients || !withinLimit || isLoading || uploading;
+  }, [content, selectedUser, maxLength, isLoading, isUploading]);
 
   /**
    * Determines the character count color based on remaining characters
@@ -221,6 +289,28 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
                 aria-invalid={remainingChars < 0}
               />
 
+              {/* Image Preview */}
+              {selectedImage && (
+                <div className="relative">
+                  <ImagePreview
+                    src={URL.createObjectURL(selectedImage)}
+                    alt="Selected image for whisper"
+                    size="lg"
+                    className="w-full max-w-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
               <div className="flex justify-between items-center text-sm">
                 <div
                   id="char-count"
@@ -241,17 +331,56 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
                     {error.message}
                   </div>
                 )}
+
+                {uploadError && (
+                  <div
+                    className="text-red-500"
+                    role="alert"
+                    aria-live="assertive"
+                  >
+                    {uploadError}
+                  </div>
+                )}
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isDisabled}
-              className="w-full h-11 text-base font-medium"
-              aria-label={isLoading ? 'Sending whisper...' : 'Send whisper'}
-            >
-              {isLoading ? 'Sending...' : 'Send Whisper'}
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              {/* Image Upload Button */}
+              {FEATURE_FLAGS.IMAGE_UPLOADS && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleImageButtonClick}
+                    disabled={isLoading || isUploading}
+                    aria-label="Add image"
+                  >
+                    <Image className="h-4 w-4 mr-2" aria-hidden="true" />
+                    {isUploading ? 'Uploading...' : 'Add Image'}
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    aria-label="Select image file"
+                  />
+                </>
+              )}
+
+              {/* Send Button */}
+              <Button
+                type="submit"
+                disabled={isDisabled}
+                className="flex-1 h-11 text-base font-medium"
+                aria-label={isLoading ? 'Sending whisper...' : 'Send whisper'}
+              >
+                {isLoading ? 'Sending...' : 'Send Whisper'}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

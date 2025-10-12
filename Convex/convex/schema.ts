@@ -26,6 +26,13 @@ export default defineSchema({
     createdAt: v.number(),
     readAt: v.optional(v.number()),
     conversationId: v.optional(v.id('conversations')),
+    // Deferred feature: IMAGE_UPLOADS - URL/ID of an attached image
+    imageUrl: v.optional(v.string()),
+    // Deferred feature: LOCATION_BASED_FEATURES - User's location coordinates (with explicit opt-in)
+    location: v.optional(v.object({
+      latitude: v.number(),
+      longitude: v.number()
+    })),
   })
     .index('by_sender', ['senderId'])
     .index('by_recipient', ['recipientId'])
@@ -76,4 +83,14 @@ export default defineSchema({
     .index('by_status', ['status'])
     .index('by_user_status', ['userId', 'status'])
     .index('by_friend_status', ['friendId', 'status']),
+
+  // Messages table - messages within conversations
+  messages: defineTable({
+    conversationId: v.id('conversations'),
+    senderId: v.id('users'),
+    content: v.string(),
+    createdAt: v.number(),
+  })
+    .index('by_conversation', ['conversationId'])
+    .index('by_sender', ['senderId']),
 });

@@ -52,3 +52,5 @@ const convex = createConvexClient();
 
 export default convex;
 export { api };
+
+export type { Id, Doc } from '../../../Convex/convex/_generated/dataModel';

@@ -41,7 +41,9 @@ class WhisperService {
       // Prepare whisper data - sendWhisper expects recipientUsername string
       const whisperData = {
         recipientUsername: request.recipientUsername,
+        imageUrl: request.imageUrl,
         content: request.content.trim(),
+        location: request.location,
       };
 
       // Send whisper using Convex mutation with retry logic
