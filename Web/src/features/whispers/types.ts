@@ -14,6 +14,8 @@ export interface Whisper {
   createdAt: number;
   readAt?: number;
   conversationId?: string; // Future feature: links to conversation if whisper evolved
+  imageUrl?: string; // Optional image attachment for the whisper
+  location?: { latitude: number; longitude: number }; // Optional location data for the whisper
 }
 
 // Extended whisper with additional computed fields for UI display
@@ -28,7 +30,9 @@ export interface WhisperWithSender extends Whisper {
 // API response types for whisper operations
 export interface SendWhisperRequest {
   recipientUsername: string;
+  imageUrl?: string;
   content: string;
+  location?: { latitude: number; longitude: number };
 }
 
 export interface SendWhisperToUserRequest {

@@ -4,12 +4,13 @@ import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { Menu, Home, Send, Inbox } from 'lucide-react';
+import { Menu, Home, Send, Inbox, Users, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NavigationLink } from './NavigationLink';
 import { UserMenu } from './UserMenu';
 import { MobileNavigation } from './MobileNavigation';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 /**
  * Main navigation component for the EchoinWhispr web application.
@@ -44,8 +45,8 @@ export const Navigation = () => {
    * Navigation items configuration
    * Memoized to prevent unnecessary re-renders
    */
-  const navigationItems = useMemo(
-    () => [
+  const navigationItems = useMemo(() => {
+    const baseItems = [
       {
         href: '/',
         label: 'Home',
@@ -64,9 +65,28 @@ export const Navigation = () => {
         icon: Inbox,
         description: 'View all received whispers',
       },
-    ],
-    []
-  );
+    ];
+
+    if (FEATURE_FLAGS.FRIENDS) {
+      baseItems.push({
+        href: '/friends',
+        label: 'Friends',
+        icon: Users,
+        description: 'Manage your friends and friend requests',
+      });
+    }
+
+    if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
+      baseItems.push({
+        href: '/profile',
+        label: 'Profile',
+        icon: User,
+        description: 'Edit your profile information',
+      });
+    }
+
+    return baseItems;
+  }, []);
 
   /**
    * Check if current path matches navigation item

@@ -1,20 +1,19 @@
-import { EchoRequest } from '../types';
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex';
+import { Conversation } from '../types';
 
 /**
- * Hook for getting pending echo requests for the current user.
+ * Hook to fetch echo requests for the current user.
+ * Echo requests are initiated conversations where the user is the sender of the initial whisper.
  *
- * This is a foundation placeholder for the CONVERSATION_EVOLUTION feature.
- * Currently returns empty array since the feature is disabled for MVP.
+ * @returns Object containing the echo requests data and loading state.
  */
-export const useGetEchoRequests = (): { echoRequests: EchoRequest[], isLoading: boolean } => {
-  // TODO: Uncomment when CONVERSATION_EVOLUTION feature is enabled
-  // const echoRequests = useQuery(api.conversations.getEchoRequests);
-
-  // Placeholder: return empty array for MVP
-  const echoRequests: EchoRequest[] = [];
+export const useGetEchoRequests = (): { echoRequests: Conversation[], isLoading: boolean } => {
+  const data = useQuery(api.conversations.getEchoRequests);
+  const isLoading = data === undefined;
 
   return {
-    echoRequests,
-    isLoading: false,
+    echoRequests: data || [],
+    isLoading,
   };
 };

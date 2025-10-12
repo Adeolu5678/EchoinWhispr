@@ -16,45 +16,45 @@ export const FEATURE_FLAGS = {
    * mutually revealed conversation where both parties' identities become known.
    * Foundation: UI placeholders (e.g., "Echo Back" button) and Convex schema extensions (conversations table).
    */
-  CONVERSATION_EVOLUTION: false,
+  CONVERSATION_EVOLUTION: true,
 
   /**
    * Enables the ability for users to attach images to whispers.
    * Foundation: UI icon/placeholder in compose screen and whispers table schema extension (imageUrl field).
    */
-  IMAGE_UPLOADS: false,
+  IMAGE_UPLOADS: true,
 
   /**
    * Enables the ability for users to upload and display profile pictures.
    * Foundation: UI section for profile picture in profile screen and users table schema extension (profileImageUrl field).
    */
-  PROFILE_PICTURES: false,
+  PROFILE_PICTURES: true,
 
   /**
    * Enables comprehensive user profile management features beyond basic authentication,
    * including editing display name, bio, and other personal settings.
    * Foundation: Read-only profile screen with structured fields ready for editing conversion.
    */
-  USER_PROFILE_EDITING: false,
+  USER_PROFILE_EDITING: true,
 
   /**
    * Enables real-time alerts to users for new whispers, conversation updates, etc.
    * Foundation: Integration of necessary modules for push notifications and push token storage in users table.
    */
-  PUSH_NOTIFICATIONS: false,
+  PUSH_NOTIFICATIONS: true,
 
   /**
    * Enables future integration of location-specific functionalities (e.g., sharing location in a whisper).
    * Foundation: Code to request location permissions and whispers table schema extension (location field).
    */
-  LOCATION_BASED_FEATURES: false,
+  LOCATION_BASED_FEATURES: true,
 
   /**
    * Enables the ability for users to send and manage friend requests, view friends list,
    * and interact with other users through the friends system.
    * Foundation: UI for friends page, search, requests, and list with Convex schema and functions.
    */
-  FRIENDS: false,
+  FRIENDS: true,
 } as const;
 
 /**

@@ -13,6 +13,30 @@ import type { GenericId } from 'convex/values';
 export type ConversationStatus = 'initiated' | 'active' | 'closed';
 
 /**
+ * Represents a conversation between two users.
+ */
+export interface Conversation {
+  _id: GenericId<"conversations">;
+  participantIds: GenericId<"users">[];
+  participantKey: string;
+  initialWhisperId: GenericId<"whispers">;
+  status: ConversationStatus;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Represents a message in a conversation.
+ */
+export interface Message {
+  _id: GenericId<"messages">;
+  conversationId: GenericId<"conversations">;
+  senderId: GenericId<"users">;
+  content: string;
+  createdAt: number;
+}
+
+/**
  * Represents an echo request for identity reveal.
  * Using string types for MVP foundation since Id types are generated.
  */

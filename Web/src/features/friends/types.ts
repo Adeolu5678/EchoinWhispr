@@ -17,6 +17,7 @@ export interface FriendUser {
   email: string;
   firstName?: string;
   lastName?: string;
+  avatarUrl?: string;
   friendshipId?: FriendId; // For removal operations
 }
 
@@ -30,7 +31,9 @@ export interface FriendRequest {
   status: "pending" | "accepted" | "blocked";
   createdAt: number;
   updatedAt: number;
+  message?: string;
   sender?: FriendUser; // Populated by query
+  friendshipId: FriendId; // Alias for _id for consistency
 }
 
 /**
@@ -43,7 +46,21 @@ export interface SentFriendRequest {
   status: "pending" | "accepted" | "blocked";
   createdAt: number;
   updatedAt: number;
+  message?: string;
   recipient?: FriendUser; // Populated by query
+  friendshipId: FriendId; // Alias for _id for consistency
+}
+
+/**
+ * Represents a friend with user details and friendship information.
+ */
+export interface Friend {
+  _id: UserId;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+  friendshipId: FriendId; // ID of the friendship record for removal
 }
 
 /**
@@ -61,7 +78,7 @@ export interface UserSearchResult {
  * Props for the FriendCard component.
  */
 export interface FriendCardProps {
-  friend: FriendUser;
+  friend: Friend;
   onRemove: (friendshipId: FriendId) => void;
   isRemoving?: boolean;
 }
@@ -78,21 +95,39 @@ export interface FriendRequestCardProps {
 }
 
 /**
- * Props for the UserSearchResult component.
+ * Props for the SentFriendRequestCard component.
  */
-export interface UserSearchResultProps {
-  user: UserSearchResult;
-  onSendRequest: (userId: UserId) => void;
-  isSending?: boolean;
-  canSendRequest?: boolean;
+export interface SentFriendRequestCardProps {
+  request: SentFriendRequest;
+  onCancel: (requestId: FriendId) => void;
+  isCancelling?: boolean;
 }
 
 /**
- * Props for the FriendList component.
+ * Props for the FriendsList component.
  */
 export interface FriendListProps {
-  friends: FriendUser[];
+  friends: Friend[];
   onRemoveFriend: (friendshipId: FriendId) => void;
+  isLoading?: boolean;
+}
+
+/**
+ * Props for the FriendRequestsList component.
+ */
+export interface FriendRequestsListProps {
+  requests: FriendRequest[];
+  onAcceptRequest: (requestId: FriendId) => void;
+  onRejectRequest: (requestId: FriendId) => void;
+  isLoading?: boolean;
+}
+
+/**
+ * Props for the SentRequestsList component.
+ */
+export interface SentRequestsListProps {
+  requests: SentFriendRequest[];
+  onCancelRequest: (requestId: FriendId) => void;
   isLoading?: boolean;
 }
 
