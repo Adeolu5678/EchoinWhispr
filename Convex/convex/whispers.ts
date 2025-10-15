@@ -88,6 +88,7 @@ export const getReceivedWhispers = query({
     return await ctx.db
       .query('whispers')
       .withIndex('by_recipient', q => q.eq('recipientId', user._id))
+      .filter(q => q.eq(q.field('conversationId'), undefined))
       .order('desc')
       .collect();
   },
@@ -182,8 +183,42 @@ export const getUnreadWhisperCount = query({
       .query('whispers')
       .withIndex('by_recipient', q => q.eq('recipientId', user._id))
       .filter(q => q.eq(q.field('isRead'), false))
+      .filter(q => q.eq(q.field('conversationId'), undefined))
       .collect();
 
     return unreadWhispers.length;
+  },
+});
+// Get a specific whisper by ID (only accessible by recipient)
+export const getWhisperById = query({
+  args: {
+    whisperId: v.id('whispers'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const whisper = await ctx.db.get(args.whisperId);
+    if (!whisper) {
+      throw new Error('Whisper not found');
+    }
+
+    // Only recipient can view the whisper
+    if (whisper.recipientId !== user._id) {
+      throw new Error('Not authorized to view this whisper');
+    }
+
+    return whisper;
   },
 });

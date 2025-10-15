@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -79,12 +80,13 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
     }, [whisper.isRead]);
 
     return (
-      <Card
-        className={cardClassName}
-        role="article"
-        aria-label="Whisper message"
-      >
-        <CardContent className="p-4">
+      <Link href={`/whispers/${whisper._id}`} className="block">
+        <Card
+          className={cardClassName}
+          role="article"
+          aria-label="Whisper message"
+        >
+          <CardContent className="p-4">
           <div className="space-y-3">
             {/* Header with sender info and timestamp */}
             <div className="flex items-start justify-between gap-3">
@@ -175,6 +177,7 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
           </div>
         </CardContent>
       </Card>
+      </Link>
     );
   }
 );
