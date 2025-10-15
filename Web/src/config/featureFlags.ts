@@ -13,7 +13,7 @@
 export const FEATURE_FLAGS = {
   /**
    * Enables the ability for a recipient of a Whisper to "Echo" it back, initiating a two-way,
-   * mutually revealed conversation where both parties' identities become known.
+   * conversation.
    * Foundation: UI placeholders (e.g., "Echo Back" button) and Convex schema extensions (conversations table).
    */
   CONVERSATION_EVOLUTION: true,
@@ -55,6 +55,18 @@ export const FEATURE_FLAGS = {
    * Foundation: UI for friends page, search, requests, and list with Convex schema and functions.
    */
   FRIENDS: true,
+   /**
+    * Enables the ability for users to continue their own whisper threads by replying to their own whispers,
+    * enabling storytelling and long-form content creation while bypassing the 280-character limit.
+    * Foundation: UI placeholders for chain indicators and reply buttons, Convex schema extensions (chainId, parentWhisperId, chainOrder, isChainStart fields).
+    */
+   WHISPER_CHAINS: true,
+
+   /**
+    * Enables the ability for users to send mystery whispers, where the recipient is revealed only after they respond.
+    * Foundation: UI placeholders for mystery whisper options and Convex schema extensions (isMystery field).
+    */
+   MYSTERY_WHISPERS: true,
 } as const;
 
 /**

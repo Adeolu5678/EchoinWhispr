@@ -33,11 +33,20 @@ export default defineSchema({
       latitude: v.number(),
       longitude: v.number()
     })),
+    // Deferred feature: WHISPER_CHAINS - Chain-related fields
+    chainId: v.optional(v.id('whispers')),
+    parentWhisperId: v.optional(v.id('whispers')),
+    chainOrder: v.optional(v.number()),
+    isChainStart: v.optional(v.boolean()),
+    // Deferred feature: MYSTERY_WHISPERS - Mystery whisper flag
+    isMystery: v.optional(v.boolean()),
   })
     .index('by_sender', ['senderId'])
     .index('by_recipient', ['recipientId'])
     .index('by_sender_recipient', ['senderId', 'recipientId'])
-    .index('by_created_at', ['createdAt']),
+    .index('by_created_at', ['createdAt'])
+    .index('by_chain', ['chainId'])
+    .index('by_parent', ['parentWhisperId']),
 
   // Conversations table - deferred feature for conversation evolution
   conversations: defineTable({
@@ -50,7 +59,8 @@ export default defineSchema({
   })
     .index("by_participant_key", ["participantKey"])
     .index("by_initial_whisper", ["initialWhisperId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_participants", ["participantIds"]),
 
   // User profiles table - additional user information
   profiles: defineTable({
@@ -90,7 +100,28 @@ export default defineSchema({
     senderId: v.id('users'),
     content: v.string(),
     createdAt: v.number(),
+    // Deferred feature: IMAGE_UPLOADS - URL/ID of an attached image
+    imageUrl: v.optional(v.string()),
   })
     .index('by_conversation', ['conversationId'])
     .index('by_sender', ['senderId']),
+
+  // Mystery Settings table - user preferences for mystery whispers
+  mysterySettings: defineTable({
+    userId: v.id('users'),
+    optOut: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user_id', ['userId']),
+
+  // Mystery Whispers Daily Limits table - track daily usage
+  mysteryWhisperLimits: defineTable({
+    userId: v.id('users'),
+    date: v.string(), // YYYY-MM-DD format
+    count: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user_date', ['userId', 'date']),
 });

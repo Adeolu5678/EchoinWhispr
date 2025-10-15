@@ -16,9 +16,10 @@ export const useSendMessage = () => {
    *
    * @param conversationId - The ID of the conversation
    * @param content - The message content to send
+   * @param imageUrl - Optional image URL for attachment
    * @returns Promise resolving to the message ID
    */
-  const sendMessage = async (conversationId: Id<'conversations'>, content: string) => {
+  const sendMessage = async (conversationId: Id<'conversations'>, content: string, imageUrl?: string) => {
     try {
       // Client-side validation
       if (!content.trim()) {
@@ -32,6 +33,7 @@ export const useSendMessage = () => {
       const messageId = await sendMessageMutation({
         conversationId,
         content: content.trim(),
+        imageUrl,
       });
 
       return messageId;

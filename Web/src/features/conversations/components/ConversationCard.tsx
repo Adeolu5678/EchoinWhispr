@@ -47,6 +47,11 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({
   // For MVP, show placeholder name based on ID
   const displayName = `User ${otherParticipantId.slice(-4)}`;
 
+  // Feature-flagged conversation naming using whisper content preview
+  const conversationName = FEATURE_FLAGS.CONVERSATION_EVOLUTION && conversation.initialWhisperId
+    ? `${conversation.initialWhisperId.slice(-4)}...` // Placeholder for first 3 words + "..."
+    : displayName;
+
   const statusColor = {
     initiated: 'bg-yellow-100 text-yellow-800',
     active: 'bg-green-100 text-green-800',
