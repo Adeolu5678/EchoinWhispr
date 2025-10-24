@@ -4,23 +4,17 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Clock, User, MapPin, Send, AlertCircle } from 'lucide-react';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
-import { EchoButton } from '@/features/conversations/components/EchoButton';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { api } from '@/lib/convex';
 import { useQuery, useMutation } from 'convex/react';
 import { Id } from '@/lib/convex';
+import { Shield, ArrowLeft, Copy, Save } from 'lucide-react';
 
 /**
- * WhisperDetailPage component displays full whisper content with interaction options
- * Includes Echo button for identity revelation and reply composer for conversations
+ * WhisperDetailPage component displays full whisper content with interaction options,
+ * styled with a custom UI design.
  */
 export default function WhisperDetailPage() {
   const params = useParams();
@@ -36,7 +30,6 @@ export default function WhisperDetailPage() {
   // Reply functionality
   const [replyContent, setReplyContent] = useState('');
   const [isReplying, setIsReplying] = useState(false);
-
   const echoWhisper = useMutation(api.conversations.echoWhisper);
 
   /**
@@ -49,7 +42,7 @@ export default function WhisperDetailPage() {
     try {
       await echoWhisper({
         whisperId: whisper._id as Id<'whispers'>,
-         replyContent: replyContent.trim(),
+        replyContent: replyContent.trim(),
       });
 
       toast({
@@ -57,7 +50,6 @@ export default function WhisperDetailPage() {
         description: 'Your conversation has been started.',
       });
 
-      // Navigate to conversations page
       router.push('/conversations');
     } catch (error) {
       console.error('Failed to echo whisper:', error);
@@ -72,192 +64,182 @@ export default function WhisperDetailPage() {
   };
 
   /**
-   * Formats the timestamp for display
+   * Copies the whisper content to the clipboard
    */
+  const handleCopy = () => {
+    if(!whisper) return;
+    navigator.clipboard.writeText(whisper.content);
+    toast({ title: 'Copied to clipboard!' });
+  };
+
   const formattedTime = whisper
     ? formatDistanceToNow(new Date(whisper._creationTime), { addSuffix: true })
     : '';
 
-  // Loading state
+  // The Convex backend already enforces that only recipients can access whispers
+  const isRecipient: boolean = !!whisper;
+
+  // Loading state skeleton matching the new design
   if (!whisper) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="space-y-6">
-          <Skeleton className="h-10 w-32" />
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-10 w-32" />
-            </CardContent>
-          </Card>
+      <div className="px-4 md:px-10 lg:px-40 flex flex-1 justify-center py-5">
+        <div className="flex flex-col max-w-[960px] flex-1 animate-pulse">
+            <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-border-dark px-4 sm:px-10 py-3">
+                <div className="flex items-center gap-4">
+                    <div className="size-6 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                    <div className="h-6 w-32 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                </div>
+                <div className="flex flex-1 justify-end gap-4 sm:gap-8">
+                    <div className="h-10 w-12 bg-gray-300 dark:bg-border-dark rounded-lg"></div>
+                    <div className="size-10 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+                </div>
+            </header>
+            <main className="flex-1 mt-8">
+                <div className="p-4">
+                    <div className="bg-background-light dark:bg-card-dark rounded-xl shadow-lg">
+                        <div className="p-6 flex flex-col gap-4">
+                            <div className="h-6 w-48 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                            <div className="h-5 w-full bg-gray-300 dark:bg-gray-700 rounded mt-2"></div>
+                            <div className="h-5 w-3/4 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                        </div>
+                        <div className="h-5 w-24 bg-gray-300 dark:bg-gray-700 rounded float-right mr-6 mb-3"></div>
+                    </div>
+                </div>
+            </main>
         </div>
       </div>
     );
   }
 
-// If whisper data loads successfully, user is authorized as recipient
-// The Convex backend already enforces that only recipients can access whispers
-const isRecipient: boolean = !!whisper;
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="space-y-6">
+    <div className="px-4 md:px-10 lg:px-40 flex flex-1 justify-center py-5">
+      <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-bold">Whisper Details</h1>
-        </div>
+        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-border-dark px-4 sm:px-10 py-3">
+          <div className="flex items-center gap-4 text-gray-800 dark:text-white">
+            <div className="size-6 text-primary">
+              <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path clipRule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fillRule="evenodd"></path>
+              </svg>
+            </div>
+            <h2 className="text-gray-800 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">EchoinWhispr</h2>
+          </div>
+          <div className="flex flex-1 justify-end gap-4 sm:gap-8">
+            <button
+                onClick={() => router.back()}
+                className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-gray-200 dark:bg-border-dark text-gray-800 dark:text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-800 dark:text-white" />
+            </button>
+            <div
+              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+              style={{ backgroundImage: `url(${user?.imageUrl})` }}
+            ></div>
+          </div>
+        </header>
 
-        {/* Whisper Content Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="w-4 h-4" aria-hidden="true" />
-                <span>
-                  {FEATURE_FLAGS.CONVERSATION_EVOLUTION && whisper.conversationId
-                    ? 'Anonymous' // TODO: Implement sender name resolution when schema supports it
-                    : 'Anonymous'}
-                </span>
+        {/* Main Content */}
+        <main className="flex-1 mt-8">
+          {/* Whisper Card */}
+          <div className="p-4">
+            <div className="bg-background-light dark:bg-card-dark flex flex-col items-stretch rounded-xl shadow-lg overflow-hidden">
+              <div className="p-6 flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                  <p className="text-gray-800 dark:text-white text-lg font-bold leading-normal">Anonymous Whisper</p>
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-base font-normal leading-relaxed">
+                  {whisper.content}
+                </p>
+                {FEATURE_FLAGS.IMAGE_UPLOADS && whisper.imageUrl && (
+                  <div className="mt-4">
+                    <Image
+                      alt="Whisper Image"
+                      className="rounded-lg w-full h-auto object-cover"
+                      src={whisper.imageUrl}
+                      width={500}
+                      height={400}
+                    />
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" aria-hidden="true" />
+              <p className="text-gray-500 dark:text-muted-dark text-sm font-normal leading-normal pb-3 pt-1 px-6 text-right">
                 <time dateTime={new Date(whisper._creationTime).toISOString()}>
                   {formattedTime}
                 </time>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            {/* Whisper content */}
-            <div className="text-base leading-relaxed">
-              {whisper.content}
-            </div>
-
-            {/* Image display */}
-            {FEATURE_FLAGS.IMAGE_UPLOADS && whisper.imageUrl && (
-              <div className="mt-4">
-                <Image
-                  src={whisper.imageUrl}
-                  alt="Whisper image"
-                  width={400}
-                  height={300}
-                  className="w-full max-w-md h-auto rounded-lg object-cover"
-                  onError={(e) => {
-                    console.error('Failed to load image:', whisper.imageUrl);
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Location display */}
-            {FEATURE_FLAGS.LOCATION_BASED_FEATURES && whisper.location && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" aria-hidden="true" />
-                <span>
-                  Location: {whisper.location.latitude.toFixed(4)}, {whisper.location.longitude.toFixed(4)}
-                </span>
-              </div>
-            )}
-
-            {/* Action buttons - only for recipient */}
-            {isRecipient && (
-              <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
-                {/* Echo button - feature flagged */}
-                {FEATURE_FLAGS.CONVERSATION_EVOLUTION && (
-                  <EchoButton
-                    whisperId={whisper._id as Id<'whispers'>}
-                    recipientId={user!.id}
-                    onSuccess={() => {
-                      toast({
-                        title: 'Echo request sent!',
-                        description: 'The sender will be notified of your interest.',
-                      });
-                    }}
-                  />
-                )}
-
-                {/* Reply button - always available */}
-                <Button
-                  variant="outline"
-                  onClick={() => document.getElementById('reply-textarea')?.focus()}
-                  className="flex items-center gap-2"
-                >
-                  <Send className="w-4 h-4" />
-                  Reply
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Reply composer - only for recipient */}
-        {isRecipient && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Send Reply</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Start a conversation by replying to this whisper
               </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                id="reply-textarea"
-                placeholder="Type your reply here..."
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                className="min-h-[100px] resize-none"
-                maxLength={280}
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  {replyContent.length}/280 characters
-                </span>
-                <Button
-                  onClick={handleReply}
-                  disabled={!replyContent.trim() || isReplying}
-                  className="flex items-center gap-2"
-                >
-                  {isReplying ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      Send Reply
-                    </>
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </div>
 
-        {/* Info for non-recipients */}
-        {!isRecipient && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              You can only reply to whispers that were sent to you. Please check if you are logged in with the correct account.
-            </AlertDescription>
-          </Alert>
-        )}
+          {/* Action & Reply Section */}
+          {isRecipient ? (
+            <div className="px-4 py-6 border-t border-gray-200 dark:border-border-dark space-y-6">
+                {/* Action Buttons */}
+                <div className="flex flex-wrap justify-between items-center gap-4">
+                    <div className="flex gap-2">
+                        <button onClick={handleCopy} className="flex items-center justify-center gap-2 rounded-lg bg-gray-200 dark:bg-border-dark px-4 py-2 text-gray-800 dark:text-white text-sm font-medium leading-normal">
+                            <Copy className="w-4 h-4" />
+                            <span>Copy</span>
+                        </button>
+                        <button onClick={() => toast({ title: "Feature coming soon!" })} className="flex items-center justify-center gap-2 rounded-lg bg-gray-200 dark:bg-border-dark px-4 py-2 text-gray-800 dark:text-white text-sm font-medium leading-normal">
+                            <Save className="w-4 h-4" />
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Reply Composer */}
+                <div className="space-y-4">
+                    <label htmlFor="reply-textarea" className="text-lg font-bold text-gray-800 dark:text-white">Send Reply</label>
+                    <div className="relative">
+                        <textarea
+                          id="reply-textarea"
+                          placeholder="Type your reply here..."
+                          value={replyContent}
+                          onChange={(e) => setReplyContent(e.target.value)}
+                          maxLength={280}
+                          className="w-full min-h-[100px] resize-none p-3 pr-12 rounded-lg bg-gray-200 dark:bg-border-dark text-gray-800 dark:text-white focus:ring-2 focus:ring-primary focus:outline-none"
+                        />
+                        {FEATURE_FLAGS.IMAGE_UPLOADS && (
+                          <button
+                            type="button"
+                            className="absolute bottom-3 right-3 p-1 rounded bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                            onClick={() => toast({ title: "Image upload coming soon!" })}
+                          >
+                            <span className="material-symbols-outlined text-base text-gray-700 dark:text-gray-300">image</span>
+                          </button>
+                        )}
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500 dark:text-muted-dark">
+                          {replyContent.length}/280
+                        </span>
+                        <button
+                          onClick={handleReply}
+                          disabled={!replyContent.trim() || isReplying}
+                          className="flex min-w-[120px] items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] disabled:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isReplying ? (
+                             <>
+                                <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                <span>Sending...</span>
+                            </>
+                          ) : (
+                            <span>Reply</span>
+                          )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+          ) : (
+            <div className="px-4 py-6 border-t border-gray-200 dark:border-border-dark">
+                <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 flex items-center gap-3">
+                    <Shield className="w-6 h-6" />
+                    <p>You can only reply to whispers that were sent to you.</p>
+                </div>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );

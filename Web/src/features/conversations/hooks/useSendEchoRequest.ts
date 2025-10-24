@@ -9,7 +9,7 @@ import type { GenericId } from 'convex/values';
  *
  * @returns Object containing the sendEchoRequest function and loading state.
  */
-export const useSendEchoRequest = (): { sendEchoRequest: (whisperId: GenericId<"whispers">) => Promise<void>, isLoading: boolean } => {
+export const useSendEchoRequest = (): { sendEchoRequest: (whisperId: GenericId<"whispers">) => Promise<GenericId<"conversations"> | null>, isLoading: boolean } => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const sendEchoRequestMutation = useMutation(api.conversations.sendEchoRequest);
@@ -19,17 +19,19 @@ export const useSendEchoRequest = (): { sendEchoRequest: (whisperId: GenericId<"
    * This creates a conversation record with status 'initiated'.
    *
    * @param whisperId - The ID of the whisper to echo back
+   * @returns The conversation ID if successful, null otherwise
    */
-  const sendEchoRequest = useCallback(async (whisperId: GenericId<"whispers">) => {
-    if (isLoading) return;
+  const sendEchoRequest = useCallback(async (whisperId: GenericId<"whispers">): Promise<GenericId<"conversations"> | null> => {
+    if (isLoading) return null;
 
     setIsLoading(true);
     try {
-      await sendEchoRequestMutation({ whisperId });
+      const conversationId = await sendEchoRequestMutation({ whisperId });
       toast({
         title: "Echo request sent",
         description: "Your echo request has been sent successfully.",
       });
+      return conversationId;
     } catch (error) {
       console.error('Failed to send echo request:', error);
       toast({
@@ -37,6 +39,7 @@ export const useSendEchoRequest = (): { sendEchoRequest: (whisperId: GenericId<"
         description: "An error occurred while sending your echo request. Please try again.",
         variant: "destructive",
       });
+      return null;
     } finally {
       setIsLoading(false);
     }

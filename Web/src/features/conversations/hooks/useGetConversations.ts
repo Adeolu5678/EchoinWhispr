@@ -11,7 +11,7 @@ export const useGetConversations = () => {
   const conversations = useQuery(api.conversations.getActiveConversations);
 
   return {
-    conversations: conversations || [],
+    conversations,
     isLoading: conversations === undefined,
     error: null, // Convex handles errors internally
   };

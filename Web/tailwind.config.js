@@ -27,6 +27,7 @@ const webConfig = {
       // Next.js specific utilities
       fontFamily: {
         'inter-var': ['InterVariable', 'Inter', 'system-ui', 'sans-serif'],
+        "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"]
       },
 
       // Web-specific animations
@@ -68,6 +69,18 @@ const webConfig = {
         xl: '36rem',
         '2xl': '42rem',
       },
+
+      // --- ADD THIS EXTEND BLOCK ---
+      colors: {
+        "primary": "#1919e6",
+        "background-light": "#f6f6f8",
+        "background-dark": "#111121",
+        "card-dark": "#1C1C2E",
+        "border-dark": "#242447",
+        "muted-dark": "#e5e5e5",
+        "text-dark": "#ffffff"
+      },
+      // --- END OF ADDITION ---
     },
   },
 

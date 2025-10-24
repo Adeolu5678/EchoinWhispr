@@ -1,63 +1,64 @@
-'use client';
-
 import { ConversationCard } from './ConversationCard';
-import { useGetConversations } from '../hooks/useGetConversations';
-import { useUser } from '@clerk/nextjs';
-import { Loader2, MessageCircle } from 'lucide-react';
 import type { Id } from '@/lib/convex';
+import type { Conversation } from '../types';
 
-/**
- * ConversationList component displays a list of conversations.
- * Handles empty state, loading state, and scrolling.
- */
-export const ConversationList: React.FC = () => {
-  const { conversations, isLoading, error } = useGetConversations();
-  const { user } = useUser();
+interface ConversationListProps {
+  conversations: Conversation[] | undefined;
+  isLoading: boolean;
+  error: Error | null;
+  currentUserId: Id<'users'>;
+  onRefresh?: () => void;
+}
+
+export const ConversationList: React.FC<ConversationListProps> = ({
+  conversations,
+  isLoading,
+  error,
+  currentUserId,
+  onRefresh: _onRefresh,
+}) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Loading conversations...</span>
-      </div>
+        <div className="p-4">
+            <div className="bg-background-light dark:bg-card-dark rounded-xl shadow-lg p-6 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <span className="ml-4 text-gray-700 dark:text-gray-300">Loading conversations...</span>
+            </div>
+        </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center">
-        <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-          Failed to load conversations
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          {error || 'An error occurred while loading your conversations.'}
-        </p>
-      </div>
+        <div className="p-4">
+            <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-lg p-6 flex items-center gap-3">
+                <span className="material-symbols-outlined">error</span>
+                <p>{error.message || 'An error occurred while loading your conversations.'}</p>
+            </div>
+        </div>
     );
   }
 
   if (!conversations || conversations.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center">
-        <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-          No conversations yet
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          When you send or receive echo requests that are accepted, your conversations will appear here.
-        </p>
-      </div>
+        <div className="p-4">
+            <div className="bg-background-light dark:bg-card-dark rounded-xl shadow-lg p-10 text-center">
+                <span className="material-symbols-outlined text-6xl text-gray-400 dark:text-gray-500">forum</span>
+                <h3 className="mt-4 text-xl font-bold text-gray-800 dark:text-white">No conversations yet</h3>
+                <p className="mt-2 text-base text-gray-700 dark:text-gray-300">When you accept an echo request, your conversation will appear here.</p>
+            </div>
+        </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       {conversations.map((conversation) => (
         <ConversationCard
           key={conversation._id}
           conversation={conversation}
-          currentUserId={user?.id as Id<'users'>}
+          currentUserId={currentUserId}
         />
       ))}
     </div>

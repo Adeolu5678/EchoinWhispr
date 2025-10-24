@@ -2,11 +2,13 @@
 
 import { Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUser } from '@clerk/nextjs';
 import { useInboxData } from '@/features/inbox/hooks/useInboxData';
 import { UnreadCountBadge } from './components/UnreadCountBadge';
 import { RefreshButton } from './components/RefreshButton';
 import { InboxContent } from './components/InboxContent';
 import { ConversationList } from '@/features/conversations/components/ConversationList';
+import type { Id } from '@/lib/convex';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +64,8 @@ function InboxPageSkeleton() {
  * @returns {JSX.Element} The rendered inbox page
  */
 export default function InboxPage() {
+  const { user } = useUser();
+
   // Extract all necessary data from the combined inbox hook
   const {
     whispers,
@@ -71,12 +75,12 @@ export default function InboxPage() {
     isLoadingConversations,
     conversationsError,
     isLoading,
-    hasError,
-    error,
     totalUnreadCount,
     refetchAll,
     markAsRead,
   } = useInboxData();
+
+  const currentUserId = user?.id as Id<'users'>;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -129,6 +133,7 @@ export default function InboxPage() {
                 conversations={conversations}
                 isLoading={isLoadingConversations}
                 error={conversationsError}
+                currentUserId={currentUserId}
                 onRefresh={refetchAll}
               />
             </Suspense>
