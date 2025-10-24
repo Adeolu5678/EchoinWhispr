@@ -11,7 +11,6 @@ EchoinWhispr/
 ├── Flutter/               # Flutter learning project
 ├── Convex/                # Shared Convex backend
 ├── packages/              # Shared packages (future use)
-├── .kilocode/            # AI agent rules and configurations
 └── Software Specification Documentation (SSD)/
     # Comprehensive project documentation
 ```
@@ -79,7 +78,6 @@ See the individual README files in each platform directory for detailed setup in
 
 - [Software Specification Documentation](./Software Specification Documentation (SSD)/README.md)
 - [Platform-Specific Instructions](./Web/Tailored Instructions/README.md)
-- [AI Agent Rules](./.kilocode/rules/)
 
 ## License
 
