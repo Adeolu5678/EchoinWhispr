@@ -91,9 +91,9 @@ export const colors = {
   text: {
     primary: '#171717', // neutral-900
     secondary: '#525252', // neutral-600
-    tertiary: '#737373', // neutral-500
+    tertiary: '#404040',
     inverse: '#ffffff',
-    disabled: '#a3a3a3', // neutral-400
+    disabled: '#525252',
   },
 
   // Border Colors
