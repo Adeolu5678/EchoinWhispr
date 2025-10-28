@@ -8,7 +8,7 @@ import { WebhookEvent, UserJSON } from '@clerk/clerk-sdk-node';
 export const clerkWebhook = action({
   args: {
     body: v.string(),
-    headers: v.any(),
+    headers: v.record(v.string(), v.string()),
   },
   handler: async (ctx, args) => {
     const { body, headers } = args;
@@ -32,16 +32,16 @@ export const clerkWebhook = action({
         case 'user.updated':
           await handleUserUpdated(ctx, data);
           break;
-    case "user.deleted":
-      {
-        const data: UserDeletedEventData = {
-          id: event.data.id,
-          deleted: event.data.deleted,
-          object: "user",
-        };
-        await handleUserDeleted(ctx, data);
-      }
-      break;
+        case 'user.deleted':
+          {
+            const userDeletedData: UserDeletedEventData = {
+              id: event.data.id,
+              deleted: event.data.deleted,
+              object: 'user',
+            };
+            await handleUserDeleted(ctx, userDeletedData);
+          }
+          break;
         default:
           console.log(`Unhandled webhook event type: ${type}`);
       }
@@ -70,6 +70,7 @@ async function verifyWebhookSignature(
   const svix_signature = headers['svix-signature'] as string;
 
   if (!svix_id || !svix_timestamp || !svix_signature) {
+    console.error('Missing required webhook headers');
     return null;
   }
 
@@ -173,8 +174,9 @@ async function handleUserDeleted(
 ) {
   try {
     const { id: clerkId } = userData;
-    if (clerkId === undefined) {
-      throw new Error("Clerk ID is undefined in webhook event data.");
+    if (!clerkId) {
+      console.error('Clerk ID is missing in webhook event data');
+      return;
     }
 
     // Find user by clerkId
@@ -200,5 +202,10 @@ async function handleUserDeleted(
 function generateUsernameFromEmail(email: string): string {
   const [localPart] = email.split('@');
   // Remove special characters and ensure uniqueness
-  return localPart.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  const cleanUsername = localPart.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  // Ensure minimum length and add random suffix if too short
+  if (cleanUsername.length < 3) {
+    return cleanUsername + Math.random().toString(36).substring(2, 5);
+  }
+  return cleanUsername;
 }

@@ -1,106 +1,28 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { Menu, Home, Send, Inbox, Users, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { NavigationLink } from './NavigationLink';
+import { MenuBar } from './MenuBar';
 import { UserMenu } from './UserMenu';
-import { MobileNavigation } from './MobileNavigation';
-import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
-import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 /**
  * Main navigation component for the EchoinWhispr web application.
  *
  * This component provides the primary navigation structure for authenticated users,
- * including desktop and mobile navigation options. It displays the app logo,
- * navigation links, and user menu based on authentication status.
+ * including a menu bar with dropdown navigation and user menu. It displays the app logo,
+ * menu bar, and user menu based on authentication status.
  *
  * Features:
- * - Responsive design with mobile hamburger menu
+ * - Menu bar with hamburger icon and dropdown menu
  * - Integration with Clerk authentication
- * - Active route highlighting
- * - Mobile-first approach with collapsible navigation
- * - Performance optimizations with React.memo and useCallback
+ * - Responsive design
+ * - Performance optimizations with useCallback
  *
  * @returns {JSX.Element} The rendered navigation component
  */
 export const Navigation = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
-  const pathname = usePathname();
   const { user, isLoaded } = useUser();
-
-  /**
-   * Close mobile menu
-   * Uses useCallback for performance optimization
-   */
-  const closeMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(false);
-  }, []);
-
-  /**
-   * Navigation items configuration
-   * Memoized to prevent unnecessary re-renders
-   */
-  const navigationItems = useMemo(() => {
-    const baseItems = [
-      {
-        href: '/',
-        label: 'Home',
-        icon: Home,
-        description: 'View received whispers and home feed',
-      },
-      {
-        href: '/compose',
-        label: 'Compose',
-        icon: Send,
-        description: 'Create and send new whispers',
-      },
-      {
-        href: '/inbox',
-        label: 'Inbox',
-        icon: Inbox,
-        description: 'View all received whispers',
-      },
-    ];
-
-    if (FEATURE_FLAGS.FRIENDS) {
-      baseItems.push({
-        href: '/friends',
-        label: 'Friends',
-        icon: Users,
-        description: 'Manage your friends and friend requests',
-      });
-    }
-
-    if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
-      baseItems.push({
-        href: '/profile',
-        label: 'Profile',
-        icon: User,
-        description: 'Edit your profile information',
-      });
-    }
-
-    return baseItems;
-  }, []);
-
-  /**
-   * Check if current path matches navigation item
-   * Uses useCallback for performance optimization
-   */
-  const isActiveRoute = useCallback(
-    (href: string) => {
-      if (href === '/') {
-        return pathname === '/';
-      }
-      return pathname.startsWith(href);
-    },
-    [pathname]
-  );
 
   // Show loading state while Clerk is loading
   if (!isLoaded) {
@@ -134,7 +56,6 @@ export const Navigation = () => {
             <Link
               href="/"
               className="flex items-center space-x-2 text-xl font-bold text-inverse hover:text-primary-100 transition-colors"
-              onClick={closeMobileMenu}
             >
               <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">EW</span>
@@ -143,45 +64,14 @@ export const Navigation = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navigationItems.map(item => (
-              <NavigationLink
-                key={item.href}
-                href={item.href}
-                icon={item.icon}
-                label={item.label}
-                isActive={isActiveRoute(item.href)}
-                onClick={closeMobileMenu}
-              />
-            ))}
+          {/* Menu Bar */}
+          <div className="flex items-center">
+            <MenuBar />
           </div>
 
-          {/* User Menu and Mobile Toggle */}
-          <div className="flex items-center space-x-4">
+          {/* User Menu */}
+          <div className="flex items-center">
             <UserMenu user={user} />
-
-            {/* Mobile menu button */}
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="md:hidden p-2"
-                  aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="flex flex-col">
-                <MobileNavigation
-                  user={user}
-                  navigationItems={navigationItems}
-                  isActiveRoute={isActiveRoute}
-                  onClose={closeMobileMenu}
-                />
-              </SheetContent>
-            </Sheet>
           </div>
         </div>
       </div>

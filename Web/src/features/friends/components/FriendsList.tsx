@@ -15,7 +15,7 @@ import type { FriendListProps } from '../types';
  * @param onRemoveFriend - Callback function to handle friend removal
  * @param isLoading - Loading state for the friends list
  */
-export const FriendsList = ({ friends, onRemoveFriend, isLoading }: FriendListProps) => {
+export const FriendsList = ({ friends, onRemoveFriend, isLoading, removingFriendIds = [] }: FriendListProps) => {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -47,7 +47,7 @@ export const FriendsList = ({ friends, onRemoveFriend, isLoading }: FriendListPr
           key={friend.friendshipId}
           friend={friend}
           onRemove={onRemoveFriend}
-          isRemoving={false} // TODO: Implement individual loading states if needed
+          isRemoving={removingFriendIds.includes(friend.friendshipId)}
         />
       ))}
     </div>

@@ -110,6 +110,7 @@ export interface FriendListProps {
   friends: Friend[];
   onRemoveFriend: (friendshipId: FriendId) => void;
   isLoading?: boolean;
+  removingFriendIds?: FriendId[];
 }
 
 /**

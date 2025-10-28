@@ -31,7 +31,7 @@ export const useFriends = () => {
   const friendsData = useQuery(api.friends.getFriendsList);
 
   // Transform the data to match our Friend type
-  const friends: Friend[] = friendsData?.map(friendData => ({
+  const friends: Friend[] = friendsData?.map((friendData: any) => ({
     _id: friendData._id,
     username: friendData.username,
     firstName: friendData.firstName,

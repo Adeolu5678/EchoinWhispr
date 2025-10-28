@@ -16,6 +16,10 @@ export interface Whisper {
   conversationId?: string; // Future feature: links to conversation if whisper evolved
   imageUrl?: string; // Optional image attachment for the whisper
   location?: { latitude: number; longitude: number }; // Optional location data for the whisper
+  consensusTimestamp?: string; // Optional consensus timestamp from Hedera
+  consensusHash?: string; // Optional consensus hash for verification
+  consensusTopicId?: string; // Optional consensus topic ID
+  heading?: string; // Optional AI-generated heading for the whisper
 }
 
 // Extended whisper with additional computed fields for UI display

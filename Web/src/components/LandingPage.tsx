@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Shield, ArrowRightLeft, Clock, PenTool, Send, RotateCcw } from 'lucide-react';
+import { Shield, ArrowRightLeft, Clock, PenTool, Send, RotateCcw, Coins, Vote, Heart } from 'lucide-react';
 
 /**
  * LandingPage component for unauthenticated users.
@@ -48,9 +48,9 @@ export default function LandingPage(): JSX.Element {
                       <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em]">
                         Whisper into the Void. Hear an Echo Back.
                       </h1>
-                      <p className="text-white/80 text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
-                        EchoinWhispr is a platform for anonymous messages. Styled with <span className="font-semibold text-white">Tailwind CSS</span> and built with <span className="font-semibold text-white">Shadcn UI</span> components.
-                      </p>
+                      <p className="text-primary-text text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
+                          EchoinWhispr is a platform for anonymous messages. Styled with <span className="font-semibold text-primary-text">Tailwind CSS</span> and built with <span className="font-semibold text-primary-text">Shadcn UI</span> components.
+                        </p>
                     </div>
                     <div className="flex-wrap gap-3 flex justify-center">
                       <Link href="/sign-up">
@@ -72,7 +72,7 @@ export default function LandingPage(): JSX.Element {
                   <h2 className="text-white tracking-tight text-3xl font-bold leading-tight @[480px]:text-4xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em] max-w-[720px]">
                     Discover a New Way to Connect
                   </h2>
-                  <p className="text-white/80 text-base font-normal leading-normal max-w-[720px]">
+                  <p className="text-primary-text text-base font-normal leading-normal max-w-[720px]">
                     Our platform is built on the principles of anonymity and the potential for genuine connection. Here is what makes EchoinWhispr unique:
                   </p>
                 </div>
@@ -81,21 +81,42 @@ export default function LandingPage(): JSX.Element {
                     <Shield className="text-primary text-4xl" />
                     <div className="flex flex-col gap-1">
                       <h3 className="text-white text-lg font-bold leading-tight">Anonymity</h3>
-                      <p className="text-[#9393c8] text-sm font-normal leading-normal">Your identity is your secret. Share your thoughts without revealing who you are.</p>
+                      <p className="text-primary-text text-sm font-normal leading-normal">Your identity is your secret. Share your thoughts without revealing who you are.</p>
                     </div>
                   </div>
                   <div className="flex flex-1 gap-4 rounded-xl border border-[#343465] bg-[#1a1a32] p-6 flex-col items-center text-center">
                     <ArrowRightLeft className="text-primary text-4xl" />
                     <div className="flex flex-col gap-1">
                       <h3 className="text-white text-lg font-bold leading-tight">One-Way to Two-Way</h3>
-                      <p className="text-[#9393c8] text-sm font-normal leading-normal">From a single whisper to a meaningful conversation. See where your messages take you.</p>
+                      <p className="text-primary-text text-sm font-normal leading-normal">From a single whisper to a meaningful conversation. See where your messages take you.</p>
                     </div>
                   </div>
                   <div className="flex flex-1 gap-4 rounded-xl border border-[#343465] bg-[#1a1a32] p-6 flex-col items-center text-center">
                     <Clock className="text-primary text-4xl" />
                     <div className="flex flex-col gap-1">
                       <h3 className="text-white text-lg font-bold leading-tight">No Digital Trail</h3>
-                      <p className="text-[#9393c8] text-sm font-normal leading-normal">Messages that disappear, leaving no trace behind.</p>
+                      <p className="text-primary-text text-sm font-normal leading-normal">Messages that disappear, leaving no trace behind.</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-1 gap-4 rounded-xl border border-[#343465] bg-[#1a1a32] p-6 flex-col items-center text-center">
+                    <Coins className="text-primary text-4xl" />
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-white text-lg font-bold leading-tight">Token Rewards</h3>
+                      <p className="text-primary-text text-sm font-normal leading-normal">Earn tokens for quality whispers and tip other users.</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-1 gap-4 rounded-xl border border-[#343465] bg-[#1a1a32] p-6 flex-col items-center text-center">
+                    <Vote className="text-primary text-4xl" />
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-white text-lg font-bold leading-tight">Community Governance</h3>
+                      <p className="text-primary-text text-sm font-normal leading-normal">Vote on platform decisions and shape the community.</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-1 gap-4 rounded-xl border border-[#343465] bg-[#1a1a32] p-6 flex-col items-center text-center">
+                    <Heart className="text-primary text-4xl" />
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-white text-lg font-bold leading-tight">Interest Matching</h3>
+                      <p className="text-primary-text text-sm font-normal leading-normal">Connect with users who share your interests anonymously.</p>
                     </div>
                   </div>
                 </div>
@@ -107,21 +128,21 @@ export default function LandingPage(): JSX.Element {
                     <PenTool className="text-primary text-3xl" />
                     <div className="flex flex-col gap-1">
                       <h3 className="text-white text-lg font-bold leading-tight">1. Compose Your Whisper</h3>
-                      <p className="text-[#9393c8] text-sm font-normal leading-normal">Write your anonymous message, free from the constraints of identity.</p>
+                      <p className="text-primary-text text-sm font-normal leading-normal">Write your anonymous message, free from the constraints of identity.</p>
                     </div>
                   </div>
                   <div className="flex flex-1 gap-3 rounded-xl border border-[#343465] bg-[#1a1a32] p-6 flex-col">
                     <Send className="text-primary text-3xl" />
                     <div className="flex flex-col gap-1">
                       <h3 className="text-white text-lg font-bold leading-tight">2. Send it into the Ether</h3>
-                      <p className="text-[#9393c8] text-sm font-normal leading-normal">Your whisper is sent out, ready to be discovered by another user.</p>
+                      <p className="text-primary-text text-sm font-normal leading-normal">Your whisper is sent out, ready to be discovered by another user.</p>
                     </div>
                   </div>
                   <div className="flex flex-1 gap-3 rounded-xl border border-[#343465] bg-[#1a1a32] p-6 flex-col">
                     <RotateCcw className="text-primary text-3xl" />
                     <div className="flex flex-col gap-1">
                       <h3 className="text-white text-lg font-bold leading-tight">3. Wait for an Echo</h3>
-                      <p className="text-[#9393c8] text-sm font-normal leading-normal">If your whisper resonates, you might receive a reply and start a conversation.</p>
+                      <p className="text-primary-text text-sm font-normal leading-normal">If your whisper resonates, you might receive a reply and start a conversation.</p>
                     </div>
                   </div>
                 </div>
@@ -132,11 +153,11 @@ export default function LandingPage(): JSX.Element {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
                     <div className="bg-[#1a1a32] p-6 rounded-xl border border-[#343465] flex flex-col items-center gap-4">
                       <p className="text-white/90 italic">&ldquo;The freedom to speak my mind without judgment is liberating. I&apos;ve had some of the most profound conversations here.&rdquo;</p>
-                      <span className="text-[#9393c8] font-semibold">- User_Alpha7</span>
+                      <span className="text-white font-semibold">- User_Alpha7</span>
                     </div>
                     <div className="bg-[#1a1a32] p-6 rounded-xl border border-[#343465] flex flex-col items-center gap-4">
                       <p className="text-white/90 italic">&ldquo;It&apos;s exciting. You never know if your whisper will echo back. It&apos;s a beautiful way to connect with strangers.&rdquo;</p>
-                      <span className="text-[#9393c8] font-semibold">- EchoSeeker22</span>
+                      <span className="text-white font-semibold">- EchoSeeker22</span>
                     </div>
                   </div>
                 </div>

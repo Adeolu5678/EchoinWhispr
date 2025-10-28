@@ -189,6 +189,46 @@ export const getUnreadWhisperCount = query({
     return unreadWhispers.length;
   },
 });
+// Update whisper heading
+export const updateHeading = mutation({
+  args: {
+    whisperId: v.id('whispers'),
+    heading: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const whisper = await ctx.db.get(args.whisperId);
+    if (!whisper) {
+      throw new Error('Whisper not found');
+    }
+
+    // Only sender can update the heading
+    if (whisper.senderId !== user._id) {
+      throw new Error('Not authorized to update this whisper heading');
+    }
+
+    // Update the whisper heading
+    await ctx.db.patch(args.whisperId, {
+      heading: args.heading,
+    });
+
+    return args.whisperId;
+  },
+});
+
 // Get a specific whisper by ID (only accessible by recipient)
 export const getWhisperById = query({
   args: {

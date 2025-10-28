@@ -3,18 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  /* Light mode - High contrast colors */
+  --foreground-rgb: 23, 23, 23; /* neutral-900 - better contrast than pure black */
+  --background-start-rgb: 255, 255, 255; /* pure white for maximum contrast */
+  --background-end-rgb: 250, 250, 250; /* very light gray */
   --background-rgb: var(--background-start-rgb);
+  --muted-foreground-rgb: 82, 82, 82; /* neutral-600 for secondary text */
+  --border-rgb: 229, 229, 229; /* neutral-200 */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    /* Dark mode - High contrast colors */
+    --foreground-rgb: 255, 255, 255; /* pure white */
+    --background-start-rgb: 0, 0, 0; /* pure black */
+    --background-end-rgb: 17, 17, 17; /* very dark gray */
     --background-rgb: var(--background-start-rgb);
+    --muted-foreground-rgb: 163, 163, 163; /* neutral-400 for secondary text */
+    --border-rgb: 64, 64, 64; /* neutral-700 */
   }
 }
 
@@ -22,4 +28,34 @@ body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
   @apply text-body;
+}
+
+/* Additional high contrast utilities */
+.text-high-contrast {
+  color: rgb(var(--foreground-rgb));
+}
+
+.text-muted-high-contrast {
+  color: rgb(var(--muted-foreground-rgb));
+}
+
+.bg-high-contrast {
+  background-color: rgb(var(--background-rgb));
+}
+
+.border-high-contrast {
+  border-color: rgb(var(--border-rgb));
+}
+
+/* Universal text color classes for consistent theming */
+.text-primary-text {
+  color: rgb(var(--foreground-rgb));
+}
+
+.text-secondary-text {
+  color: rgb(var(--muted-foreground-rgb));
+}
+
+.text-inverse-text {
+  color: rgb(var(--background-rgb));
 }

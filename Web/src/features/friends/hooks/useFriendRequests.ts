@@ -40,7 +40,7 @@ export const useFriendRequests = () => {
   const sentData = useQuery(api.friends.getSentRequests);
 
   // Transform received requests data
-  const receivedRequests: FriendRequest[] = receivedData?.map(requestData => ({
+  const receivedRequests: FriendRequest[] = receivedData?.map((requestData: any) => ({
     _id: requestData._id,
     userId: requestData.userId,
     friendId: requestData.friendId,
@@ -60,7 +60,7 @@ export const useFriendRequests = () => {
   })) || [];
 
   // Transform sent requests data
-  const sentRequests: SentFriendRequest[] = sentData?.map(requestData => ({
+  const sentRequests: SentFriendRequest[] = sentData?.map((requestData: any) => ({
     _id: requestData._id,
     userId: requestData.userId,
     friendId: requestData.friendId,

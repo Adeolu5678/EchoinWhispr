@@ -67,6 +67,92 @@ export const FEATURE_FLAGS = {
     * Foundation: UI placeholders for mystery whisper options and Convex schema extensions (isMystery field).
     */
    MYSTERY_WHISPERS: true,
+
+   /**
+    * Enables persona profiles with verification capabilities using Hedera attestations.
+    * Foundation: UI placeholders for persona fields, verification badge, and Convex schema extensions (career, skills, expertise, verified, attestationId fields).
+    */
+   PERSONA_PROFILES_VERIFICATION: true,
+
+   /**
+    * Enables interest-based anonymous matching using Hedera smart contracts.
+    * Foundation: Convex schema extensions (interests field in users, matches table), UI placeholders for interests input and match section, Hedera integration hooks.
+    */
+   INTEREST_BASED_MATCHING: true,
+
+   /**
+    * Enables random anonymous messaging using Hedera equitable distribution.
+    * Foundation: Convex schema extensions (randomMessageCount field in users, randomMessages table), UI placeholders for random messaging option, Hedera integration hooks.
+    */
+   RANDOM_ANONYMOUS_MESSAGING: true,
+    /**
+     * Enables career-focused user search and whispers using Hedera verifiable searches.
+     * Foundation: Convex schema extensions (careerSearchEnabled field in users, careerWhispers table), UI placeholders for career search filters and results, Hedera integration hooks.
+     */
+    CAREER_FOCUSED_SEARCH_WHISPERS: true,
+
+    /**
+     * Enables AI-generated headings for whispers to provide context and categorization.
+     * Foundation: Convex schema extensions (heading field in whispers table), UI placeholders for heading display and generation button, AI integration hooks.
+     */
+    AI_GENERATED_WHISPER_HEADINGS: true,
+
+    /**
+     * Enables subscription model for enhanced access using Hedera payments.
+     * Foundation: Convex schema extensions (subscriptionTier, subscriptionExpiresAt, unlimitedMessages, unlimitedMatches fields in users table), UI placeholders for subscription tiers and Hedera payment buttons, Hedera integration hooks.
+     */
+    SUBSCRIPTION_MODEL_ENHANCED_ACCESS: true,
+
+    /**
+     * Enables Hedera-based decentralized identity verification.
+     * Foundation: Convex schema extensions (didId, didDocument, verificationStatus, communityMemberships fields in users table), UI placeholders for DID creation and verification buttons, Hedera integration hooks.
+     */
+    HEDERA_BASED_DECENTRALIZED_IDENTITY_VERIFICATION: true,
+
+    /**
+     * Enables tokenized whisper rewards and tipping using Hedera Token Services.
+     * Foundation: Convex schema extensions (tokenBalance, earnedTokens fields in users table, tokenTransactions table), UI placeholders for token balance display and tipping buttons, Hedera integration hooks.
+     */
+    TOKENIZED_WHISPER_REWARDS_AND_TIPPING: true,
+
+    /**
+     * Enables immutable whisper timestamping via Hedera Consensus Service.
+     * Foundation: Convex schema extensions (consensusTimestamp, consensusHash, consensusTopicId fields in whispers table), UI placeholders for timestamp display and verification button, Hedera Consensus Service integration hooks.
+     */
+    IMMUTABLE_WHISPER_TIMESTAMPING_VIA_CONSENSUS_SERVICE: true,
+     /**
+      * Enables Hedera-powered anonymous community governance.
+      * Foundation: Convex schema extensions (governanceProposals table), UI placeholders for governance dashboard with proposal list and voting buttons, Hedera smart contract governance integration hooks.
+      */
+     HEDERA_POWERED_ANONYMOUS_COMMUNITY_GOVERNANCE: true,
+
+     /**
+      * Enables mood-based random connections.
+      * Foundation: Convex schema extensions (mood field in users, moodConnections table), UI placeholders for mood selector and matcher components, daily limit tracking with subscription override.
+      */
+      /**
+       * Enables Tinder-like swiping for romance feature.
+       * Foundation: Convex schema extensions (romanceSwipeLimits, swipeHistory tables), UI components for swipeable persona cards, gesture handling, daily limit tracking with subscription override.
+       */
+      TINDER_LIKE_SWIPING_FOR_ROMANCE: true,
+
+      /**
+       * Enables mutual matching system where both users must express interest before a match is created.
+       * Foundation: Enhanced matches table with mutual confirmation fields, UI components for match notifications and dashboard, hooks for interest confirmation and match creation.
+       */
+      MUTUAL_MATCHING_SYSTEM: true,
+     MOOD_BASED_CONNECTIONS: true,
+
+     /**
+      * Enables daily limits and subscription integration across all features.
+      * Foundation: Unified usageLimits table, UsageTracker component, subscription override checks, daily reset logic.
+      */
+      /**
+       * Enables enhanced friend whispering feature allowing users to send anonymous whispers to friends by username.
+       * Foundation: friendWhispers table, FriendWhisperComposer component, username validation and friend verification logic.
+       */
+      ENHANCED_FRIEND_WHISPERING: true,
+    DAILY_LIMITS_SUBSCRIPTION_INTEGRATION: true,
 } as const;
 
 /**

@@ -1,3 +1,9 @@
 export { useProfile } from './useProfile';
 export { useUpdateProfile } from './useUpdateProfile';
 export { useProfileValidation } from './useProfileValidation';
+export { usePersonaAttestation } from './usePersonaAttestation';
+export { useInterestMatching } from './useInterestMatching';
+export { useSubscriptionManager } from './useSubscriptionManager';
+export { useDecentralizedIdentity } from './useDecentralizedIdentity';
+export { useTokenManager } from './useTokenManager';
+export { useCommunityGovernance } from './useCommunityGovernance';

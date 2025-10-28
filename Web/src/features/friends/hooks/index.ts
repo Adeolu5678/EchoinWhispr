@@ -11,3 +11,6 @@ export { useSendFriendRequest } from './useSendFriendRequest';
 export { useAcceptFriendRequest } from './useAcceptFriendRequest';
 export { useRejectFriendRequest } from './useRejectFriendRequest';
 export { useRemoveFriend } from './useRemoveFriend';
+export { useFriendWhispering } from './useFriendWhispering';
+export { useUsernameValidation } from './useUsernameValidation';
+export { useFriendVerification } from './useFriendVerification';

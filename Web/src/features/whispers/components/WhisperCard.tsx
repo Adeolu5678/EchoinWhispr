@@ -1,15 +1,21 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { WhisperWithSender } from '../types';
 import { useMarkAsRead } from '../hooks/useWhispers';
+import { useTokenManager } from '@/features/profile/hooks/useTokenManager';
 import { formatDistanceToNow } from 'date-fns';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
-import { CheckCircle2, Clock, User, MapPin } from 'lucide-react';
+import { CheckCircle2, Clock, User, MapPin, Coins } from 'lucide-react';
+import { ConsensusTimestamp } from './ConsensusTimestamp';
+import { AIHeadingGenerator } from './AIHeadingGenerator';
+import { useToast } from '@/hooks/use-toast';
+import { Id } from '@/lib/convex';
 
 interface WhisperCardProps {
   whisper: WhisperWithSender;
@@ -30,6 +36,10 @@ interface WhisperCardProps {
 export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
   ({ whisper, showMarkAsRead = true, onMarkAsRead, className = '' }) => {
     const { markAsRead, isLoading } = useMarkAsRead();
+    const { transferTokens } = useTokenManager();
+    const { toast } = useToast();
+    const [tipAmount, setTipAmount] = useState<string>('');
+    const [isTipping, setIsTipping] = useState(false);
 
     /**
      * Handles marking the whisper as read
@@ -44,6 +54,39 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
         console.error('Failed to mark whisper as read:', error);
       }
     }, [whisper._id, markAsRead, onMarkAsRead]);
+
+    /**
+     * Handles tipping tokens to the whisper sender
+     */
+    const handleTip = useCallback(async () => {
+      const amount = parseFloat(tipAmount);
+      if (!amount || amount <= 0) {
+        toast({
+          title: 'Invalid amount',
+          description: 'Please enter a valid tip amount',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setIsTipping(true);
+      try {
+        await transferTokens(whisper.senderId, amount, whisper._id);
+        toast({
+          title: 'Tip sent!',
+          description: `Successfully tipped ${amount} tokens`,
+        });
+        setTipAmount('');
+      } catch (error) {
+        toast({
+          title: 'Tip failed',
+          description: 'Failed to send tip. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsTipping(false);
+      }
+    }, [tipAmount, transferTokens, whisper.senderId, whisper._id, toast]);
 
     /**
      * Formats the timestamp for display
@@ -108,6 +151,18 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
               </div>
             </div>
 
+            {/* AI Heading display */}
+            {FEATURE_FLAGS.AI_GENERATED_WHISPER_HEADINGS && whisper.heading && (
+              <div className="mb-2">
+                <AIHeadingGenerator
+                  whisperId={whisper._id as Id<'whispers'>}
+                  whisperContent={whisper.content}
+                  currentHeading={whisper.heading}
+                  className="mb-2"
+                />
+              </div>
+            )}
+
             {/* Whisper content */}
             <div className={`text-sm leading-relaxed ${contentClassName}`}>
               {whisper.content}
@@ -141,9 +196,53 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
               </div>
             )}
 
+            {/* Consensus Timestamp display */}
+            {FEATURE_FLAGS.IMMUTABLE_WHISPER_TIMESTAMPING_VIA_CONSENSUS_SERVICE && (
+              <div className="mt-3">
+                <ConsensusTimestamp
+                  whisperId={whisper._id}
+                  consensusTimestamp={whisper.consensusTimestamp}
+                  consensusHash={whisper.consensusHash}
+                />
+              </div>
+            )}
+
             {/* Action buttons */}
-            {showMarkAsRead && !whisper.isRead && (
-              <div className="flex justify-end pt-2 border-t border-border/50">
+            <div className="flex justify-between items-center pt-2 border-t border-border/50">
+              {/* Tipping functionality - conditionally shown */}
+              {FEATURE_FLAGS.TOKENIZED_WHISPER_REWARDS_AND_TIPPING && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Amount"
+                    value={tipAmount}
+                    onChange={(e) => setTipAmount(e.target.value)}
+                    className="w-20 h-8 text-xs"
+                    min="0"
+                    step="0.01"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleTip}
+                    disabled={isTipping || !tipAmount}
+                    className="h-8 px-3 text-xs"
+                    aria-label="Tip tokens"
+                  >
+                    {isTipping ? (
+                      'Tipping...'
+                    ) : (
+                      <>
+                        <Coins className="w-3 h-3 mr-1" aria-hidden="true" />
+                        Tip
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* Mark as read button */}
+              {showMarkAsRead && !whisper.isRead && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -164,8 +263,8 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
                     </>
                   )}
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Read indicator */}
             {whisper.isRead && (

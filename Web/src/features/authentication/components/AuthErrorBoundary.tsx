@@ -162,7 +162,7 @@ export class AuthErrorBoundary extends Component<
     console.log('Retry Count:', this.state.retryCount);
     console.groupEnd();
 
-    // Log to external service in production (placeholder for future integration)
+    // Log to external service in production
     if (process.env.NODE_ENV === 'production') {
       this.reportErrorToService(error, errorInfo, errorContext, errorCategory);
     }
@@ -255,7 +255,7 @@ export class AuthErrorBoundary extends Component<
     // Placeholder for external error reporting service
     console.log('📊 Error Report (Production):', errorReport);
 
-    // TODO: Integrate with error logging service (e.g., Sentry, LogRocket)
+    // TODO: Integrate with actual error logging service (e.g., Sentry, LogRocket)
     // Example: Sentry.captureException(error, { extra: errorReport })
   };
 

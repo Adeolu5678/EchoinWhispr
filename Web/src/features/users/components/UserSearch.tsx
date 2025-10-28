@@ -4,9 +4,11 @@ import { memo, useCallback, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, X, Users, Loader2 } from 'lucide-react';
+import { Search, X, Users, Loader2, Briefcase } from 'lucide-react';
 import { useUserSearch } from '../hooks/useUserSearch';
 import { UserSearchResult } from './UserSearchResult';
+import { CareerSearch } from './CareerSearch';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 import type { UserSearchResult as UserSearchResultType } from '../types';
 
 /**
@@ -59,6 +61,7 @@ export const UserSearch = memo<UserSearchProps>(
     disabled = false,
   }) => {
     const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+    const [searchMode, setSearchMode] = useState<'general' | 'career'>('general');
 
     const {
       query,
@@ -176,121 +179,151 @@ export const UserSearch = memo<UserSearchProps>(
               </div>
             )}
           </div>
-        </CardHeader>
 
-        <CardContent className="space-y-4">
-          {/* Search Input */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={placeholder}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                disabled={disabled}
-                className="pl-10 pr-10"
-              />
-              {query && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleClearSearch}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
-                  disabled={disabled}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            <Button
-              onClick={handleSearch}
-              disabled={disabled || !query.trim()}
-              className="flex-shrink-0"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                'Search'
-              )}
-            </Button>
-          </div>
-
-          {/* Results Summary */}
-          {query && (
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>
-                {totalCount > 0
-                  ? `Found ${totalCount} user${totalCount !== 1 ? 's' : ''}`
-                  : 'No users found'}
-              </span>
-              {results.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSelectAll}
-                  disabled={disabled}
-                  className="h-auto p-1 text-xs"
-                >
-                  Select All
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Error Display */}
-          {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
-
-          {/* Results List */}
-          {displayResults.length > 0 && (
-            <div className="max-h-96 overflow-y-auto space-y-2">
-              {displayResults.map(user => (
-                <UserSearchResult
-                  key={user._id}
-                  user={user}
-                  isSelected={selectedUsers.has(user._id)}
-                  isSelectable={!disabled}
-                  onToggleSelection={handleUserToggle}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Load More Button */}
-          {showLoadMore && hasMore && displayResults.length > 0 && (
-            <div className="flex justify-center pt-2">
+          {/* Search Mode Toggle */}
+          {FEATURE_FLAGS.CAREER_FOCUSED_SEARCH_WHISPERS && (
+            <div className="flex gap-2 mt-2">
               <Button
-                variant="outline"
-                onClick={loadMore}
-                disabled={disabled || isLoading}
-                className="w-full"
+                variant={searchMode === 'general' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSearchMode('general')}
+                className="flex items-center gap-2"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Loading...
-                  </>
-                ) : (
-                  `Load More Users`
-                )}
+                <Users className="h-4 w-4" />
+                General Search
+              </Button>
+              <Button
+                variant={searchMode === 'career' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSearchMode('career')}
+                className="flex items-center gap-2"
+              >
+                <Briefcase className="h-4 w-4" />
+                Career Search
               </Button>
             </div>
           )}
+        </CardHeader>
 
-          {/* Empty State */}
-          {query && !isLoading && displayResults.length === 0 && !error && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p className="text-sm">
-                No users found matching &ldquo;{query}&rdquo;
-              </p>
-              <p className="text-xs mt-1">Try adjusting your search terms</p>
-            </div>
+        <CardContent className="space-y-4">
+          {searchMode === 'career' && FEATURE_FLAGS.CAREER_FOCUSED_SEARCH_WHISPERS ? (
+            <CareerSearch />
+          ) : (
+            <>
+              {/* Search Input */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder={placeholder}
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    disabled={disabled}
+                    className="pl-10 pr-10"
+                  />
+                  {query && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearSearch}
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-auto p-1"
+                      disabled={disabled}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <Button
+                  onClick={handleSearch}
+                  disabled={disabled || !query.trim()}
+                  className="flex-shrink-0"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Search'
+                  )}
+                </Button>
+              </div>
+
+              {/* Results Summary */}
+              {query && (
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>
+                    {totalCount > 0
+                      ? `Found ${totalCount} user${totalCount !== 1 ? 's' : ''}`
+                      : 'No users found'}
+                  </span>
+                  {results.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      disabled={disabled}
+                      className="h-auto p-1 text-xs"
+                    >
+                      Select All
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* Error Display */}
+              {error && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
+
+              {/* Results List */}
+              {displayResults.length > 0 && (
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {displayResults.map(user => (
+                    <UserSearchResult
+                      key={user._id}
+                      user={user}
+                      isSelected={selectedUsers.has(user._id)}
+                      isSelectable={!disabled}
+                      onToggleSelection={handleUserToggle}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Load More Button */}
+              {showLoadMore && hasMore && displayResults.length > 0 && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={loadMore}
+                    disabled={disabled || isLoading}
+                    className="w-full"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Loading...
+                      </>
+                    ) : (
+                      `Load More Users`
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {/* Empty State */}
+              {query && !isLoading && displayResults.length === 0 && !error && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm">
+                    No users found matching &ldquo;{query}&rdquo;
+                  </p>
+                  <p className="text-xs mt-1">Try adjusting your search terms</p>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

@@ -29,6 +29,7 @@ interface ClerkErrorBoundaryState {
   errorInfo?: ErrorInfo;
   retryCount: number;
   showTechnicalDetails: boolean;
+  errorId: string | null;
 }
 
 /**
@@ -58,13 +59,18 @@ export class ClerkErrorBoundary extends Component<
       errorInfo: undefined,
       retryCount: 0,
       showTechnicalDetails: false,
+      errorId: null,
     };
   }
 
   static getDerivedStateFromError(error: Error) {
+    // Generate unique error ID for tracking
+    const errorId = `clerk-err-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     return {
       hasError: true,
       error,
+      errorId,
     };
   }
 
@@ -101,10 +107,10 @@ export class ClerkErrorBoundary extends Component<
       console.warn('🔑 Authentication-specific error detected');
     }
 
-    // Log to external service in production (placeholder for future integration)
+    // Log to external service in production
     if (process.env.NODE_ENV === 'production') {
-      // TODO: Integrate with error logging service (e.g., Sentry, LogRocket)
-      console.log('Production error logged (placeholder)');
+      // Integrate with error logging service (e.g., Sentry, LogRocket)
+      this.reportErrorToService(error, errorInfo);
     }
   }
 
@@ -205,6 +211,27 @@ export class ClerkErrorBoundary extends Component<
     this.setState(prevState => ({
       showTechnicalDetails: !prevState.showTechnicalDetails,
     }));
+  };
+
+  /**
+   * Report error to external service (placeholder for future integration)
+   */
+  private reportErrorToService = (error: Error, errorInfo: ErrorInfo) => {
+    const errorReport = {
+      errorId: this.state.errorId,
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+    };
+
+    // Placeholder for external error reporting service
+    console.log('📊 Clerk Error Report (Production):', errorReport);
+
+    // TODO: Integrate with actual error logging service (e.g., Sentry, LogRocket)
+    // Example: Sentry.captureException(error, { extra: errorReport })
   };
 
   componentWillUnmount() {

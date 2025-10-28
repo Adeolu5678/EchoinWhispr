@@ -111,3 +111,113 @@ export interface ProfileScreenProps {
   /** Additional CSS classes */
   className?: string;
 }
+
+/**
+ * Governance Proposal interface.
+ * Represents a proposal in the community governance system.
+ */
+export interface Proposal {
+  /** Unique identifier for the proposal */
+  _id: string;
+  /** Title of the proposal */
+  title: string;
+  /** Description of the proposal */
+  description: string;
+  /** ID of the user who proposed this */
+  proposerId: string;
+  /** Current status of the proposal (e.g., 'active', 'closed') */
+  status: string;
+  /** Number of votes in favor */
+  votesFor: number;
+  /** Number of votes against */
+  votesAgainst: number;
+  /** Timestamp when proposal was created */
+  createdAt: number;
+  /** Timestamp when proposal expires */
+  expiresAt: number;
+}
+
+/**
+ * Mood enum for mood-based connections.
+ * Defines the available mood states for users.
+ */
+export enum Mood {
+  HAPPY = 'happy',
+  SAD = 'sad',
+  EXCITED = 'excited',
+  CALM = 'calm',
+  ANGRY = 'angry',
+  RELAXED = 'relaxed',
+  ENERGETIC = 'energetic',
+  TIRED = 'tired',
+}
+
+/**
+ * Mood connection status enum.
+ * Defines the possible states of a mood-based connection.
+ */
+export enum MoodConnectionStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+  SKIPPED = 'skipped',
+}
+
+/**
+ * Mood connection interface.
+ * Represents a mood-based connection between two users.
+ */
+export interface MoodConnection {
+  /** Unique identifier for the connection */
+  _id: string;
+  /** ID of the user who initiated the connection */
+  userId: string;
+  /** ID of the matched user */
+  matchedUserId: string;
+  /** The mood that matched for this connection */
+  mood: Mood;
+  /** Current status of the connection */
+  status: MoodConnectionStatus;
+  /** Timestamp when connection was created */
+  createdAt: number;
+  /** Timestamp when connection was last updated */
+  updatedAt?: number;
+}
+
+/**
+ * Daily limit interface for mood connections.
+ * Tracks daily usage limits for mood-based connections.
+ */
+export interface MoodConnectionLimit {
+  /** Unique identifier for the limit record */
+  _id: string;
+  /** ID of the user this limit applies to */
+  userId: string;
+  /** Date string in YYYY-MM-DD format */
+  date: string;
+  /** Number of connections made today */
+  count: number;
+  /** Maximum allowed connections per day */
+  maxLimit: number;
+  /** Timestamp when record was created */
+  createdAt: number;
+  /** Timestamp when record was last updated */
+  updatedAt: number;
+}
+
+/**
+ * Mood matching result interface.
+ * Represents a potential mood match for connection.
+ */
+export interface MoodMatch {
+  /** User ID of the potential match */
+  userId: string;
+  /** Display name of the user */
+  displayName?: string;
+  /** Username of the user */
+  username?: string;
+  /** The matching mood */
+  mood: Mood;
+  /** Whether this user has been connected before */
+  isConnected: boolean;
+}

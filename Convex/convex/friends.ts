@@ -413,3 +413,215 @@ export const getSentRequests = query({
     );
   },
 });
+
+export const checkFriendship = query({
+  args: {
+    userId: v.id('users'),
+    friendUsername: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Get friend by username
+    const friend = await ctx.db
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', args.friendUsername))
+      .first();
+
+    if (!friend) {
+      return { isFriend: false, friendId: null };
+    }
+
+    // Check if friendship exists (both directions)
+    const friendship1 = await ctx.db
+      .query('friends')
+      .withIndex('by_user_friend', q =>
+        q.eq('userId', args.userId).eq('friendId', friend._id)
+      )
+      .first();
+
+    const friendship2 = await ctx.db
+      .query('friends')
+      .withIndex('by_user_friend', q =>
+        q.eq('userId', friend._id).eq('friendId', args.userId)
+      )
+      .first();
+
+    const friendship = friendship1 || friendship2;
+
+    return {
+      isFriend: friendship?.status === 'accepted',
+      friendId: friend._id,
+      friendshipId: friendship?._id || null,
+    };
+  },
+});
+
+export const sendFriendWhisper = mutation({
+  args: {
+    recipientUsername: v.string(),
+    content: v.string(),
+    imageUrl: v.optional(v.string()),
+    heading: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Unauthorized: User must be authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Get recipient by username
+    const recipient = await ctx.db
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', args.recipientUsername))
+      .first();
+
+    if (!recipient) {
+      throw new Error('Recipient not found');
+    }
+
+    // Check if they are friends
+    const friendship1 = await ctx.db
+      .query('friends')
+      .withIndex('by_user_friend', q =>
+        q.eq('userId', user._id).eq('friendId', recipient._id)
+      )
+      .first();
+
+    const friendship2 = await ctx.db
+      .query('friends')
+      .withIndex('by_user_friend', q =>
+        q.eq('userId', recipient._id).eq('friendId', user._id)
+      )
+      .first();
+
+    const friendship = friendship1 || friendship2;
+
+    if (!friendship || friendship.status !== 'accepted') {
+      throw new Error('You can only send whispers to friends');
+    }
+
+    // Create the friend whisper
+    const whisperId = await ctx.db.insert('friendWhispers', {
+      senderId: user._id,
+      recipientId: recipient._id,
+      content: args.content,
+      imageUrl: args.imageUrl,
+      heading: args.heading,
+      isRead: false,
+      createdAt: Date.now(),
+      readAt: undefined,
+    });
+
+    return whisperId;
+  },
+});
+
+export const getSentFriendWhispers = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    const whispers = await ctx.db
+      .query('friendWhispers')
+      .withIndex('by_sender', q => q.eq('senderId', user._id))
+      .collect();
+
+    // Get recipient details for each whisper
+    const whispersWithRecipients = await Promise.all(
+      whispers.map(async (whisper) => {
+        const recipient = await ctx.db.get(whisper.recipientId);
+        if (!recipient) return null;
+
+        const profile = await ctx.db
+          .query('profiles')
+          .withIndex('by_user_id', q => q.eq('userId', whisper.recipientId))
+          .first();
+
+        return {
+          ...whisper,
+          recipient: {
+            _id: recipient._id,
+            username: recipient.username,
+            firstName: recipient.firstName,
+            lastName: recipient.lastName,
+            avatarUrl: profile?.avatarUrl,
+          },
+        };
+      })
+    );
+
+    return whispersWithRecipients.filter(
+      (w): w is NonNullable<typeof w> => w !== null
+    );
+  },
+});
+
+export const getReceivedFriendWhispers = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    const whispers = await ctx.db
+      .query('friendWhispers')
+      .withIndex('by_recipient', q => q.eq('recipientId', user._id))
+      .collect();
+
+    // Get sender details for each whisper
+    const whispersWithSenders = await Promise.all(
+      whispers.map(async (whisper) => {
+        const sender = await ctx.db.get(whisper.senderId);
+        if (!sender) return null;
+
+        const profile = await ctx.db
+          .query('profiles')
+          .withIndex('by_user_id', q => q.eq('userId', whisper.senderId))
+          .first();
+
+        return {
+          ...whisper,
+          sender: {
+            _id: sender._id,
+            username: sender.username,
+            firstName: sender.firstName,
+            lastName: sender.lastName,
+            avatarUrl: profile?.avatarUrl,
+          },
+        };
+      })
+    );
+
+    return whispersWithSenders.filter(
+      (w): w is NonNullable<typeof w> => w !== null
+    );
+  },
+});

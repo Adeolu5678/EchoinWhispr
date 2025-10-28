@@ -5,6 +5,7 @@ import { Users, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
 import { FriendsList } from '@/features/friends/components';
+import { UserSearch } from '@/features/users/components/UserSearch';
 import { useFriends, useFriendRequests, useRemoveFriend, useAcceptFriendRequest, useRejectFriendRequest } from '@/features/friends/hooks';
 import { Id } from '@/lib/convex';
 
@@ -77,13 +78,17 @@ export default function FriendsPage() {
 function FriendsTab() {
   const { friends, isLoading } = useFriends();
   const { removeFriend } = useRemoveFriend();
+  const [removingFriendIds, setRemovingFriendIds] = useState<string[]>([]);
 
   const handleRemoveFriend = async (friendshipId: string) => {
+    setRemovingFriendIds(prev => [...prev, friendshipId]);
     try {
       await removeFriend(friendshipId as Id<'friends'>);
     } catch (error) {
       // Error handling is done in the hook
       console.error('Failed to remove friend:', error);
+    } finally {
+      setRemovingFriendIds(prev => prev.filter(id => id !== friendshipId));
     }
   };
 
@@ -94,6 +99,7 @@ function FriendsTab() {
         friends={friends}
         onRemoveFriend={handleRemoveFriend}
         isLoading={isLoading}
+        removingFriendIds={removingFriendIds}
       />
     </div>
   );
@@ -106,20 +112,28 @@ function RequestsTab() {
   const { receivedRequests, sentRequests, isLoading } = useFriendRequests();
   const { acceptFriendRequest } = useAcceptFriendRequest();
   const { rejectFriendRequest } = useRejectFriendRequest();
+  const [acceptingRequestIds, setAcceptingRequestIds] = useState<string[]>([]);
+  const [rejectingRequestIds, setRejectingRequestIds] = useState<string[]>([]);
 
   const handleAcceptRequest = async (requestId: string) => {
+    setAcceptingRequestIds(prev => [...prev, requestId]);
     try {
       await acceptFriendRequest(requestId as Id<'friends'>);
     } catch (error) {
       console.error('Failed to accept friend request:', error);
+    } finally {
+      setAcceptingRequestIds(prev => prev.filter(id => id !== requestId));
     }
   };
 
   const handleRejectRequest = async (requestId: string) => {
+    setRejectingRequestIds(prev => [...prev, requestId]);
     try {
       await rejectFriendRequest(requestId as Id<'friends'>);
     } catch (error) {
       console.error('Failed to reject friend request:', error);
+    } finally {
+      setRejectingRequestIds(prev => prev.filter(id => id !== requestId));
     }
   };
 
@@ -149,8 +163,8 @@ function RequestsTab() {
                 request={request}
                 onAccept={handleAcceptRequest}
                 onReject={handleRejectRequest}
-                isAccepting={false} // TODO: Implement individual loading states
-                isRejecting={false}
+                isAccepting={acceptingRequestIds.includes(request.friendshipId)}
+                isRejecting={rejectingRequestIds.includes(request.friendshipId)}
               />
             ))}
           </div>
@@ -202,17 +216,31 @@ function RequestsTab() {
  * Find Friends tab component for discovering new friends.
  */
 function FindFriendsTab() {
+  const handleSendRequest = async (userId: string) => {
+    // This will be implemented when the send friend request hook is available
+    console.log('Send friend request to user:', userId);
+  };
+
   return (
-    <div className="text-center py-12">
-      <UserPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-900 mb-2">Find Friends</h3>
-      <p className="text-gray-500 mb-6">
-        Search for users to send friend requests and grow your network.
-      </p>
-      {/* TODO: Integrate UserSearch component here */}
-      <div className="text-sm text-gray-400">
-        User search component will be integrated here
+    <div className="space-y-6">
+      <div className="text-center">
+        <UserPlus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Find Friends</h3>
+        <p className="text-gray-500 mb-6">
+          Search for users to send friend requests and grow your network.
+        </p>
       </div>
+      <UserSearch
+        placeholder="Search for users to add as friends..."
+        onUserSelect={(users) => {
+          // Handle multiple user selection if needed
+          console.log('Selected users:', users);
+        }}
+        onUserToggle={(user) => {
+          // Handle individual user selection
+          handleSendRequest(user._id);
+        }}
+      />
     </div>
   );
 }

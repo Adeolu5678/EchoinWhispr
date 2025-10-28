@@ -73,12 +73,14 @@ const webConfig = {
       // --- ADD THIS EXTEND BLOCK ---
       colors: {
         "primary": "#1919e6",
-        "background-light": "#f6f6f8",
-        "background-dark": "#111121",
+        "background-light": "#ffffff", // Changed to pure white for better contrast
+        "background-dark": "#000000", // Changed to pure black for better contrast
         "card-dark": "#1C1C2E",
-        "border-dark": "#242447",
-        "muted-dark": "#e5e5e5",
-        "text-dark": "#ffffff"
+        "border-dark": "#404040", // Darker border for better contrast
+        "muted-dark": "#a3a3a3", // Better contrast for muted text
+        "text-dark": "#ffffff", // Pure white for text
+        "text-light": "#171717", // Dark text for light backgrounds
+        "muted-light": "#737373", // Better contrast for muted text on light
       },
       // --- END OF ADDITION ---
     },
