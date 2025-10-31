@@ -90,6 +90,20 @@ jobs:
             echo "No test script found, skipping tests"
           fi
 
+      - name: Run security audit
+        working-directory: ./Web
+        run: pnpm audit --audit-level=moderate
+
+      - name: Check for high-severity vulnerabilities
+        working-directory: ./Web
+        run: |
+          if pnpm audit --audit-level=high; then
+            echo "No high-severity vulnerabilities found"
+          else
+            echo "High-severity vulnerabilities detected"
+            exit 1
+          fi
+
   build:
     name: Build Web Application
     runs-on: ubuntu-latest

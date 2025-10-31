@@ -1,27 +1,54 @@
-# EchoinWhispr: React Native Application (ReactNative Folder)
+# EchoinWhspr React Native App
 
-This ReactNative folder contains the codebase for the primary mobile application of EchoinWhispr. This application is being developed using React Native with the Expo framework, specifically designed for Android and iOS devices. It will be "vibecoded" using AI agents, with a "Human-in-the-Loop" project management approach to ensure quality and adherence to specifications.
+A React Native application built with Expo for the EchoinWhspr platform.
 
-1. Project Overview
-The EchoinWhispr React Native application is a key component of our unified platform, providing a mobile-first experience for anonymous one-way messages ("Whispers") that can evolve into two-way conversations. This application will run in parallel with the web application, both sharing the same backend services for a consistent user experience.
+## Features
 
-2. Technology Stack
-The application leverages a modern and efficient technology stack:
-Mobile Framework: React Native with Expo (chosen for cross-platform development, AI agent proficiency, and simplified native module management).
-Client Framework: React.
-Backend & API Layer: Convex (serving as both the real-time database and API layer).
-Authentication: Clerk (for robust user sign-up, login, and session management).
-Package Management: PNPM (for efficient dependency management within the monorepo).
-Hosting: Vercel (for Convex backend functions and potential auxiliary services).
+- Built with Expo SDK 49
+- TypeScript support
+- Hedera SDK integration
+- Design system integration (shared with web app)
 
-3. Core Functionality (Minimum Viable Product - MVP)
-The initial release of the EchoinWhispr React Native application focuses on a lean MVP:
-User Authentication: Secure user sign-up and login.
-Sending Whispers: Users can compose and send anonymous text messages.
-Receiving Whispers: Users can view whispers sent to them in real-time.
+## Getting Started
 
-4. Scalability & Future Features
-The application is built with a modular architecture and integrates feature flags from the outset. This "foundation-first" approach means that while advanced features like conversation evolution, image uploads, profile management, and push notifications are deferred, their underlying architectural hooks are in place for easy, future integration without extensive refactoring. The admin feature to track user device information and location has been explicitly dropped for privacy reasons.
+### Prerequisites
 
-5. Project Management & Development Workflow
-Development is managed through a "Human-in-the-Loop" workflow. You will act as the orchestrator, guiding AI agents through tasks managed on a Notion Kanban board. Each task includes an "AI Agent Logbook" entry detailing the prompt, AI output, human review notes, and traceability to specifications. This ensures a transparent, verifiable, and quality-controlled development process for the vibecoded application.
+- Node.js >= 18.17.0
+- npm or yarn
+- Expo CLI
+
+### Installation
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm start
+   ```
+
+3. Run on specific platform:
+   ```bash
+   npm run android  # for Android
+   npm run ios      # for iOS
+   npm run web      # for web
+   ```
+
+## Project Structure
+
+- `App.tsx` - Main application entry point
+- `app.json` - Expo configuration
+- `tsconfig.json` - TypeScript configuration
+
+## Dependencies
+
+- `@hashgraph/sdk` - Hedera SDK for blockchain integration
+- `expo` - Expo framework
+- `react-native` - React Native framework
+- `react` - React library
+
+## Development
+
+This app is part of a monorepo and shares the design system with the web application.

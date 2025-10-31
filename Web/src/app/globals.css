@@ -27,7 +27,6 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
-  @apply text-body;
 }
 
 /* Additional high contrast utilities */

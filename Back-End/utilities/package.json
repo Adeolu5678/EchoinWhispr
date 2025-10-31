@@ -1,0 +1,29 @@
+{
+  "name": "echoinwhispr-utilities",
+  "version": "1.0.0",
+  "description": "Client-side utilities for EchoinWhispr encryption and IPFS operations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts"
+  },
+  "dependencies": {
+    "@hashgraph/sdk": "^2.75.0",
+    "eciesjs": "^0.4.6",
+    "ipfs-http-client": "^60.0.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.10.0",
+    "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.0"
+  }
+}

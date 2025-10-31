@@ -4,8 +4,12 @@
  * Export all design system components for easy importing.
  */
 
-// Core component types (implementations are platform-specific)
+// Core component types and implementations
 export type { ButtonProps, ButtonVariant, ButtonSize } from './Button';
+export { Button, buttonVariants } from './Button';
+
+export type { InputProps } from './Input';
+export { Input, inputVariants } from './Input';
 
 // Re-export utilities
 export * from '../utils';

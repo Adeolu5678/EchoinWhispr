@@ -73,6 +73,14 @@ jobs:
           fi
 
   # Individual application workflows
+  hardhat-ci:
+    name: Smart Contracts CI
+    uses: ./.github/workflows/hardhat-ci.yml
+
+  utilities-ci:
+    name: Utilities CI
+    uses: ./.github/workflows/utilities-ci.yml
+
   convex-ci:
     name: Convex Backend CI
     uses: ./.github/workflows/convex-ci.yml
@@ -131,13 +139,15 @@ jobs:
     name: CI Status Check
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [root-lint, convex-ci, web-ci, react-native-ci, security-audit]
+    needs: [root-lint, hardhat-ci, utilities-ci, convex-ci, web-ci, react-native-ci, security-audit]
     if: always()
 
     steps:
       - name: Check all CI jobs status
         run: |
           if [ "${{ needs.root-lint.result }}" = "failure" ] || \
+             [ "${{ needs.hardhat-ci.result }}" = "failure" ] || \
+             [ "${{ needs.utilities-ci.result }}" = "failure" ] || \
              [ "${{ needs.convex-ci.result }}" = "failure" ] || \
              [ "${{ needs.web-ci.result }}" = "failure" ] || \
              [ "${{ needs.react-native-ci.result }}" = "failure" ] || \
@@ -155,6 +165,8 @@ jobs:
           echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Root Linting | ${{ needs.root-lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Smart Contracts | ${{ needs.hardhat-ci.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Utilities | ${{ needs.utilities-ci.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Convex Backend | ${{ needs.convex-ci.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Web Application | ${{ needs.web-ci.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| React Native App | ${{ needs.react-native-ci.result }} |" >> $GITHUB_STEP_SUMMARY

@@ -1,40 +1,91 @@
-# EchoinWhispr: Web Application (Web Folder)
+# EchoinWhispr: Web Application
 
-This Web folder contains the complete codebase for the EchoinWhispr web application. This application is being meticulously rebuilt from the ground up using a modern, scalable technology stack to provide a seamless and intuitive user experience that mirrors the functionality of the primary mobile application.
+This directory contains the Next.js web application for EchoinWhispr, a fully decentralized social dApp on Hedera that enables anonymous persona-based connections with end-to-end encryption.
 
-1. Project Overview
-   The EchoinWhispr web application is a core component of the unified EchoinWhispr ecosystem, designed to facilitate anonymous one-way messages ("Whispers") that can evolve into two-way conversations. This web interface offers broad accessibility, allowing users to engage with the platform from any device with a web browser.
+## Overview
 
-2. Technology Stack
-   The web application is built on a robust and modern technology stack, chosen for its performance, scalability, and developer experience.
-   Client Framework: React with Next.js
-   Next.js is utilized for its powerful features, including server-side rendering (SSR) and static site generation (SSG), which enhance performance, SEO, and user experience.
-   Styling: Tailwind CSS and Shadcn
-   Tailwind CSS provides a utility-first approach for rapid and consistent styling. Shadcn UI components offer a set of beautifully designed and accessible UI primitives, built on top of Tailwind.
-   Backend & API Layer: Convex
-   Convex serves as both the real-time database and API layer, simplifying data management and providing live updates across the application.
-   Authentication: Clerk
-   Clerk provides a comprehensive, secure, and easily integratable authentication service, handling user sign-up, login, and session management.
-   Hosting: Vercel
-   Vercel offers an optimized hosting platform for Next.js applications, providing seamless deployments, global CDN, and serverless functions.
-   Package Management: PNPM
-   PNPM is used for efficient package management, especially beneficial in monorepo setups, offering speed and disk space savings.
+The EchoinWhispr web application provides a Web2-friendly user experience for Web3 decentralized social networking. Users can create anonymous personas, connect based on shared interests and career paths, and engage in encrypted conversations - all without revealing their real identities or relying on centralized servers.
 
-3. Core Functionality (Minimum Viable Product - MVP)
-   The initial release of the EchoinWhispr web application focuses on a lean Minimum Viable Product (MVP) to ensure rapid development and a solid foundation.
-   User Authentication: Secure user sign-up and login via Clerk.
-   Sending Whispers: Users can compose and send anonymous one-way text messages.
-   Receiving Whispers: Users can view whispers sent to them.
+## Key Features
 
-4. Scalability & Future Features
-   The application is designed with a modular architecture and incorporates feature flags to enable easy integration of future functionalities without extensive refactoring. This "foundation-first" approach means that while certain advanced features are not active in the MVP, the structural elements are in place for their seamless addition in later iterations. Future features include (but are not limited to):
-   Conversation Evolution: Transitioning one-way whispers into two-way, mutually revealed conversations.
-   Image Uploads: Functionality to attach images to whispers or for profile pictures.
-   Profile Management: Comprehensive user profile customization.
-   Location-Based Features: Future integration of location-specific functionalities.
+- **Hedera Wallet Authentication**: Secure decentralized identity management
+- **Persona Management**: Create and manage anonymous profiles with career, interests, and mood
+- **Subscription Service**: Premium features via HTS token payments
+- **Search & Matching**: Find connections by career, interests, and mood
+- **Anonymous Conversations**: End-to-end encrypted messaging with rich media support
+- **Decentralized Architecture**: No central servers - all data on Hedera/IPFS
 
-5. Project Management & Development Workflow
-   Development of the web application follows a "Human-in-the-Loop" workflow. AI agents generate code based on detailed prompts, and you, as the sole human developer, act as the project orchestrator.
-   Kanban Workflow: Tasks are managed on a Notion Kanban board, progressing through Backlog, To Do, Vibecoding in Progress, Ready for Review, Testing, and Done states.
-   AI Agent Logbook: Each task card serves as a logbook entry, meticulously documenting the AI prompt, generated output, review notes, and traceability links to the main specification.
-   This structured approach ensures transparency, quality, and efficient iteration throughout the development process.
+## Technology Stack
+
+- **Framework**: Next.js with React
+- **Styling**: Tailwind CSS with Shadcn UI components
+- **Blockchain Integration**: Hedera SDK for wallet connection and smart contracts
+- **Encryption**: Client-side ECIES encryption
+- **Storage**: IPFS for content, HCS for messaging
+- **Authentication**: Hedera WalletConnect
+- **Hosting**: Decentralized hosting solutions
+
+## Core Functionality (MVP)
+
+- **Wallet Authentication**: Connect Hedera wallet for decentralized identity
+- **Persona Creation**: Set up anonymous profile with career, interests, and mood
+- **Profile Management**: Edit persona details (except permanent identifiers)
+- **Subscription Management**: Handle HTS token-based premium subscriptions
+- **User Discovery**: Search and browse other users by career/interests
+- **Mood Matching**: Random connections based on current mood
+- **Anonymous Messaging**: Send and receive encrypted messages with rich media
+- **Conversation Management**: View and manage ongoing anonymous conversations
+
+## Architecture
+
+The web application follows a client-side heavy architecture:
+
+1. **Client-Side Encryption**: All sensitive data encrypted before network transmission
+2. **Direct Blockchain Interaction**: Smart contract calls for user registration, subscriptions, and matching
+3. **IPFS Integration**: Content storage and retrieval for messages and media
+4. **HCS Messaging**: Consensus-based message routing and timestamping
+5. **No Backend Servers**: Fully decentralized, serverless architecture
+
+## Development Workflow
+
+- **AI-Assisted Development**: Code generation with human oversight
+- **Feature Flags**: Modular feature enablement for iterative development
+- **Testing**: Comprehensive testing across authentication, encryption, and blockchain interactions
+- **Security**: Client-side key management, end-to-end encryption validation
+
+## Getting Started
+
+1. Install dependencies: `pnpm install`
+2. Set up environment variables for Hedera and IPFS
+3. Run development server: `pnpm dev`
+4. Connect Hedera wallet for testing
+
+## Project Structure
+
+```
+Web/
+├── src/
+│   ├── app/                 # Next.js app router pages
+│   ├── components/          # Reusable UI components
+│   ├── features/            # Feature-specific modules
+│   ├── lib/                 # Utilities and integrations
+│   └── hooks/               # Custom React hooks
+├── public/                  # Static assets
+└── tailwind.config.js       # Tailwind configuration
+```
+
+## Security Considerations
+
+- Private keys never leave user devices
+- All encryption/decryption happens client-side
+- Content addressed storage prevents tampering
+- Immutable audit trails via HCS consensus
+- No central points of failure or data collection
+
+## Future Enhancements
+
+- Advanced matching algorithms
+- Group conversations
+- Voice/video messaging
+- Cross-platform synchronization
+- Enhanced privacy controls
