@@ -1,31 +1,36 @@
 import React from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 import { WhisperList } from './WhisperList';
+import { Button } from '@/components/ui/button';
 
 export const WhisperFeed: React.FC = () => {
   return (
-    <div className="px-4 md:px-10 lg:px-40 flex flex-1 justify-center py-5">
-      <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
-        <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-border-dark px-4 sm:px-10 py-3">
-          <div className="flex items-center gap-4 text-gray-800 dark:text-white">
-            <div className="size-6 text-primary">
-              <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                <path clipRule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fillRule="evenodd"></path>
-              </svg>
+    <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
+      <div className="w-full max-w-4xl">
+        <header className="flex items-center justify-between mb-8 glass p-6 rounded-2xl border border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/20 p-2.5 rounded-xl">
+              <Sparkles className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-gray-800 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">EchoinWhispr</h2>
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">Whisper Feed</h2>
+              <p className="text-muted-foreground text-sm">Listen to the echoes of the void</p>
+            </div>
           </div>
           <Link href="/compose">
-            <button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors">
+            <Button className="gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25">
               <Plus className="w-4 h-4" />
-              <span className="truncate">New Whisper</span>
-            </button>
+              <span className="hidden sm:inline">New Whisper</span>
+            </Button>
           </Link>
         </header>
-        <main className="flex-1 mt-8">
-          <div className="bg-background-light dark:bg-card-dark rounded-xl shadow-lg">
-            <WhisperList showMarkAsRead />
+        
+        <main className="space-y-6">
+          <div className="glass rounded-2xl border border-white/10 overflow-hidden p-1">
+            <div className="bg-card/50 backdrop-blur-sm rounded-xl">
+              <WhisperList showMarkAsRead />
+            </div>
           </div>
         </main>
       </div>

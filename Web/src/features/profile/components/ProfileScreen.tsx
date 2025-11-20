@@ -57,10 +57,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setIsEditing(!isEditing);
   };
 
-  const handleSave = async (formData: { bio: string }) => {
+  const handleSave = async (formData: { bio: string; career: string; interests: string; mood: string; displayName: string }) => {
     try {
       await updateProfile({
         bio: formData.bio,
+        career: formData.career,
+        interests: formData.interests.split(',').map(i => i.trim()).filter(Boolean),
+        mood: formData.mood,
+        displayName: formData.displayName,
       });
       setIsEditing(false);
     } catch (error) {
@@ -131,12 +135,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {currentUsername && (
               <p className="text-muted-foreground">@{currentUsername}</p>
             )}
+            {currentProfile?.career && (
+              <p className="text-sm text-muted-foreground">{currentProfile.career}</p>
+            )}
+            {currentProfile?.mood && (
+              <p className="text-sm">Mood: {currentProfile.mood}</p>
+            )}
+            {currentProfile?.interests && currentProfile.interests.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                {currentProfile.interests.map((interest, index) => (
+                  <span key={index} className="text-xs bg-secondary px-2 py-1 rounded-full">
+                    {interest}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Bio Section */}
           {isEditing ? (
             <ProfileForm
               initialBio={currentProfile?.bio || ''}
+              initialCareer={currentProfile?.career || ''}
+              initialInterests={currentProfile?.interests || []}
+              initialMood={currentProfile?.mood || ''}
+              initialDisplayName={currentDisplayName}
               onSubmit={handleSave}
               onCancel={handleCancel}
               isSubmitting={updateLoading}

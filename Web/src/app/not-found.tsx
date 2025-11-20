@@ -1,23 +1,52 @@
 'use client';
 
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Ghost, Home, ArrowLeft } from 'lucide-react';
+
 export const dynamic = 'force-dynamic';
 
 export default function NotFound(): JSX.Element {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="text-center max-w-md">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          404 - Page Not Found
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
+      <div className="glass p-12 rounded-3xl border border-white/10 text-center max-w-lg relative z-10 backdrop-blur-xl shadow-2xl">
+        <div className="bg-primary/20 p-6 rounded-full w-24 h-24 mx-auto mb-8 flex items-center justify-center animate-float">
+          <Ghost className="w-12 h-12 text-primary" />
+        </div>
+        
+        <h1 className="text-6xl font-bold tracking-tighter mb-4 bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+          404
         </h1>
-        <p className="text-lg text-gray-600 mb-8">
-          The page you&apos;re looking for doesn&apos;t exist.
+        
+        <h2 className="text-2xl font-semibold mb-4 text-white">
+          Lost in the Void?
+        </h2>
+        
+        <p className="text-muted-foreground mb-8 text-lg leading-relaxed">
+          The whisper you&apos;re looking for has faded into silence. It seems this page doesn&apos;t exist or has been removed.
         </p>
-        <a
-          href="/"
-          className="inline-block bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-        >
-          Go Home
-        </a>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button asChild size="lg" className="gap-2">
+            <Link href="/">
+              <Home className="w-4 h-4" />
+              Return Home
+            </Link>
+          </Button>
+          
+          <Button asChild variant="outline" size="lg" className="gap-2 hover:bg-white/5">
+            <Link href="javascript:history.back()">
+              <ArrowLeft className="w-4 h-4" />
+              Go Back
+            </Link>
+          </Button>
+        </div>
       </div>
     </main>
   );

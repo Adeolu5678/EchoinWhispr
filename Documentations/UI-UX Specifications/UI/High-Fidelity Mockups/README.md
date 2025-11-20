@@ -1,0 +1,1 @@
+This document describes the high-fidelity mockups for all screens specified in the [UX Architecture document](../../UX Specifications/UX Architecture & User Flow Specification/1. Introduction.md), using the [Design System](../Design System/README.md).

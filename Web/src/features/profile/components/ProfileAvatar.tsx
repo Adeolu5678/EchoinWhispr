@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Camera } from 'lucide-react';
 import { Profile } from '../types';
 import { useUploadProfilePicture } from '../hooks/useUploadProfilePicture';
-import { FEATURE_FLAGS } from '@/config/featureFlags';
+import { useFeatureFlag } from '@/hooks/useFeatureFlags';
 
 /**
  * ProfileAvatar component displays the user's profile picture or initials.
@@ -25,6 +25,7 @@ interface ProfileAvatarProps {
 export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ profile, displayName, username }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadProfilePicture, isUploading } = useUploadProfilePicture();
+  const isProfilePicturesEnabled = useFeatureFlag('PROFILE_PICTURES');
 
   // Generate initials from displayName or username
   const getInitials = (displayName?: string, username?: string): string => {
@@ -73,7 +74,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ profile, displayNa
         </Avatar>
 
         {/* Upload overlay when feature is enabled */}
-        {FEATURE_FLAGS.PROFILE_PICTURES && (
+        {isProfilePicturesEnabled && (
           <Button
             size="sm"
             variant="secondary"
@@ -92,7 +93,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ profile, displayNa
       </div>
 
       {/* Hidden file input */}
-      {FEATURE_FLAGS.PROFILE_PICTURES && (
+      {isProfilePicturesEnabled && (
         <input
           ref={fileInputRef}
           type="file"
@@ -104,7 +105,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({ profile, displayNa
       )}
 
       {/* Status text */}
-      {FEATURE_FLAGS.PROFILE_PICTURES ? (
+      {isProfilePicturesEnabled ? (
         <p className="text-sm text-muted-foreground text-center max-w-xs">
           {isUploading ? 'Uploading...' : 'Click the camera icon to upload a profile picture'}
         </p>

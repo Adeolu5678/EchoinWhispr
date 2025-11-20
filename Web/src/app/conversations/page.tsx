@@ -6,7 +6,8 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useGetConversations } from '@/features/conversations/hooks/useGetConversations';
 import type { Id } from '@/lib/convex';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sparkles, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function ConversationsPage() {
   const { user } = useUser();
@@ -16,75 +17,54 @@ export default function ConversationsPage() {
 
   if (!FEATURE_FLAGS.CONVERSATION_EVOLUTION) {
     return (
-        <div className="px-4 md:px-10 lg:px-40 flex flex-1 justify-center py-5">
-            <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
-                <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-border-dark px-4 sm:px-10 py-3">
-                    <div className="flex items-center gap-4 text-gray-800 dark:text-white">
-                        <div className="size-6 text-primary">
-                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                <path clipRule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fillRule="evenodd"></path>
-                            </svg>
-                        </div>
-                        <h2 className="text-gray-800 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">EchoinWhispr</h2>
-                    </div>
-                    <div className="flex flex-1 justify-end gap-4 sm:gap-8">
-                        <button
-                            onClick={() => router.back()}
-                            className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-gray-200 dark:bg-border-dark text-gray-800 dark:text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5"
-                        >
-                            <ArrowLeft className="w-6 h-6 text-gray-800 dark:text-white" />
-                        </button>
-                        <div
-                            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
-                            style={{ backgroundImage: `url(${user?.imageUrl})` }}
-                        ></div>
-                    </div>
-                </header>
-                <main className="flex-1 mt-8">
-                    <div className="p-4 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 flex items-center gap-3">
-                        <span className="material-symbols-outlined">error</span>
-                        <p>This feature is currently disabled.</p>
-                    </div>
-                </main>
-            </div>
+      <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center items-center">
+        <div className="w-full max-w-md glass p-8 rounded-2xl border border-white/10 text-center">
+          <div className="bg-primary/10 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+            <MessageSquare className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight mb-2">Feature Locked</h1>
+          <p className="text-muted-foreground">
+            Conversations are currently disabled. Check back later!
+          </p>
         </div>
+      </div>
     );
   }
 
   return (
-    <div className="px-4 md:px-10 lg:px-40 flex flex-1 justify-center py-5">
-        <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
-            <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-border-dark px-4 sm:px-10 py-3">
-                <div className="flex items-center gap-4 text-gray-800 dark:text-white">
-                    <div className="size-6 text-primary">
-                        <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                            <path clipRule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fillRule="evenodd"></path>
-                        </svg>
-                    </div>
-                    <h2 className="text-gray-800 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Conversations</h2>
-                </div>
-                <div className="flex flex-1 justify-end gap-4 sm:gap-8">
-                    <button
-                        onClick={() => router.back()}
-                        className="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 bg-gray-200 dark:bg-border-dark text-gray-800 dark:text-white gap-2 text-sm font-bold leading-normal tracking-[0.015em] min-w-0 px-2.5"
-                    >
-                        <ArrowLeft className="w-6 h-6 text-gray-800 dark:text-white" />
-                    </button>
-                    <div
-                        className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
-                        style={{ backgroundImage: `url(${user?.imageUrl})` }}
-                    ></div>
-                </div>
-            </header>
-            <main className="flex-1 mt-8">
+    <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
+      <div className="w-full max-w-4xl">
+        <header className="flex items-center gap-3 mb-8 glass p-6 rounded-2xl border border-white/10">
+          <div className="bg-primary/20 p-2.5 rounded-xl">
+            <Sparkles className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Conversations</h1>
+            <p className="text-muted-foreground text-sm">Your echoes in the void</p>
+          </div>
+          <div className="ml-auto">
+             <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.back()}
+                className="hover:bg-white/10"
+            >
+                <ArrowLeft className="w-6 h-6" />
+            </Button>
+          </div>
+        </header>
+
+        <main className="glass rounded-2xl border border-white/10 overflow-hidden p-1">
+            <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6 min-h-[400px]">
                 <ConversationList
                     conversations={conversations}
                     isLoading={isLoading}
                     error={error}
                     currentUserId={currentUserId}
                 />
-            </main>
-        </div>
+            </div>
+        </main>
+      </div>
     </div>
   );
 }

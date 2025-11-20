@@ -10,7 +10,7 @@ import { ProfileUpdateData } from '../types';
  * @returns Object containing update function, loading state, and error state
  */
 export const useUpdateProfile = () => {
-  const updateProfileMutation = useMutation(api.profiles.updateProfile);
+  const updateProfileMutation = useMutation(api.users.updateUserProfile);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
