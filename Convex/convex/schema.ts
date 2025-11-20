@@ -9,13 +9,28 @@ export default defineSchema({
     email: v.string(),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
+    // Added for future profile editing
+    displayName: v.optional(v.string()),
+    // Added for push notifications
+    pushNotificationToken: v.optional(v.string()),
+    // Subscription status
+    subscriptionStatus: v.optional(v.union(v.literal('free'), v.literal('premium'))),
+    // SSD Fields
+    career: v.optional(v.string()),
+    interests: v.optional(v.array(v.string())),
+    mood: v.optional(v.string()),
+    
     createdAt: v.number(),
     updatedAt: v.number(),
     needsUsernameSelection: v.optional(v.boolean()),
   })
     .index('by_clerk_id', ['clerkId'])
     .index('by_username', ['username'])
-    .index('by_email', ['email']),
+    .index('by_email', ['email'])
+    .index('by_push_token', ['pushNotificationToken'])
+    // Add indexes for search/filtering if needed, though full text search might be better for interests
+    .index('by_career', ['career'])
+    .index('by_mood', ['mood']),
 
   // Whispers table - core messaging functionality
   whispers: defineTable({
@@ -124,4 +139,27 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index('by_user_date', ['userId', 'date']),
+
+  // Feature Flags table - remote configuration
+  featureFlags: defineTable({
+    name: v.string(),
+    enabled: v.boolean(),
+    description: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_name', ['name']),
+
+  // Subscriptions table - manage user subscriptions
+  subscriptions: defineTable({
+    userId: v.id('users'),
+    planId: v.string(), // e.g., 'monthly_premium', 'yearly_premium'
+    status: v.union(v.literal('active'), v.literal('canceled'), v.literal('expired')),
+    startDate: v.number(),
+    endDate: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user_id', ['userId'])
+    .index('by_status', ['status']),
 });

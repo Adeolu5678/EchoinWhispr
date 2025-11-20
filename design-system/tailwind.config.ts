@@ -163,7 +163,7 @@ const tailwindConfig = {
   // Plugins
   plugins: [
     // Custom utilities for design system
-    function({ addUtilities, theme }: any) {
+    function({ addUtilities, theme }: { addUtilities: (utilities: Record<string, any>) => void; theme: (path: string) => any }) {
       const newUtilities = {
         // Text styles
         '.text-h1': {

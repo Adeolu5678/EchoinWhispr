@@ -222,3 +222,120 @@ export const getWhisperById = query({
     return whisper;
   },
 });
+
+// Reply to a whisper (Whisper Chains)
+export const replyToWhisper = mutation({
+  args: {
+    parentWhisperId: v.id('whispers'),
+    content: v.string(),
+    imageUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) throw new Error('User not found');
+
+    // 1. Check Feature Flag
+    const featureFlag = await ctx.db
+      .query('featureFlags')
+      .withIndex('by_name', q => q.eq('name', 'WHISPER_CHAINS'))
+      .first();
+
+    if (!featureFlag || !featureFlag.enabled) {
+      throw new Error('Whisper Chains feature is currently disabled');
+    }
+
+    // 2. Get Parent Whisper
+    const parentWhisper = await ctx.db.get(args.parentWhisperId);
+    if (!parentWhisper) throw new Error('Parent whisper not found');
+
+    // 3. Validate Ownership (Can only reply to own whispers in a chain context)
+    // The requirement says "replying to their own whispers".
+    if (parentWhisper.senderId !== user._id) {
+      throw new Error('Can only reply to your own whispers to create a chain');
+    }
+
+    // 4. Determine Chain ID
+    const chainId = parentWhisper.chainId || parentWhisper._id;
+
+    // 5. Determine Chain Order
+    // Find the last whisper in this chain to increment order
+    const lastWhisperInChain = await ctx.db
+      .query('whispers')
+      .withIndex('by_chain', q => q.eq('chainId', chainId))
+      .order('desc')
+      .first();
+    
+    const chainOrder = lastWhisperInChain && lastWhisperInChain.chainOrder 
+      ? lastWhisperInChain.chainOrder + 1 
+      : 1; // 0 is the original whisper (if we backfill) or 1 is the first reply
+
+    // 6. Create Reply Whisper
+    const whisperId = await ctx.db.insert('whispers', {
+      senderId: user._id,
+      recipientId: parentWhisper.recipientId, // Chain continues to same recipient
+      content: args.content,
+      imageUrl: args.imageUrl,
+      isRead: false,
+      createdAt: Date.now(),
+      parentWhisperId: args.parentWhisperId,
+      chainId: chainId,
+      chainOrder: chainOrder,
+    });
+
+    // 7. If parent didn't have chainId, update it (it's now the start of a chain)
+    if (!parentWhisper.chainId) {
+      await ctx.db.patch(parentWhisper._id, {
+        chainId: parentWhisper._id,
+        chainOrder: 0,
+        isChainStart: true,
+      });
+    }
+
+    return whisperId;
+  },
+});
+
+// Get a full whisper chain
+export const getWhisperChain = query({
+  args: {
+    whisperId: v.id('whispers'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) throw new Error('User not found');
+
+    const targetWhisper = await ctx.db.get(args.whisperId);
+    if (!targetWhisper) throw new Error('Whisper not found');
+
+    // Determine Chain ID
+    const chainId = targetWhisper.chainId || targetWhisper._id;
+
+    // Fetch all whispers in the chain
+    const chain = await ctx.db
+      .query('whispers')
+      .withIndex('by_chain', q => q.eq('chainId', chainId))
+      .collect();
+
+    // If chain is empty (single whisper case where chainId wasn't set yet), return just the whisper
+    if (chain.length === 0) {
+        return [targetWhisper];
+    }
+
+    // Sort by chain order
+    return chain.sort((a, b) => (a.chainOrder || 0) - (b.chainOrder || 0));
+  },
+});

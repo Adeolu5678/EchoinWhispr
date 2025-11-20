@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { useSendWhisper } from '../hooks/useWhispers';
+import { useSendMysteryWhisper } from '../hooks/useMysteryWhispers';
+import { useLocation } from '@/hooks/useLocation';
 import { WHISPER_LIMITS } from '../types';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
 import { useFileUpload } from '@/hooks/useFileUpload';
@@ -7,7 +9,12 @@ import { validateFile } from '@/lib/fileValidation';
 import { useToast } from '@/hooks/use-toast';
 import { RecipientSelector } from './RecipientSelector';
 import { UserSearchResult } from '@/features/users/types';
-import { Shield } from 'lucide-react';
+import { Shield, Image as ImageIcon, Send, Loader2, HelpCircle, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 interface WhisperComposerProps {
   onWhisperSent?: () => void;
@@ -25,10 +32,17 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
   const [content, setContent] = useState('');
   const [selectedRecipient, setSelectedRecipient] = useState<UserSearchResult | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [isMystery, setIsMystery] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { sendWhisper, isLoading } = useSendWhisper();
+  
+  const { sendWhisper, isLoading: isSendingWhisper } = useSendWhisper();
+  const { sendMysteryWhisper, isLoading: isSendingMystery } = useSendMysteryWhisper();
+  const { location, requestLocation, isLoading: isLocating } = useLocation();
   const { upload, isUploading } = useFileUpload();
   const { toast } = useToast();
+
+  const isLoading = isSendingWhisper || isSendingMystery;
 
   const handleContentChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -65,7 +79,13 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
     async (e: React.FormEvent) => {
       e.preventDefault();
       const trimmedContent = content.trim();
-      if (!trimmedContent || trimmedContent.length < WHISPER_LIMITS.MIN_CONTENT_LENGTH || !selectedRecipient) {
+      
+      // Validation
+      if (!trimmedContent || trimmedContent.length < WHISPER_LIMITS.MIN_CONTENT_LENGTH) {
+        return;
+      }
+      
+      if (!isMystery && !selectedRecipient) {
         return;
       }
 
@@ -76,13 +96,25 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
           imageUrl = uploadResult.url;
         }
 
-        await sendWhisper({
-          recipientUsername: selectedRecipient.username,
-          content: trimmedContent,
-          imageUrl,
-        });
+        if (isMystery) {
+          await sendMysteryWhisper({
+            content: trimmedContent,
+            imageUrl,
+          });
+          toast({ title: 'Mystery Whisper Sent!', description: 'Your whisper has been sent to a random soul.' });
+        } else {
+          if (!selectedRecipient) return;
+          await sendWhisper({
+            recipientUsername: selectedRecipient.username,
+            content: trimmedContent,
+            imageUrl,
+            location: location ? { latitude: location.latitude, longitude: location.longitude } : undefined,
+          });
+          toast({ title: 'Whisper Sent', description: `Sent to ${selectedRecipient.username}` });
+        }
 
         setContent('');
+        setSelectedRecipient(null);
         setSelectedImage(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
@@ -90,82 +122,139 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
         onWhisperSent?.();
       } catch (error) {
         console.error('Failed to send whisper:', error);
+        toast({ 
+          title: 'Failed to send whisper', 
+          description: error instanceof Error ? error.message : 'Unknown error',
+          variant: 'destructive' 
+        });
       }
     },
-    [content, selectedRecipient, selectedImage, sendWhisper, upload, onWhisperSent]
+    [content, selectedRecipient, selectedImage, isMystery, location, sendWhisper, sendMysteryWhisper, upload, onWhisperSent, toast]
   );
 
   const isDisabled = useMemo(() => {
     const hasValidContent = content.trim().length >= WHISPER_LIMITS.MIN_CONTENT_LENGTH;
-    const hasRecipient = !!selectedRecipient;
+    const hasRecipient = isMystery || !!selectedRecipient;
     const withinLimit = content.length <= maxLength;
     return !hasValidContent || !hasRecipient || !withinLimit || isLoading || isUploading;
-  }, [content, selectedRecipient, maxLength, isLoading, isUploading]);
+  }, [content, selectedRecipient, isMystery, maxLength, isLoading, isUploading]);
 
   return (
-    <div className={`p-4 ${className}`}>
-        <div className="bg-background-light dark:bg-card-dark flex flex-col items-stretch rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 flex flex-col gap-4">
-                <div className="flex items-center gap-2">
-                    <Shield className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-                    <p className="text-gray-800 dark:text-white text-lg font-bold leading-normal">New Whisper</p>
-                </div>
-                <div className="space-y-4">
-                    <div>
-                        <label htmlFor="recipient-selector" className="text-lg font-bold text-gray-800 dark:text-white">To:</label>
-                        <RecipientSelector
-                            selectedRecipient={selectedRecipient}
-                            onRecipientSelect={setSelectedRecipient}
-                        />
-                    </div>
-                    <div className="relative">
-                        <textarea
-                            id="whisper-textarea"
-                            placeholder={placeholder}
-                            value={content}
-                            onChange={handleContentChange}
-                            maxLength={maxLength}
-                            className="w-full min-h-[120px] resize-none p-3 pr-12 rounded-lg bg-gray-200 dark:bg-border-dark text-gray-800 dark:text-white focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                        />
-                        {FEATURE_FLAGS.IMAGE_UPLOADS && (
-                            <button
-                                type="button"
-                                className="absolute bottom-3 right-3 p-1 rounded bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-                                onClick={handleImageButtonClick}
-                            >
-                                <span className="material-symbols-outlined text-base text-gray-700 dark:text-gray-300">image</span>
-                            </button>
-                        )}
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-700 dark:text-gray-300">
-                            {content.length}/{maxLength}
-                        </span>
-                        <button
-                            onClick={handleSubmit}
-                            disabled={isDisabled}
-                            className="flex min-w-[120px] items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] disabled:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading || isUploading ? (
-                                <>
-                                    <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Sending...</span>
-                                </>
-                            ) : (
-                                <span>Send Whisper</span>
-                            )}
-                        </button>
-                    </div>
-                </div>
+    <div className={`space-y-6 ${className}`}>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-primary">
+            {isMystery ? <HelpCircle className="w-5 h-5" /> : <Shield className="w-5 h-5" />}
+            <p className="font-medium">{isMystery ? 'Mystery Whisper' : 'Anonymous Whisper'}</p>
+          </div>
+          
+          {FEATURE_FLAGS.MYSTERY_WHISPERS && (
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="mystery-mode" 
+                checked={isMystery}
+                onCheckedChange={setIsMystery}
+              />
+              <Label htmlFor="mystery-mode" className="text-sm cursor-pointer">Mystery Mode</Label>
             </div>
+          )}
         </div>
-        <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-        />
+        
+        {!isMystery && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <label htmlFor="recipient-selector" className="text-sm font-medium text-muted-foreground ml-1">
+              To:
+            </label>
+            <RecipientSelector
+              selectedRecipient={selectedRecipient}
+              onRecipientSelect={setSelectedRecipient}
+            />
+          </div>
+        )}
+
+        {isMystery && (
+          <div className="p-4 rounded-lg bg-secondary/20 border border-primary/20 text-sm text-muted-foreground animate-in fade-in slide-in-from-top-2 duration-300">
+            <p>Your whisper will be sent to a random user. Destiny awaits!</p>
+          </div>
+        )}
+
+        <div className="relative group">
+          <Textarea
+            id="whisper-textarea"
+            placeholder={isMystery ? "Whisper something to the universe..." : placeholder}
+            value={content}
+            onChange={handleContentChange}
+            maxLength={maxLength}
+            className="min-h-[160px] resize-none p-4 pr-12 bg-secondary/30 border-white/10 focus:border-primary/50 focus:ring-primary/20 text-lg transition-all duration-300"
+          />
+          <div className="absolute bottom-3 right-3 flex gap-2">
+             {FEATURE_FLAGS.LOCATION_BASED_FEATURES && !isMystery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={`hover:bg-primary/10 hover:text-primary transition-colors ${location ? 'text-green-500' : ''}`}
+                onClick={requestLocation}
+                disabled={isLocating || !!location}
+                title={location ? "Location added" : "Add location"}
+              >
+                {isLocating ? <Loader2 className="w-5 h-5 animate-spin" /> : <MapPin className="w-5 h-5" />}
+              </Button>
+            )}
+            {FEATURE_FLAGS.IMAGE_UPLOADS && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="hover:bg-primary/10 hover:text-primary transition-colors"
+                onClick={handleImageButtonClick}
+              >
+                <ImageIcon className="w-5 h-5" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {location && !isMystery && (
+           <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+             <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 gap-1">
+               <MapPin className="w-3 h-3" />
+               Location attached
+             </Badge>
+           </div>
+        )}
+
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-xs text-muted-foreground font-medium ml-1">
+            {content.length}/{maxLength} characters
+          </span>
+          <Button
+            onClick={handleSubmit}
+            disabled={isDisabled}
+            className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all duration-300"
+          >
+            {isLoading || isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                {isMystery ? 'Send Mystery' : 'Send Whisper'}
+                <Send className="w-4 h-4 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
     </div>
   );
 };

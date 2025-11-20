@@ -20,6 +20,12 @@ export interface Profile {
   userId: UserId;
   /** User's biography text (optional, max 280 characters) */
   bio?: string;
+  /** User's career field (optional) */
+  career?: string;
+  /** User's interests (optional) */
+  interests?: string[];
+  /** User's current mood (optional) */
+  mood?: string;
   /** URL to user's profile picture (optional, for future feature) */
   avatarUrl?: string;
   /** Whether this profile is publicly visible */
@@ -37,8 +43,16 @@ export interface Profile {
 export interface ProfileUpdateData {
   /** Biography text to update (optional) */
   bio?: string;
+  /** Career field to update (optional) */
+  career?: string;
+  /** Interests to update (optional) */
+  interests?: string[];
+  /** Mood to update (optional) */
+  mood?: string;
   /** Avatar URL to update (optional, for future feature) */
   avatarUrl?: string;
+  /** Display name to update (optional) */
+  displayName?: string;
 }
 
 /**
@@ -47,7 +61,15 @@ export interface ProfileUpdateData {
  */
 export interface ProfileFormData {
   /** Biography text input by user */
-  bio: string;
+  bio?: string;
+  /** Career input by user */
+  career?: string;
+  /** Interests input by user (comma separated string for form handling) */
+  interests?: string;
+  /** Mood input by user */
+  mood?: string;
+  /** Display name input by user */
+  displayName: string;
 }
 
 /**
@@ -83,6 +105,14 @@ export interface ProfileBioProps {
 export interface ProfileFormProps {
   /** Initial bio value */
   initialBio?: string;
+  /** Initial career value */
+  initialCareer?: string;
+  /** Initial interests value */
+  initialInterests?: string[];
+  /** Initial mood value */
+  initialMood?: string;
+  /** Initial display name value */
+  initialDisplayName?: string;
   /** Callback when form is successfully submitted */
   onSubmit: (data: ProfileFormData) => Promise<void>;
   /** Callback when user cancels editing */
@@ -104,6 +134,12 @@ export interface ProfileScreenProps {
   displayName?: string;
   /** User's username from Clerk */
   username?: string;
+  /** User's career */
+  career?: string;
+  /** User's interests */
+  interests?: string[];
+  /** User's mood */
+  mood?: string;
   /** Whether profile data is currently loading */
   isLoading?: boolean;
   /** Error message if profile loading failed */

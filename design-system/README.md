@@ -1,18 +1,19 @@
 # EchoinWhspr Design System
 
-A comprehensive design system for the EchoinWhspr project, providing consistent design tokens, components, and utilities across Web and React Native platforms.
+A comprehensive design system for the EchoinWhspr decentralized social dApp, providing consistent design tokens, components, and utilities across Web and React Native platforms.
 
 ## Overview
 
-The EchoinWhspr Design System ensures a unified user experience across all platforms while respecting platform-specific conventions. It follows modern design principles with a mobile-first approach, minimalist aesthetic, and accessible color schemes.
+The EchoinWhspr Design System ensures a unified user experience across all platforms for a decentralized social dApp. It follows modern design principles with a mobile-first approach, minimalist aesthetic, and accessible color schemes, designed specifically for anonymous persona-based social networking.
 
 ## Core Principles
 
-- **Consistency**: Unified design language across platforms
-- **Accessibility**: WCAG 2.1 AA compliant colors and interactions
-- **Performance**: Optimized for both web and mobile performance
-- **Scalability**: Modular architecture for easy extension
-- **Developer Experience**: TypeScript-first with comprehensive documentation
+- **Consistency**: Unified design language across platforms for decentralized social features
+- **Accessibility**: WCAG 2.1 AA compliant colors and interactions for inclusive anonymous networking
+- **Performance**: Optimized for both web and mobile performance with decentralized data loading
+- **Scalability**: Modular architecture for easy extension of social features
+- **Developer Experience**: TypeScript-first with comprehensive documentation for blockchain integration
+- **Privacy-First**: Design patterns that support anonymous personas and encrypted communications
 
 ## Structure
 

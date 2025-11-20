@@ -1,144 +1,89 @@
-/**
- * EchoinWhspr Web - Tailwind CSS Configuration
- *
- * Web-specific Tailwind configuration that extends the shared design system.
- * Includes Next.js specific optimizations and web-only utilities.
- */
-
-const baseConfig = require('../design-system/tailwind.config');
-
-const webConfig = {
-  ...baseConfig,
-
-  // Web-specific content paths
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: ["class"],
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
-    // Include design system components
-    '../design-system/components/**/*.{js,ts,jsx,tsx}',
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
-
-  // Web-specific theme extensions
   theme: {
-    ...baseConfig.theme,
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
     extend: {
-      // Next.js specific utilities
-      fontFamily: {
-        'inter-var': ['InterVariable', 'Inter', 'system-ui', 'sans-serif'],
-        "display": ["Plus Jakarta Sans", "Noto Sans", "sans-serif"]
-      },
-
-      // Web-specific animations
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-in-out',
-        'slide-up': 'slideUp 0.3s ease-out',
-        'scale-in': 'scaleIn 0.2s ease-out',
-      },
-
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        scaleIn: {
-          '0%': { transform: 'scale(0.95)', opacity: '0' },
-          '100%': { transform: 'scale(1)', opacity: '1' },
-        },
-      },
-
-      // Web-specific spacing for larger screens
-      spacing: {
-        '18': '4.5rem',
-        '88': '22rem',
-        '112': '28rem',
-        '128': '32rem',
-      },
-
-      // Container queries for responsive design
-      containers: {
-        xs: '20rem',
-        sm: '24rem',
-        md: '28rem',
-        lg: '32rem',
-        xl: '36rem',
-        '2xl': '42rem',
-      },
-
-      // --- ADD THIS EXTEND BLOCK ---
       colors: {
-        "primary": "#1919e6",
-        "background-light": "#f6f6f8",
-        "background-dark": "#111121",
-        "card-dark": "#1C1C2E",
-        "border-dark": "#242447",
-        "muted-dark": "#e5e5e5",
-        "text-dark": "#ffffff"
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
       },
-      // --- END OF ADDITION ---
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
+        "fade-in": {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
+        "slide-up": {
+          from: { transform: "translateY(10px)", opacity: 0 },
+          to: { transform: "translateY(0)", opacity: 1 },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.5s ease-out",
+        "slide-up": "slide-up 0.5s ease-out",
+      },
+      fontFamily: {
+        sans: ["var(--font-inter)", "sans-serif"],
+      },
     },
   },
-
-  // Web-specific plugins
-  plugins: [
-    ...(baseConfig.plugins || []),
-
-    // Container queries plugin (if installed)
-    // require('@tailwindcss/container-queries'),
-
-    // Custom web-specific utilities
-    function ({ addUtilities, theme }) {
-      const webUtilities = {
-        // Web-specific focus styles
-        '.focus-visible-ring': {
-          '@apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2':
-            {},
-        },
-
-        // Scroll utilities
-        '.scroll-smooth': {
-          scrollBehavior: 'smooth',
-        },
-
-        '.scrollbar-hide': {
-          '-ms-overflow-style': 'none',
-          'scrollbar-width': 'none',
-          '&::-webkit-scrollbar': {
-            display: 'none',
-          },
-        },
-
-        // Selection styles
-        '.selection-primary': {
-          '::selection': {
-            backgroundColor: theme('colors.primary.100'),
-            color: theme('colors.primary.900'),
-          },
-        },
-
-        // Print styles
-        '.print-hidden': {
-          '@media print': {
-            display: 'none',
-          },
-        },
-
-        '.print-visible': {
-          display: 'none',
-          '@media print': {
-            display: 'block',
-          },
-        },
-      };
-
-      addUtilities(webUtilities);
-    },
-  ],
-};
-
-module.exports = webConfig;
+  plugins: [require("tailwindcss-animate")],
+}

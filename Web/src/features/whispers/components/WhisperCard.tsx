@@ -8,13 +8,15 @@ import { Button } from '@/components/ui/button';
 import { WhisperWithSender } from '../types';
 import { useMarkAsRead } from '../hooks/useWhispers';
 import { formatDistanceToNow } from 'date-fns';
-import { FEATURE_FLAGS } from '@/config/featureFlags';
-import { CheckCircle2, Clock, User, MapPin } from 'lucide-react';
+import { useFeatureFlag } from '@/hooks/useFeatureFlags';
+import { CheckCircle2, Clock, User, MapPin, MessageCircle, Link as LinkIcon } from 'lucide-react';
 
 interface WhisperCardProps {
   whisper: WhisperWithSender;
   showMarkAsRead?: boolean;
   onMarkAsRead?: (whisperId: string) => void;
+  onReply?: (whisperId: string) => void;
+  onChain?: (whisperId: string) => void;
   className?: string;
 }
 
@@ -25,17 +27,24 @@ interface WhisperCardProps {
  * @param whisper - The whisper data to display
  * @param showMarkAsRead - Whether to show the mark as read button
  * @param onMarkAsRead - Optional callback when whisper is marked as read
+ * @param onReply - Optional callback when user wants to reply (Echo Back)
+ * @param onChain - Optional callback when user wants to add to chain
  * @param className - Additional CSS classes
  */
 export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
-  ({ whisper, showMarkAsRead = true, onMarkAsRead, className = '' }) => {
+  ({ whisper, showMarkAsRead = true, onMarkAsRead, onReply, onChain, className = '' }) => {
     const { markAsRead, isLoading } = useMarkAsRead();
+    const isConversationEvolutionEnabled = useFeatureFlag('CONVERSATION_EVOLUTION');
+    const isWhisperChainsEnabled = useFeatureFlag('WHISPER_CHAINS');
+    const isImageUploadsEnabled = useFeatureFlag('IMAGE_UPLOADS');
+    const isLocationEnabled = useFeatureFlag('LOCATION_BASED_FEATURES');
 
     /**
      * Handles marking the whisper as read
      * Calls the hook and optional callback
      */
-    const handleMarkAsRead = useCallback(async () => {
+    const handleMarkAsRead = useCallback(async (e: React.MouseEvent) => {
+      e.preventDefault(); // Prevent link navigation
       try {
         await markAsRead(whisper._id);
         onMarkAsRead?.(whisper._id);
@@ -44,6 +53,16 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
         console.error('Failed to mark whisper as read:', error);
       }
     }, [whisper._id, markAsRead, onMarkAsRead]);
+
+    const handleReply = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      onReply?.(whisper._id);
+    }, [whisper._id, onReply]);
+
+    const handleChain = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      onChain?.(whisper._id);
+    }, [whisper._id, onChain]);
 
     /**
      * Formats the timestamp for display
@@ -93,7 +112,7 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="w-4 h-4" aria-hidden="true" />
                 <span>
-                  {FEATURE_FLAGS.CONVERSATION_EVOLUTION &&
+                  {isConversationEvolutionEnabled &&
                   whisper.conversationId
                     ? whisper.senderName || 'Anonymous'
                     : 'Anonymous'}
@@ -113,7 +132,7 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
               {whisper.content}
             </div>
             {/* Image display */}
-            {FEATURE_FLAGS.IMAGE_UPLOADS && whisper.imageUrl && (
+            {isImageUploadsEnabled && whisper.imageUrl && (
               <div className="mt-3">
                 <Image
                   src={whisper.imageUrl}
@@ -132,7 +151,7 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
             )}
 
             {/* Location display */}
-            {FEATURE_FLAGS.LOCATION_BASED_FEATURES && whisper.location && (
+            {isLocationEnabled && whisper.location && (
               <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4" aria-hidden="true" />
                 <span>
@@ -142,8 +161,36 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
             )}
 
             {/* Action buttons */}
-            {showMarkAsRead && !whisper.isRead && (
-              <div className="flex justify-end pt-2 border-t border-border/50">
+            <div className="flex justify-end pt-2 border-t border-border/50 gap-2">
+              {/* Reply / Echo Back */}
+              {isConversationEvolutionEnabled && !whisper.isOwnWhisper && onReply && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleReply}
+                  className="h-8 px-3 text-xs gap-1"
+                  aria-label="Reply to whisper"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  Echo Back
+                </Button>
+              )}
+
+              {/* Add to Chain */}
+              {isWhisperChainsEnabled && whisper.isOwnWhisper && onChain && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleChain}
+                  className="h-8 px-3 text-xs gap-1"
+                  aria-label="Add to chain"
+                >
+                  <LinkIcon className="w-3 h-3" />
+                  Chain
+                </Button>
+              )}
+
+              {showMarkAsRead && !whisper.isRead && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -164,8 +211,8 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
                     </>
                   )}
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Read indicator */}
             {whisper.isRead && (
