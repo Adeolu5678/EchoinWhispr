@@ -1,15 +1,20 @@
-'use client';
-
-import React, { useState, useCallback, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { useSendWhisper } from '../hooks/useWhispers';
+import { useSendMysteryWhisper } from '../hooks/useMysteryWhispers';
+import { useLocation } from '@/hooks/useLocation';
 import { WHISPER_LIMITS } from '../types';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { validateFile } from '@/lib/fileValidation';
+import { useToast } from '@/hooks/use-toast';
 import { RecipientSelector } from './RecipientSelector';
 import { UserSearchResult } from '@/features/users/types';
-import { Users, X, Send } from 'lucide-react';
-
+import { Shield, Image as ImageIcon, Send, Loader2, HelpCircle, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 interface WhisperComposerProps {
   onWhisperSent?: () => void;
@@ -18,44 +23,30 @@ interface WhisperComposerProps {
   className?: string;
 }
 
-/**
- * Enhanced WhisperComposer component with user search integration
- *
- * Provides a complete interface for composing and sending anonymous whispers
- * with the ability to search for and select a single recipient.
- *
- * Features:
- * - User search with real-time results
- * - Single recipient selection
- * - Visual feedback for selected user
- * - Character limit validation
- * - Loading states and error handling
- *
- * @param onWhisperSent - Optional callback fired when whisper is successfully sent
- * @param placeholder - Placeholder text for the textarea
- * @param maxLength - Maximum character limit for the whisper content
- * @param className - Additional CSS classes
- */
 export const WhisperComposer: React.FC<WhisperComposerProps> = ({
   onWhisperSent,
-  placeholder = 'Write your anonymous whisper...',
+  placeholder = 'Type your whisper here.',
   maxLength = WHISPER_LIMITS.MAX_CONTENT_LENGTH,
   className = '',
 }) => {
-  // Component state
   const [content, setContent] = useState('');
-  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
-  const { sendWhisper, isLoading, error } = useSendWhisper();
+  const [selectedRecipient, setSelectedRecipient] = useState<UserSearchResult | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [isMystery, setIsMystery] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { sendWhisper, isLoading: isSendingWhisper } = useSendWhisper();
+  const { sendMysteryWhisper, isLoading: isSendingMystery } = useSendMysteryWhisper();
+  const { location, requestLocation, isLoading: isLocating } = useLocation();
+  const { upload, isUploading } = useFileUpload();
+  const { toast } = useToast();
 
-  /**
-   * Handles content change with character limit validation
-   * Prevents input beyond the maximum character limit
-   */
+  const isLoading = isSendingWhisper || isSendingMystery;
+
   const handleContentChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newContent = e.target.value;
-
-      // Enforce character limit
       if (newContent.length <= maxLength) {
         setContent(newContent);
       }
@@ -63,198 +54,207 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
     [maxLength]
   );
 
-  /**
-   * Handles user selection from search results
-   * For single recipient selection, replaces current selection
-   */
-  const handleUserToggle = useCallback((user: UserSearchResult) => {
-    setSelectedUser(user);
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const validation = await validateFile(file);
+      if (!validation.isValid) {
+        toast({ title: 'Invalid file', description: validation.error, variant: 'destructive' });
+        return;
+      }
+      setSelectedImage(file);
+    } catch (error) {
+      console.error('File validation error:', error);
+      toast({ title: 'Error', description: 'Failed to validate file', variant: 'destructive' });
+    }
+  }, [toast]);
+
+  const handleImageButtonClick = useCallback(() => {
+    fileInputRef.current?.click();
   }, []);
 
-  /**
-   * Handles user removal from selected list
-   */
-  const handleRemoveUser = useCallback(() => {
-    setSelectedUser(null);
-  }, []);
-
-  /**
-   * Handles whisper submission with validation
-   * Prevents empty or whitespace-only whispers from being sent
-   */
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-
-      // Validate content
       const trimmedContent = content.trim();
-      if (
-        !trimmedContent ||
-        trimmedContent.length < WHISPER_LIMITS.MIN_CONTENT_LENGTH
-      ) {
+      
+      // Validation
+      if (!trimmedContent || trimmedContent.length < WHISPER_LIMITS.MIN_CONTENT_LENGTH) {
         return;
       }
-
-      // Validate recipients
-      if (!selectedUser) {
+      
+      if (!isMystery && !selectedRecipient) {
         return;
       }
 
       try {
-        // Send whisper using the hook
-        await sendWhisper({
-          recipientUsername: selectedUser.username,
-          content: trimmedContent,
-        });
+        let imageUrl: string | undefined;
+        if (selectedImage) {
+          const uploadResult = await upload(selectedImage);
+          imageUrl = uploadResult.url;
+        }
 
-        // Clear content and selected user, notify parent component
+        if (isMystery) {
+          await sendMysteryWhisper({
+            content: trimmedContent,
+            imageUrl,
+          });
+          toast({ title: 'Mystery Whisper Sent!', description: 'Your whisper has been sent to a random soul.' });
+        } else {
+          if (!selectedRecipient) return;
+          await sendWhisper({
+            recipientUsername: selectedRecipient.username,
+            content: trimmedContent,
+            imageUrl,
+            location: location ? { latitude: location.latitude, longitude: location.longitude } : undefined,
+          });
+          toast({ title: 'Whisper Sent', description: `Sent to ${selectedRecipient.username}` });
+        }
+
         setContent('');
-        setSelectedUser(null);
+        setSelectedRecipient(null);
+        setSelectedImage(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
         onWhisperSent?.();
       } catch (error) {
-        // Error handling is managed by the hook with toast notifications
-        // Additional logging for debugging purposes
         console.error('Failed to send whisper:', error);
+        toast({ 
+          title: 'Failed to send whisper', 
+          description: error instanceof Error ? error.message : 'Unknown error',
+          variant: 'destructive' 
+        });
       }
     },
-    [content, selectedUser, sendWhisper, onWhisperSent]
+    [content, selectedRecipient, selectedImage, isMystery, location, sendWhisper, sendMysteryWhisper, upload, onWhisperSent, toast]
   );
 
-  /**
-   * Calculates remaining characters for display
-   */
-  const remainingChars = useMemo(
-    () => maxLength - content.length,
-    [maxLength, content]
-  );
-
-  /**
-   * Determines if the send button should be disabled
-   * Disabled when content is empty, no recipients selected, loading, or exceeds character limit
-   */
   const isDisabled = useMemo(() => {
-    const hasValidContent =
-      content.trim().length >= WHISPER_LIMITS.MIN_CONTENT_LENGTH;
-    const hasRecipients = selectedUser !== null;
+    const hasValidContent = content.trim().length >= WHISPER_LIMITS.MIN_CONTENT_LENGTH;
+    const hasRecipient = isMystery || !!selectedRecipient;
     const withinLimit = content.length <= maxLength;
-
-    return !hasValidContent || !hasRecipients || !withinLimit || isLoading;
-  }, [content, selectedUser, maxLength, isLoading]);
-
-  /**
-   * Determines the character count color based on remaining characters
-   * Red for over limit, yellow for low remaining, gray for normal
-   */
-  const characterCountColor = useMemo(() => {
-    if (remainingChars < 0) return 'text-red-500';
-    if (remainingChars <= 20) return 'text-yellow-500';
-    return 'text-muted-foreground';
-  }, [remainingChars]);
+    return !hasValidContent || !hasRecipient || !withinLimit || isLoading || isUploading;
+  }, [content, selectedRecipient, isMystery, maxLength, isLoading, isUploading]);
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* User Search Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="h-5 w-5" />
-            Select Recipients
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RecipientSelector
-            selectedRecipient={selectedUser}
-            onRecipientSelect={handleUserToggle}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Selected User Display */}
-      {selectedUser && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Selected Recipient</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm">
-                <Users className="h-3 w-3" />
-                User {selectedUser.username.slice(-8)}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveUser}
-                  className="h-auto p-0 hover:bg-transparent"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Whisper Composition Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Send className="h-5 w-5" />
-            Compose Whisper
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4"
-            role="form"
-            aria-label="Compose whisper"
-          >
-            <div className="space-y-2">
-              <Textarea
-                value={content}
-                onChange={handleContentChange}
-                placeholder={placeholder}
-                disabled={isLoading}
-                className="min-h-[120px] resize-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                aria-label="Whisper content"
-                aria-describedby="char-count error-message"
-                aria-invalid={remainingChars < 0}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-primary">
+            {isMystery ? <HelpCircle className="w-5 h-5" /> : <Shield className="w-5 h-5" />}
+            <p className="font-medium">{isMystery ? 'Mystery Whisper' : 'Anonymous Whisper'}</p>
+          </div>
+          
+          {FEATURE_FLAGS.MYSTERY_WHISPERS && (
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="mystery-mode" 
+                checked={isMystery}
+                onCheckedChange={setIsMystery}
               />
-
-              <div className="flex justify-between items-center text-sm">
-                <div
-                  id="char-count"
-                  className={characterCountColor}
-                  aria-live="polite"
-                  aria-label={`${remainingChars} characters remaining`}
-                >
-                  {remainingChars} characters remaining
-                </div>
-
-                {error && (
-                  <div
-                    id="error-message"
-                    className="text-red-500"
-                    role="alert"
-                    aria-live="assertive"
-                  >
-                    {error.message}
-                  </div>
-                )}
-              </div>
+              <Label htmlFor="mystery-mode" className="text-sm cursor-pointer">Mystery Mode</Label>
             </div>
+          )}
+        </div>
+        
+        {!isMystery && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <label htmlFor="recipient-selector" className="text-sm font-medium text-muted-foreground ml-1">
+              To:
+            </label>
+            <RecipientSelector
+              selectedRecipient={selectedRecipient}
+              onRecipientSelect={setSelectedRecipient}
+            />
+          </div>
+        )}
 
-            <Button
-              type="submit"
-              disabled={isDisabled}
-              className="w-full h-11 text-base font-medium"
-              aria-label={isLoading ? 'Sending whisper...' : 'Send whisper'}
-            >
-              {isLoading ? 'Sending...' : 'Send Whisper'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+        {isMystery && (
+          <div className="p-4 rounded-lg bg-secondary/20 border border-primary/20 text-sm text-muted-foreground animate-in fade-in slide-in-from-top-2 duration-300">
+            <p>Your whisper will be sent to a random user. Destiny awaits!</p>
+          </div>
+        )}
+
+        <div className="relative group">
+          <Textarea
+            id="whisper-textarea"
+            placeholder={isMystery ? "Whisper something to the universe..." : placeholder}
+            value={content}
+            onChange={handleContentChange}
+            maxLength={maxLength}
+            className="min-h-[160px] resize-none p-4 pr-12 bg-secondary/30 border-white/10 focus:border-primary/50 focus:ring-primary/20 text-lg transition-all duration-300"
+          />
+          <div className="absolute bottom-3 right-3 flex gap-2">
+             {FEATURE_FLAGS.LOCATION_BASED_FEATURES && !isMystery && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={`hover:bg-primary/10 hover:text-primary transition-colors ${location ? 'text-green-500' : ''}`}
+                onClick={requestLocation}
+                disabled={isLocating || !!location}
+                title={location ? "Location added" : "Add location"}
+              >
+                {isLocating ? <Loader2 className="w-5 h-5 animate-spin" /> : <MapPin className="w-5 h-5" />}
+              </Button>
+            )}
+            {FEATURE_FLAGS.IMAGE_UPLOADS && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="hover:bg-primary/10 hover:text-primary transition-colors"
+                onClick={handleImageButtonClick}
+              >
+                <ImageIcon className="w-5 h-5" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {location && !isMystery && (
+           <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+             <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 gap-1">
+               <MapPin className="w-3 h-3" />
+               Location attached
+             </Badge>
+           </div>
+        )}
+
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-xs text-muted-foreground font-medium ml-1">
+            {content.length}/{maxLength} characters
+          </span>
+          <Button
+            onClick={handleSubmit}
+            disabled={isDisabled}
+            className="px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all duration-300"
+          >
+            {isLoading || isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                {isMystery ? 'Send Mystery' : 'Send Whisper'}
+                <Send className="w-4 h-4 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
     </div>
   );
 };

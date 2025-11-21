@@ -9,6 +9,7 @@ import { Doc, Id } from './_generated/dataModel';
 type SafeUser = {
   _id: Id<'users'>;
   username: string;
+  email: string;
   firstName?: string;
   lastName?: string;
   avatarUrl?: string;
@@ -271,6 +272,7 @@ export const getFriendsList = query({
         const safeUser: SafeUser = {
           _id: user._id,
           username: user.username,
+          email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           avatarUrl: profile?.avatarUrl,
@@ -335,6 +337,7 @@ export const getPendingRequests = query({
         const safeSender: SafeUser = {
           _id: sender._id,
           username: sender.username,
+          email: sender.email,
           firstName: sender.firstName,
           lastName: sender.lastName,
           avatarUrl: profile?.avatarUrl,
@@ -392,6 +395,7 @@ export const getSentRequests = query({
         const safeRecipient: SafeUser = {
           _id: recipient._id,
           username: recipient.username,
+          email: recipient.email,
           firstName: recipient.firstName,
           lastName: recipient.lastName,
           avatarUrl: profile?.avatarUrl,

@@ -4,7 +4,8 @@ import { memo, useCallback } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check, User } from 'lucide-react';
+import { Check, User, UserPlus, Loader2 } from 'lucide-react';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 import type { UserSearchResult as UserSearchResultType } from '../types';
 
 /**
@@ -19,6 +20,10 @@ interface UserSearchResultProps {
   isSelectable?: boolean;
   /** Callback when user is selected/deselected */
   onToggleSelection?: (user: UserSearchResultType) => void;
+  /** Callback when add friend is clicked */
+  onAddFriend?: (user: UserSearchResultType) => void;
+  /** Whether add friend is loading */
+  isAddFriendLoading?: boolean;
   /** Additional CSS classes */
   className?: string;
 }
@@ -26,9 +31,8 @@ interface UserSearchResultProps {
 /**
  * Individual user search result component
  *
- * Displays user information in a card format with optional selection functionality.
- * Used within search result lists to show individual users that can be selected
- * as whisper recipients.
+ * Displays user information in a card format with optional selection functionality
+ * and Add Friend button when the friends feature is enabled.
  *
  * @param props - Component props
  * @returns JSX element representing a user search result
@@ -39,6 +43,8 @@ interface UserSearchResultProps {
  *   user={userData}
  *   isSelected={selectedUsers.includes(userData._id)}
  *   onToggleSelection={(user) => toggleUserSelection(user)}
+ *   onAddFriend={(user) => sendFriendRequest(user)}
+ *   isAddFriendLoading={loadingStates[user._id]}
  * />
  * ```
  */
@@ -48,6 +54,8 @@ export const UserSearchResult = memo<UserSearchResultProps>(
     isSelected = false,
     isSelectable = true,
     onToggleSelection,
+    onAddFriend,
+    isAddFriendLoading = false,
     className = '',
   }) => {
     /**
@@ -58,6 +66,15 @@ export const UserSearchResult = memo<UserSearchResultProps>(
         onToggleSelection(user);
       }
     }, [isSelectable, onToggleSelection, user]);
+
+    /**
+     * Handles add friend action
+     */
+    const handleAddFriend = useCallback(() => {
+      if (onAddFriend && !isAddFriendLoading) {
+        onAddFriend(user);
+      }
+    }, [onAddFriend, user, isAddFriendLoading]);
 
     /**
      * Generates user initials for avatar fallback
@@ -141,23 +158,45 @@ export const UserSearchResult = memo<UserSearchResultProps>(
               </div>
             </div>
 
-            {/* Selection Button */}
-            {isSelectable && onToggleSelection && (
-              <Button
-                type="button"
-                variant={isSelected ? 'default' : 'outline'}
-                size="sm"
-                onClick={handleToggleSelection}
-                className="flex-shrink-0"
-                aria-label={
-                  isSelected
-                    ? `Deselect ${displayName}`
-                    : `Select ${displayName}`
-                }
-              >
-                {isSelected ? 'Selected' : 'Select'}
-              </Button>
-            )}
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Add Friend Button - Only show when friends feature is enabled */}
+              {FEATURE_FLAGS.FRIENDS && onAddFriend && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddFriend}
+                  disabled={isAddFriendLoading}
+                  className="flex-shrink-0"
+                  aria-label={`Add ${displayName} as friend`}
+                >
+                  {isAddFriendLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <UserPlus className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+
+              {/* Selection Button */}
+              {isSelectable && onToggleSelection && (
+                <Button
+                  type="button"
+                  variant={isSelected ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={handleToggleSelection}
+                  className="flex-shrink-0"
+                  aria-label={
+                    isSelected
+                      ? `Deselect ${displayName}`
+                      : `Select ${displayName}`
+                  }
+                >
+                  {isSelected ? 'Selected' : 'Select'}
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
