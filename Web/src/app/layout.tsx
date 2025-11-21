@@ -5,10 +5,11 @@ import { Navigation } from '@/components/Navigation';
 import { UsernameSelectionHandler } from '@/features/authentication/components/UsernameSelectionHandler';
 import { ReactNode } from 'react';
 import './globals.css';
+import { FeatureFlagProvider } from '@/components/FeatureFlagProvider';
 
 const inter = Inter({
   subsets: ['latin'],
-  display: 'swap',
+  display: 'optional',
   fallback: [
     'system-ui',
     '-apple-system',
@@ -26,23 +27,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className}`}>
+    <html lang="en" className="dark">
+      <body className={`bg-background-dark font-sans antialiased ${inter.className}`}>
         <Providers>
-          <div className="min-h-screen">
-            {/* Username Selection Handler - must be at root level for modal overlay */}
-            <UsernameSelectionHandler />
-
-            {/* Main Navigation */}
-            <Navigation />
-
-            {/* Main Content */}
-            <main className="flex-1">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <FeatureFlagProvider>
+            <div className="flex flex-col min-h-screen">
+              <Navigation />
+              <UsernameSelectionHandler />
+              <div className="flex flex-1 justify-center w-full">
                 {children}
               </div>
-            </main>
-          </div>
+            </div>
+          </FeatureFlagProvider>
         </Providers>
       </body>
     </html>

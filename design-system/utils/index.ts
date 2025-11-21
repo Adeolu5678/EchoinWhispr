@@ -148,7 +148,7 @@ export const validationUtils = {
   // Validate spacing values
   isValidSpacing: (value: string): boolean => {
     const validSpacing = Object.values(spacing);
-    return validSpacing.includes(value as string);
+    return validSpacing.includes(value as any);
   },
 };
 
@@ -165,6 +165,8 @@ export const platformUtils = {
     return platformUtils.isWeb ? webValue : nativeValue;
   },
 };
+
+export { cn } from './cn';
 
 export {
   colorUtils as colors,

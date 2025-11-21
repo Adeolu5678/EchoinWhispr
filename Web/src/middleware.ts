@@ -28,7 +28,7 @@ export default authMiddleware({
     const protectedRoutes = ['/compose', '/inbox'];
 
     // If user is not authenticated and trying to access protected routes
-    if (!auth.userId && protectedRoutes.includes(req.nextUrl.pathname)) {
+    if (!auth.userId && (protectedRoutes.includes(req.nextUrl.pathname) || req.nextUrl.pathname.startsWith('/whispers'))) {
       const signInUrl = new URL('/sign-in', req.url);
       signInUrl.searchParams.set('redirect_url', req.nextUrl.pathname);
       return Response.redirect(signInUrl);

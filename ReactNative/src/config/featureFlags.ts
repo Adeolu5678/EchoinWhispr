@@ -8,6 +8,8 @@ export const FEATURE_FLAGS = {
   PUSH_NOTIFICATIONS: false,
   OFFLINE_MODE: false,
   CONVERSATION_EVOLUTION: false,
+  WHISPER_CHAINS: true,
+  MYSTERY_WHISPERS: true,
 } as const;
 
 export type FeatureFlag = keyof typeof FEATURE_FLAGS;

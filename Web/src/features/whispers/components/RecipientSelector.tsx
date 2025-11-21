@@ -38,12 +38,12 @@ export const RecipientSelector = ({
     <div className="relative w-full">
       {/* Main Button Container */}
       <div className="flex gap-2">
-        {/* Non-clickable recipient display button */}
+        {/* Clickable recipient display button */}
         <Button
           type="button"
           variant="outline"
-          className="flex-1 justify-start bg-purple-50 border-purple-200 text-purple-900 hover:bg-purple-100 cursor-default"
-          disabled
+          className="flex-1 justify-start bg-purple-50 border-purple-200 text-purple-900 hover:bg-purple-100"
+          onClick={handleToggleDropdown}
         >
           <Users className="w-4 h-4 mr-2" />
           {selectedRecipient ? selectedRecipient.username : 'Select Recipient'}

@@ -14,6 +14,7 @@ interface InboxContentProps {
   whispersError: AppError | null;
   refetchWhispers: () => void;
   markAsRead: (whisperId: string) => Promise<void>;
+  onReply: (whisperId: string) => void;
 }
 
 export function InboxContent({
@@ -22,6 +23,7 @@ export function InboxContent({
   whispersError,
   refetchWhispers,
   markAsRead,
+  onReply,
 }: InboxContentProps) {
   // Show loading state
   if (isLoadingWhispers) {
@@ -133,8 +135,12 @@ export function InboxContent({
   // Show whispers list
   return (
     <WhisperList
+      whispers={whispers}
+      isLoading={isLoadingWhispers}
+      error={whispersError}
       showMarkAsRead={true}
       onWhisperMarkAsRead={markAsRead}
+      onReply={onReply}
       emptyStateMessage="No whispers found in your inbox."
       emptyStateActionLabel="Refresh Inbox"
       onEmptyStateAction={refetchWhispers}

@@ -4,12 +4,13 @@ import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { Menu, Home, Send, Inbox } from 'lucide-react';
+import { Menu, Home, Send, Inbox, Users, User, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NavigationLink } from './NavigationLink';
 import { UserMenu } from './UserMenu';
 import { MobileNavigation } from './MobileNavigation';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 
 /**
  * Main navigation component for the EchoinWhispr web application.
@@ -44,8 +45,8 @@ export const Navigation = () => {
    * Navigation items configuration
    * Memoized to prevent unnecessary re-renders
    */
-  const navigationItems = useMemo(
-    () => [
+  const navigationItems = useMemo(() => {
+    const baseItems = [
       {
         href: '/',
         label: 'Home',
@@ -64,9 +65,35 @@ export const Navigation = () => {
         icon: Inbox,
         description: 'View all received whispers',
       },
-    ],
-    []
-  );
+    ];
+
+    if (FEATURE_FLAGS.FRIENDS) {
+      baseItems.push({
+        href: '/friends',
+        label: 'Friends',
+        icon: Users,
+        description: 'Manage your friends and friend requests',
+      });
+    }
+
+    if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
+      baseItems.push({
+        href: '/profile',
+        label: 'Profile',
+        icon: User,
+        description: 'Edit your profile information',
+      });
+
+      baseItems.push({
+        href: '/settings',
+        label: 'Settings',
+        icon: SettingsIcon,
+        description: 'Manage your preferences',
+      });
+    }
+
+    return baseItems;
+  }, []);
 
   /**
    * Check if current path matches navigation item
@@ -85,14 +112,14 @@ export const Navigation = () => {
   // Show loading state while Clerk is loading
   if (!isLoaded) {
     return (
-      <nav className="bg-primary-600 border-b border-primary-700 shadow-sm">
+      <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="h-8 w-32 bg-primary-700 animate-pulse rounded"></div>
+              <div className="h-8 w-32 bg-primary/20 animate-pulse rounded"></div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="h-8 w-8 bg-primary-700 animate-pulse rounded-full"></div>
+              <div className="h-8 w-8 bg-primary/20 animate-pulse rounded-full"></div>
             </div>
           </div>
         </div>
@@ -106,25 +133,25 @@ export const Navigation = () => {
   }
 
   return (
-    <nav className="bg-primary-600 border-b border-primary-700 shadow-sm sticky top-0 z-50">
+    <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center space-x-2 text-xl font-bold text-inverse hover:text-primary-100 transition-colors"
+              className="flex items-center gap-2 group"
               onClick={closeMobileMenu}
             >
-              <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EW</span>
+              <div className="bg-primary/20 p-2 rounded-lg group-hover:bg-primary/30 transition-colors">
+                <Sparkles className="w-5 h-5 text-primary" />
               </div>
-              <span className="hidden sm:block">EchoinWhispr</span>
+              <span className="text-xl font-bold tracking-tight hidden sm:block">EchoinWhispr</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center gap-1">
             {navigationItems.map(item => (
               <NavigationLink
                 key={item.href}
@@ -138,7 +165,7 @@ export const Navigation = () => {
           </div>
 
           {/* User Menu and Mobile Toggle */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4">
             <UserMenu user={user} />
 
             {/* Mobile menu button */}
@@ -146,14 +173,14 @@ export const Navigation = () => {
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="md:hidden p-2"
+                  size="icon"
+                  className="md:hidden hover:bg-white/5"
                   aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="flex flex-col">
+              <SheetContent side="left" className="w-72 glass border-r border-white/10 p-0">
                 <MobileNavigation
                   user={user}
                   navigationItems={navigationItems}

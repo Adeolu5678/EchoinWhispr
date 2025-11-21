@@ -163,3 +163,17 @@ firestore-debug.log
 
 # Sentry Config File
 .sentryclirc
+
+# AI-related files and folders
+.kilocode/
+.gemini/
+.cursor/
+.windsur/
+.aider/
+.copilot/
+.github/copilot/
+.claude/
+.anthropic/
+.openai/
+.chatgpt/
+GEMINI.md

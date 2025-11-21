@@ -7,11 +7,17 @@ import { useReceivedWhispers } from '../hooks/useWhispers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { RefreshCw, AlertCircle } from 'lucide-react';
+import { WhisperWithSender } from '../types';
 
 interface WhisperListProps {
   className?: string;
+  whispers?: WhisperWithSender[];
+  isLoading?: boolean;
+  error?: Error | null;
   showMarkAsRead?: boolean;
   onWhisperMarkAsRead?: (whisperId: string) => void;
+  onReply?: (whisperId: string) => void;
+  onChain?: (whisperId: string) => void;
   emptyStateMessage?: string;
   emptyStateActionLabel?: string;
   onEmptyStateAction?: () => void;
@@ -23,8 +29,13 @@ interface WhisperListProps {
  * and empty state management
  *
  * @param className - Additional CSS classes
+ * @param whispers - Optional array of whispers to display. If not provided, fetches from useReceivedWhispers
+ * @param isLoading - Optional loading state override
+ * @param error - Optional error state override
  * @param showMarkAsRead - Whether to show mark as read buttons on cards
  * @param onWhisperMarkAsRead - Callback when a whisper is marked as read
+ * @param onReply - Callback when user wants to reply
+ * @param onChain - Callback when user wants to add to chain
  * @param emptyStateMessage - Custom message for empty state
  * @param emptyStateActionLabel - Custom label for empty state action button
  * @param onEmptyStateAction - Callback for empty state action
@@ -32,20 +43,32 @@ interface WhisperListProps {
 export const WhisperList: React.FC<WhisperListProps> = React.memo(
   ({
     className = '',
+    whispers: propWhispers,
+    isLoading: propIsLoading,
+    error: propError,
     showMarkAsRead = true,
     onWhisperMarkAsRead,
+    onReply,
+    onChain,
     emptyStateMessage,
     emptyStateActionLabel,
     onEmptyStateAction,
   }) => {
-    const { whispers, isLoading, error, refetch } = useReceivedWhispers();
+    // If props are provided, use them. Otherwise, use the hook.
+    const hookData = useReceivedWhispers();
+    
+    const whispers = propWhispers ?? hookData.whispers;
+    const isLoading = propIsLoading ?? hookData.isLoading;
+    const error = propError ?? hookData.error;
+    const refetch = hookData.refetch;
 
     /**
      * Handles manual refresh of the whisper list
      */
     const handleRefresh = useCallback(async () => {
       refetch();
-    }, [refetch]);
+      onEmptyStateAction?.();
+    }, [refetch, onEmptyStateAction]);
 
     /**
      * Handles when a whisper is marked as read
@@ -125,10 +148,10 @@ export const WhisperList: React.FC<WhisperListProps> = React.memo(
         <EmptyWhisperState
           message={emptyStateMessage}
           actionLabel={emptyStateActionLabel}
-          onAction={onEmptyStateAction}
+          onAction={handleRefresh}
         />
       ),
-      [emptyStateMessage, emptyStateActionLabel, onEmptyStateAction]
+      [emptyStateMessage, emptyStateActionLabel, handleRefresh]
     );
 
     // Loading state
@@ -226,6 +249,8 @@ export const WhisperList: React.FC<WhisperListProps> = React.memo(
                 whisper={whisper}
                 showMarkAsRead={showMarkAsRead}
                 onMarkAsRead={handleWhisperMarkAsRead}
+                onReply={onReply}
+                onChain={onChain}
               />
             </div>
           ))}
