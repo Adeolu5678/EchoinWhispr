@@ -8,7 +8,13 @@
 import React from 'react';
 import { ButtonProps } from '../../design-system/components/Button';
 
-export const Button: React.FC<ButtonProps> = ({
+interface WebButtonProps extends ButtonProps {
+  onPress?: () => void;
+  textStyle?: React.CSSProperties;
+  fullWidth?: boolean;
+}
+
+export const Button: React.FC<WebButtonProps> = ({
   children,
   variant = 'primary',
   size = 'md',

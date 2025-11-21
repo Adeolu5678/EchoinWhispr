@@ -1,3 +1,31 @@
+'use client';
+
+import { useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
+import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
+import { api } from '@/lib/convex';
+import { useQuery, useMutation } from 'convex/react';
+import { Id } from '@/lib/convex';
+import { Shield, ArrowLeft, Copy, Save, Send, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+
+export default function WhisperDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const whisperId = (params.id as string) as Id<'whispers'>;
+
+  // Fetch whisper data
+  const whisper = useQuery(api.whispers.getWhisperById, { whisperId });
+
+  // Reply functionality
+  const [replyContent, setReplyContent] = useState('');
+  const [isReplying, setIsReplying] = useState(false);
   const echoWhisper = useMutation(api.conversations.echoWhisper);
 
   /**

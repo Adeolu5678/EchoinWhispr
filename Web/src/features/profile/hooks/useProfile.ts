@@ -1,5 +1,6 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex';
+import { Profile } from '../types';
 
 /**
  * Hook to fetch the current user's profile data.
@@ -7,7 +8,7 @@ import { api } from '@/lib/convex';
  * @returns Object containing profile data, loading state, and error state
  */
 export const useProfile = () => {
-  const profile = useQuery(api.profiles.getProfile);
+  const profile = useQuery(api.profiles.getProfile) as Profile | undefined | null;
 
   return {
     profile,
