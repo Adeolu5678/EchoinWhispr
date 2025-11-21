@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ProfileBio } from './ProfileBio';
 import { ProfileForm } from './ProfileForm';
-import { ProfileScreenProps } from '../types';
+import { ProfileScreenProps, ProfileFormData } from '../types';
 import { useProfile, useUpdateProfile } from '../hooks';
 import { useUser } from '@clerk/nextjs';
 
@@ -57,12 +57,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     setIsEditing(!isEditing);
   };
 
-  const handleSave = async (formData: { bio: string; career: string; interests: string; mood: string; displayName: string }) => {
+  const handleSave = async (formData: ProfileFormData) => {
     try {
       await updateProfile({
         bio: formData.bio,
         career: formData.career,
-        interests: formData.interests.split(',').map(i => i.trim()).filter(Boolean),
+        interests: formData.interests ? formData.interests.split(',').map(i => i.trim()).filter(Boolean) : undefined,
         mood: formData.mood,
         displayName: formData.displayName,
       });

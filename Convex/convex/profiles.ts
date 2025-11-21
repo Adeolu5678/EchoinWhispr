@@ -34,7 +34,12 @@ export const getProfile = query({
       return null;
     }
 
-    return profile;
+    return {
+      ...profile,
+      career: user.career,
+      interests: user.interests,
+      mood: user.mood,
+    };
   },
 });
 

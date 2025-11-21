@@ -11,8 +11,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/lib/convex';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function FriendsPage() {
   const [activeTab, setActiveTab] = useState('friends');
@@ -267,7 +266,6 @@ function FindFriendsTab() {
               <div key={user._id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-white/5">
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={user.avatarUrl} />
                     <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div>
@@ -296,7 +294,7 @@ function FindFriendsTab() {
 
 function MoodMatchTab() {
   const [mood, setMood] = useState('');
-  const [match, setMatch] = useState<any>(null);
+  const [match, setMatch] = useState<typeof api.users.findMoodMatch._returnType>(null);
   const [isSearching, setIsSearching] = useState(false);
   const { sendFriendRequest, isLoading: isSending } = useSendFriendRequest();
   
@@ -353,7 +351,6 @@ function MoodMatchTab() {
         <div className="max-w-md mx-auto p-6 rounded-xl bg-gradient-to-br from-primary/10 to-purple-500/10 border border-primary/20">
           <div className="flex flex-col items-center gap-4">
             <Avatar className="w-20 h-20 border-2 border-primary/20">
-              <AvatarImage src={match.avatarUrl} />
               <AvatarFallback className="text-2xl">{match.username.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="text-center">

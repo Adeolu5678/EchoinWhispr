@@ -2,7 +2,7 @@
 
 import { FEATURE_FLAGS } from '@/config/featureFlags';
 import { ConversationView } from '@/features/conversations/components/ConversationView';
-import { MessageSquareOff } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 
 /**
  * Individual conversation page - displays a specific conversation.
@@ -14,7 +14,7 @@ export default function ConversationPage({ params }: { params: { id: string } })
       <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center items-center">
         <div className="w-full max-w-md glass p-8 rounded-2xl border border-white/10 text-center">
           <div className="bg-primary/10 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-            <MessageSquareOff className="w-8 h-8 text-primary" />
+            <MessageSquare className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight mb-2">Feature Locked</h1>
           <p className="text-muted-foreground">

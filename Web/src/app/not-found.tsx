@@ -1,8 +1,7 @@
-'use client';
-
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Ghost, Home, ArrowLeft } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Ghost, Home } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,20 +31,14 @@ export default function NotFound(): JSX.Element {
           The whisper you&apos;re looking for has faded into silence. It seems this page doesn&apos;t exist or has been removed.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild size="lg" className="gap-2">
-            <Link href="/">
-              <Home className="w-4 h-4" />
-              Return Home
-            </Link>
-          </Button>
-          
-          <Button asChild variant="outline" size="lg" className="gap-2 hover:bg-white/5">
-            <Link href="javascript:history.back()">
-              <ArrowLeft className="w-4 h-4" />
-              Go Back
-            </Link>
-          </Button>
+        <div className="flex justify-center">
+          <Link 
+            href="/" 
+            className={cn(buttonVariants({ size: "lg" }), "gap-2")}
+          >
+            <Home className="w-4 h-4" />
+            Return Home
+          </Link>
         </div>
       </div>
     </main>
