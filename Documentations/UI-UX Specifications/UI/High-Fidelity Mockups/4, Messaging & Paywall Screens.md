@@ -1,33 +1,26 @@
-Screen: [Screen: Inbox] (Tab 3)
-Elements (in Main Content Area):
-[Loading State]: Same as Search. Primary-500 spinner. "Please, wait while your messages are being updated..."
-[In-Page Tabs]:
-Tab: "Chats" (Active): Primary-500 Bold text. 2px Primary-500 underline.
-Tab: "Requests (1)": Neutral-400 text. A small Accent-500 circular badge with "1" in it.
-[Content Area: "Chats" Tab]: A list of full-width chat items.
-List Item: Neutral-800 surface. 1px bottom border Neutral-700. 16px padding.
-Left: Anonymous user icon (a Neutral-700 circle).
-Center (Column): "Solidity Developer" (Bold, Neutral-100). Preview: "Great design!" (14px, Neutral-400).
-Right: Timestamp (12px, Neutral-600).
-Screen: [Screen: Whisper Request] (Child Screen)
-Layout: A new screen that slides in, covering the Tab Bar.
-Header: Neutral-800 bg.
-Left: "Back" arrow icon (Primary-500).
-Center (H2): "New Whisper" (Neutral-100).
-Info Box: Card style (Neutral-800 bg). "This is a new Whisper. Accept to move it to your main chat list..." (14px, Neutral-400).
-[Message Content]: The decrypted message text, styled as Paragraph, on the Neutral-900 background.
-[Action Bar (Bottom)]: A Neutral-800 bar "stuck" to the bottom.
-Button (Primary): "Accept Conversation" (Full-width).
-Screen: [Screen: Conversation View] (Child Screen)
-Layout: Similar to Whisper Request, covers main app.
-Header: Neutral-800 bg. "Back" arrow (Primary-500). Title: "Chat with 'Solidity Developer'" (H3, Neutral-100).
-[Chat Window]: Neutral-900 background.
-(Them) Bubble: Neutral-800 background. Neutral-100 text. Left-aligned. 16px rounded corners.
-(You) Bubble: Primary-500 background. White text. Right-aligned. 16px rounded corners.
-[Input Bar (Bottom)]: Neutral-800 bar.
-Button (Icon): "Attach Image" (Primary-500 paperclip icon).
-Input (Text): Pill-shaped (24px radius) Neutral-700 bordered input. Placeholder: "Type your encrypted reply..."
-Button (Icon): "Send" (Primary-500 paper plane icon).
+Screen: [Screen: Messages / Inbox]
+Elements:
+Tabs: "Direct" (Investors/Founders) | "Workspace" (Team).
+List Item:
+  - Avatar (User or Project Logo).
+  - Name + Last Message Preview.
+  - Timestamp.
+  - Unread Badge (Primary Color).
+
+Screen: [Screen: Chat View]
+Layout: Standard Chat Interface.
+Header: User/Group Name + Status.
+Message List:
+  - Bubbles: Glassmorphism style.
+  - "Them": Dark Glass.
+  - "Me": Primary Gradient.
+Input Area:
+  - Glass Bar fixed at bottom (above Nav).
+  - "Attach" (Paperclip) + Input Field + "Send".
+
+Screen: [Screen: Interview Chat] (Special Context)
+Header: "Interviewing for [Role] at [Project]".
+Context Bar (Top): "Application Status: Pending". Actions: "Accept", "Reject".
 Screen: [Screen: Daily Limit Reached] (Modal / Paywall)
 Layout: A modal. Semi-transparent Neutral-900 overlay. A centered Card (Neutral-800 bg).
 Elements (inside card):

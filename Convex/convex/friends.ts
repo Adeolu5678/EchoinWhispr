@@ -265,17 +265,14 @@ export const getFriendsList = query({
       friendIds.map(async friendId => {
         const user = await ctx.db.get(friendId);
         if (!user) return null;
-        const profile = await ctx.db
-          .query('profiles')
-          .withIndex('by_user_id', q => q.eq('userId', friendId))
-          .first();
+        
         const safeUser: SafeUser = {
           _id: user._id,
-          username: user.username,
+          username: user.email.split('@')[0], // Fallback username
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          avatarUrl: profile?.avatarUrl,
+          avatarUrl: user.avatarUrl,
         };
         return safeUser;
       })
@@ -330,17 +327,14 @@ export const getPendingRequests = query({
       requests.map(async request => {
         const sender = await ctx.db.get(request.userId);
         if (!sender) return null;
-        const profile = await ctx.db
-          .query('profiles')
-          .withIndex('by_user_id', q => q.eq('userId', request.userId))
-          .first();
+        
         const safeSender: SafeUser = {
           _id: sender._id,
-          username: sender.username,
+          username: sender.email.split('@')[0],
           email: sender.email,
           firstName: sender.firstName,
           lastName: sender.lastName,
-          avatarUrl: profile?.avatarUrl,
+          avatarUrl: sender.avatarUrl,
         };
         return {
           ...request,
@@ -388,17 +382,14 @@ export const getSentRequests = query({
       requests.map(async request => {
         const recipient = await ctx.db.get(request.friendId);
         if (!recipient) return null;
-        const profile = await ctx.db
-          .query('profiles')
-          .withIndex('by_user_id', q => q.eq('userId', request.friendId))
-          .first();
+        
         const safeRecipient: SafeUser = {
           _id: recipient._id,
-          username: recipient.username,
+          username: recipient.email.split('@')[0],
           email: recipient.email,
           firstName: recipient.firstName,
           lastName: recipient.lastName,
-          avatarUrl: profile?.avatarUrl,
+          avatarUrl: recipient.avatarUrl,
         };
         return {
           ...request,

@@ -1,6 +1,4 @@
 {
-  "generateCommonJSApi": true,
-  "node": {
-    "polyfill": true
-  }
+
+  "generateCommonJSApi": true
 }

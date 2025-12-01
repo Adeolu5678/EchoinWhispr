@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@clerk/clerk-sdk-node": "^5.1.6",
-    "convex": "^1.9.0",
-    "svix": "^1.76.1"
+    "convex": "^1.29.3",
+    "svix": "^1.81.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3"
   }
 }

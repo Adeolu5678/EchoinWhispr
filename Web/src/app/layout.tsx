@@ -1,45 +1,34 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { Providers } from '@/components/Providers';
-import { Navigation } from '@/components/Navigation';
-import { UsernameSelectionHandler } from '@/features/authentication/components/UsernameSelectionHandler';
-import { ReactNode } from 'react';
-import './globals.css';
-import { FeatureFlagProvider } from '@/components/FeatureFlagProvider';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { ConvexClientProvider } from "@/lib/convex";
+import { BottomNav } from "@/components/layout/BottomNav";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { TopNav } from "@/components/layout/TopNav";
 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'optional',
-  fallback: [
-    'system-ui',
-    '-apple-system',
-    'BlinkMacSystemFont',
-    'Segoe UI',
-    'Roboto',
-    'sans-serif',
-  ],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'EchoinWhispr',
-  description: 'Anonymous messaging platform',
+  title: "VentureDeck | The Future of Venture Capital",
+  description: "Where Ambition Meets Opportunity. Connect with visionary entrepreneurs and elite investors.",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`bg-background-dark font-sans antialiased ${inter.className}`}>
-        <Providers>
-          <FeatureFlagProvider>
-            <div className="flex flex-col min-h-screen">
-              <Navigation />
-              <UsernameSelectionHandler />
-              <div className="flex flex-1 justify-center w-full">
-                {children}
-              </div>
-            </div>
-          </FeatureFlagProvider>
-        </Providers>
+    <html lang="en">
+      <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+        <ConvexClientProvider>
+          <div className="min-h-screen bg-background text-foreground pb-20 selection:bg-primary/30 selection:text-primary-foreground">
+            <TopNav />
+            <Breadcrumbs />
+            {children}
+            <BottomNav />
+          </div>
+        </ConvexClientProvider>
       </body>
     </html>
   );

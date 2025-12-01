@@ -1,107 +1,66 @@
-# EchoinWhispr
+# VentureDeck (formerly EchoinWhispr)
 
-A fully decentralized social dApp on Hedera for anonymous persona-based connections, bridging the Web3-Web2 divide with end-to-end encryption, HCS routing, and IPFS storage.
+> **"Where Ambition Meets Opportunity."**
+
+![VentureDeck Banner](https://via.placeholder.com/1200x400?text=VentureDeck+Banner)
+
+## Vision
+We envision a world where every groundbreaking idea has a clear path to reality. VentureDeck is the catalyst that transforms raw ambition into investable enterprises, democratizing access to capital and talent for visionaries everywhere.
 
 ## Overview
+VentureDeck is the ultimate launchpad for new startups. It bridges the gap between "I have an idea" and "I have funding" by providing a dual-interface platform:
+- **The Forge (For Entrepreneurs):** A structured environment to articulate visions, build pitch decks, and showcase traction.
+- **Deal Flow (For Investors):** A high-signal discovery engine to find, vet, and connect with the next generation of unicorns.
 
-EchoinWhispr is a decentralized social application that enables trust by design through immutable smart contracts, anonymous merit-based networking, and a decentralized architecture without central servers. It targets Web3 echo chamber users, Web2 intimidated users, and real-world wall users by providing a Web2-friendly UX with powerful Web3 privacy features.
+## Strategic Aims
+1.  **Democratize Access:** Level the playing field for entrepreneurs.
+2.  **Accelerate Discovery:** Empower investors with data-driven deal flow.
+3.  **Build Trust:** Verify skills and reputation to ensure genuine talent.
+4.  **Foster Connection:** Ignite collaboration between founders, funders, and builders.
 
-## Key Features
-
-- **Hedera Wallet Authentication**: Secure, decentralized identity management
-- **Persona Management**: Anonymous profiles based on career, interests, and mood
-- **Subscription Service**: HTS token-based premium features
-- **Search & Matching**: Find connections by career, interests, and mood
-- **Anonymous Conversations**: End-to-end encrypted messaging with rich media support
-- **Decentralized Storage**: IPFS for content, HCS for routing, no central servers
-
-## Project Structure
-
-```
-EchoinWhispr/
-├── Web/                    # Next.js web application
-│   └── Tailored Instructions/
-│       # AI agent development guidelines
-├── Back-End/               # Hedera smart contracts and utilities
-│   ├── smart-contracts/    # Solidity contracts on Hedera
-│   ├── scripts/           # Deployment scripts
-│   └── utilities/         # Client-side encryption and IPFS services
-├── design-system/          # Shared design tokens and components
-└── Documentations/
-    └── Software Specification Documentation (SSD)/
-        # Comprehensive project documentation
-```
-
-## Technology Stack
-
-- **Blockchain**: Hedera (Smart Contracts, Consensus Service, Token Service)
-- **Frontend**: Next.js (Web), React Native with Expo (Mobile)
-- **Storage**: IPFS/Filecoin for decentralized content storage
-- **Encryption**: ECIES for end-to-end encryption
-- **Authentication**: Hedera WalletConnect
-- **Package Manager**: pnpm (Monorepo management)
-- **Language**: TypeScript, Solidity
+## Tech Stack
+- **Frontend:** Next.js 15 (App Router), TailwindCSS, Lucide Icons
+- **Backend:** Convex (Real-time Database & Functions)
+- **Auth:** Clerk
+- **Language:** TypeScript
 
 ## Getting Started
 
 ### Prerequisites
-
-- Node.js 18+
-- pnpm 8+
-- Hedera testnet account with HBAR
-- IPFS gateway access (Infura/Pinata recommended)
+- Node.js (v18+)
+- pnpm
 
 ### Installation
 
-1. Install dependencies for all workspaces:
-   ```bash
-   pnpm install
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Adeolu5678/EchoinWhispr.git
+    cd EchoinWhispr
+    ```
 
-2. Set up environment variables (see individual READMEs for details)
+2.  **Install dependencies:**
+    ```bash
+    pnpm install
+    ```
 
-### Development Scripts
+3.  **Environment Setup:**
+    - Create `.env.local` in `web-new/` and `Convex/`.
+    - Add your Clerk and Convex publishable keys.
 
-- `pnpm dev:web` - Start Next.js development server
-- `pnpm build:all` - Build all platforms
-- `pnpm lint` - Run linting across all workspaces
-- `pnpm test` - Run tests across all workspaces
+4.  **Run Development Servers:**
+    ```bash
+    # Run both Frontend and Backend
+    pnpm dev
+    
+    # Or individually:
+    pnpm dev:web    # Web App (localhost:3000)
+    pnpm dev:convex # Convex Dashboard
+    ```
 
-### Platform-Specific Setup
-
-See the individual README files in each directory for detailed setup instructions:
-
-- [Web Application](./Web/README.md)
-- [Back-End Services](./Back-End/README.md)
-- [Design System](./design-system/README.md)
-
-## Architecture Principles
-
-1. **Decentralized by Design**: No central servers or databases
-2. **Privacy-First**: End-to-end encryption, anonymous personas
-3. **Trust by Design**: Immutable smart contracts govern all interactions
-4. **Web3-Web2 Bridge**: Familiar UX with powerful privacy features
-5. **Cost Efficiency**: Optimized for Hedera's low fees and high performance
-
-## Development Workflow
-
-1. **Monorepo Management**: All dependencies managed from root using pnpm workspaces
-2. **Decentralized Backend**: Hedera services provide unified backend across platforms
-3. **Client-Side Encryption**: Private keys never leave user devices
-4. **Code Quality**: ESLint and Prettier ensure consistent code quality
-
-## Contributing
-
-1. Follow the established coding standards
-2. Test all changes across platforms
-3. Update documentation as needed
-4. Ensure decentralization principles are maintained
-
-## Documentation
-
-- [Software Specification Documentation](./Documentations/Software Specification Documentation (SSD)/README.md)
-- [Platform-Specific Instructions](./Web/Tailored Instructions/README.md)
+## Project Structure
+- `/web-new`: The Next.js frontend application.
+- `/Convex`: The backend logic and database schema.
+- `/Documentations`: Comprehensive SSD and project guides.
 
 ## License
-
-MIT
+[MIT](LICENSE)

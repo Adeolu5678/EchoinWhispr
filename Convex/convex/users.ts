@@ -16,6 +16,15 @@ export const getCurrentUser = query({
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
+    if (!user) return null;
+
+    if (user.avatarStorageId) {
+      const url = await ctx.storage.getUrl(user.avatarStorageId);
+      if (url) {
+        return { ...user, avatarUrl: url };
+      }
+    }
+
     return user;
   },
 });
@@ -28,16 +37,27 @@ export const createOrUpdateUser = mutation({
     email: v.string(),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
-    // SSD Fields
-    career: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
+    // Launchpad Fields
+    role: v.optional(v.union(v.literal('entrepreneur'), v.literal('investor'))),
+    professionalBio: v.optional(v.string()),
+    linkedinUrl: v.optional(v.string()),
+    skills: v.optional(v.array(v.string())),
     interests: v.optional(v.array(v.string())),
-    mood: v.optional(v.string()),
+    notificationPreferences: v.optional(v.object({
+      email: v.boolean(),
+      push: v.boolean(),
+    })),
+    privacySettings: v.optional(v.object({
+      profileVisibility: v.union(v.literal('public'), v.literal('private')),
+    })),
+    avatarStorageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
-      .first();
+      .unique();
 
     const now = Date.now();
 
@@ -48,42 +68,42 @@ export const createOrUpdateUser = mutation({
         email: args.email,
         firstName: args.firstName,
         lastName: args.lastName,
-        // Update SSD fields if provided
-        ...(args.career !== undefined ? { career: args.career } : {}),
+        avatarUrl: args.avatarUrl,
+        professionalBio: args.professionalBio,
+        linkedinUrl: args.linkedinUrl,
+        // Only update role if it's not set (or allow switching? For now, assume sticky role)
+        ...(args.role !== undefined && !existing.role ? { role: args.role } : {}),
+        ...(args.skills !== undefined ? { skills: args.skills } : {}),
         ...(args.interests !== undefined ? { interests: args.interests } : {}),
-        ...(args.mood !== undefined ? { mood: args.mood } : {}),
+        ...(args.notificationPreferences !== undefined ? { notificationPreferences: args.notificationPreferences } : {}),
+        ...(args.privacySettings !== undefined ? { privacySettings: args.privacySettings } : {}),
+        ...(args.avatarStorageId !== undefined ? { avatarStorageId: args.avatarStorageId } : {}),
         updatedAt: now,
       });
       return existing._id;
     } else {
       // Create new user
-      // Default displayName to username initially
       return await ctx.db.insert('users', {
         clerkId: args.clerkId,
         username: args.username,
         email: args.email,
         firstName: args.firstName,
         lastName: args.lastName,
-        displayName: args.username, 
-        // Initialize SSD fields
-        career: args.career,
+        avatarUrl: args.avatarUrl,
+        professionalBio: args.professionalBio,
+        linkedinUrl: args.linkedinUrl,
+        skills: args.skills,
         interests: args.interests,
-        mood: args.mood,
+        notificationPreferences: args.notificationPreferences,
+        privacySettings: args.privacySettings,
+        avatarStorageId: args.avatarStorageId,
+        role: args.role, // Role might be null initially if not selected during signup flow
         createdAt: now,
         updatedAt: now,
+        // Legacy field default
+        needsUsernameSelection: false,
       });
     }
-  },
-});
-
-// Get user by username
-export const getUserByUsername = query({
-  args: { username: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query('users')
-      .withIndex('by_username', q => q.eq('username', args.username))
-      .first();
   },
 });
 
@@ -98,7 +118,25 @@ export const getUserByClerkId = query({
   },
 });
 
-// Search users by username or email with pagination and security
+// Set user role
+export const setRole = mutation({
+  args: { role: v.union(v.literal('entrepreneur'), v.literal('investor')) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Unauthenticated');
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .unique();
+
+    if (!user) throw new Error('User not found');
+
+    await ctx.db.patch(user._id, { role: args.role });
+  },
+});
+
+// Search users
 export const searchUsers = query({
   args: {
     query: v.string(),
@@ -107,342 +145,48 @@ export const searchUsers = query({
     excludeUserId: v.optional(v.id('users')),
   },
   handler: async (ctx, args) => {
-    // Validate input parameters
-    const searchQuery = args.query.trim();
-    if (searchQuery.length < 2) {
-      throw new Error('Search query must be at least 2 characters long');
-    }
+    const { query, limit = 20, offset = 0, excludeUserId } = args;
 
-    const limit = Math.min(args.limit || 20, 50); // Max 50 results
-    const offset = args.offset || 0;
-    const fetchSize = limit + offset + 1;
+    // For MVP, we'll just fetch all users and filter in memory.
+    // In production, we should use Convex's search capabilities (Search Indexes).
+    const users = await ctx.db.query('users').collect();
 
-    // Use database indexes for efficient searching
-    // Search by username (case-insensitive)
-    const usernameResults = await ctx.db
-      .query('users')
-      .withIndex('by_username', q =>
-        q
-          .gte('username', searchQuery.toLowerCase())
-          .lte('username', searchQuery.toLowerCase() + '\uffff')
-      )
-      .take(fetchSize);
+    const lowerQuery = query.toLowerCase();
 
-    // Search by email (case-insensitive) if no username results or need more results
-    let emailResults: Doc<'users'>[] = [];
-    if (usernameResults.length < fetchSize) {
-      emailResults = await ctx.db
-      .query('users')
-        .withIndex('by_email', q =>
-          q
-            .gte('email', searchQuery.toLowerCase())
-            .lte('email', searchQuery.toLowerCase() + '\uffff')
-        )
-        .take(fetchSize);
-    }
+    const filtered = users.filter(user => {
+      if (excludeUserId && user._id === excludeUserId) return false;
 
-    // Search by career (case-insensitive) if still need results
-    let careerResults: Doc<'users'>[] = [];
-    if (usernameResults.length + emailResults.length < fetchSize) {
-      careerResults = await ctx.db
-        .query('users')
-        .withIndex('by_career', q =>
-          q
-            .gte('career', searchQuery) // Note: This is case-sensitive unless we normalize data. For now assuming exact or prefix match.
-            .lte('career', searchQuery + '\uffff')
-        )
-        .take(fetchSize);
-    }
+      const username = user.username.toLowerCase();
+      // Also search by name if available, but prioritize username display
+      const name = `${user.firstName || ''} ${user.lastName || ''}`.trim().toLowerCase();
 
-    // TODO: Implement full-text search for interests if needed. For now, simple prefix match on career.
+      return username.includes(lowerQuery) || name.includes(lowerQuery);
+    });
 
-    // Combine and deduplicate results
-    const allResults = [...usernameResults, ...emailResults, ...careerResults];
-    const uniqueResults = allResults.filter(
-      (user, index, self) => index === self.findIndex(u => u._id === user._id)
-    );
+    // Pagination
+    const sliced = filtered.slice(offset, offset + limit);
 
-    // Filter out excluded user if provided
-    const filteredResults = args.excludeUserId
-      ? uniqueResults.filter(user => user._id !== args.excludeUserId)
-      : uniqueResults;
-
-    // Apply pagination
-    const paginatedResults = filteredResults.slice(offset, offset + limit);
-
-    // Return results with metadata
     return {
-      results: paginatedResults,
-      totalCount: filteredResults.length,
-      hasMore: filteredResults.length > offset + limit,
+      results: sliced.map(u => ({
+        _id: u._id,
+        username: u.username,
+        displayName: u.username, // Force username as display name for anonymity
+        firstName: u.firstName,
+        lastName: u.lastName,
+        avatarUrl: u.avatarUrl,
+        role: u.role,
+        career: u.professionalBio,
+      })),
+      total: filtered.length,
     };
   },
 });
 
-// Update user profile
-export const updateUserProfile = mutation({
+// Find a mood match (random user for now)
+export const findMoodMatch = query({
   args: {
-    bio: v.optional(v.string()),
-    avatarUrl: v.optional(v.string()),
-    isPublic: v.optional(v.boolean()),
-    displayName: v.optional(v.string()),
-    // SSD Fields
-    career: v.optional(v.string()),
-    interests: v.optional(v.array(v.string())),
     mood: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Update user table for displayName and SSD fields
-    const userUpdates: any = { updatedAt: Date.now() };
-    if (args.displayName !== undefined) userUpdates.displayName = args.displayName;
-    if (args.career !== undefined) userUpdates.career = args.career;
-    if (args.interests !== undefined) userUpdates.interests = args.interests;
-    if (args.mood !== undefined) userUpdates.mood = args.mood;
-
-    await ctx.db.patch(user._id, userUpdates);
-
-    // Update profiles table for other fields (assuming profiles table exists and is linked)
-    // Note: The original code seemed to mix user and profile table updates. 
-    // Ideally, we should check if a profile exists and update/create it.
-    // For now, we'll assume the profile logic is handled elsewhere or we just update the user if these fields were on user.
-    // BUT, looking at schema.ts, 'profiles' is a separate table.
-    
-    const profile = await ctx.db
-        .query('profiles')
-        .withIndex('by_user_id', q => q.eq('userId', user._id))
-        .first();
-
-    if (profile) {
-        await ctx.db.patch(profile._id, {
-            bio: args.bio,
-            avatarUrl: args.avatarUrl,
-            isPublic: args.isPublic,
-            updatedAt: Date.now(),
-        });
-    } else {
-        // Create profile if it doesn't exist
-        await ctx.db.insert('profiles', {
-            userId: user._id,
-            bio: args.bio,
-            avatarUrl: args.avatarUrl,
-            isPublic: args.isPublic ?? false, // Default to private if not specified
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        });
-    }
-
-    return user._id;
-  },
-});
-
-// Get current user or create if doesn't exist
-export const getOrCreateCurrentUser = mutation({
-  args: {},
-  handler: async (ctx): Promise<Doc<'users'> | null> => {
-    try {
-      const identity = await ctx.auth.getUserIdentity();
-      if (!identity) {
-        throw new Error('Not authenticated');
-      }
-
-      // Validate required Clerk identity fields
-      if (!identity.subject || !identity.email) {
-        throw new Error('Invalid identity: missing required fields');
-      }
-
-      // Check if user already exists
-      const existingUser = await ctx.db
-        .query('users')
-        .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
-        .first();
-
-      if (existingUser) {
-        console.log(
-          'DEBUG: Found existing user:',
-          existingUser._id,
-          'needsUsernameSelection:',
-          existingUser.needsUsernameSelection
-        );
-        return existingUser;
-      }
-
-      // User doesn't exist - create immediately with Clerk-assigned username
-      const username =
-        identity.nickname ||
-        identity.givenName ||
-        `user_${identity.subject.slice(0, 8)}`;
-
-      console.log('DEBUG: Creating new user with needsUsernameSelection: true');
-
-      const newUserId = await ctx.db.insert('users', {
-        clerkId: identity.subject,
-        username: username,
-        email: identity.email,
-        firstName: identity.givenName,
-        lastName: identity.familyName,
-        displayName: username, // Default display name
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        needsUsernameSelection: true,
-      });
-
-      // Return the newly created user
-      const newUser = await ctx.db.get(newUserId);
-      console.log(
-        'DEBUG: Created new user:',
-        newUserId,
-        'needsUsernameSelection:',
-        newUser?.needsUsernameSelection
-      );
-      return newUser;
-    } catch (error) {
-      console.error('Error in getOrCreateCurrentUser:', error);
-      throw error;
-    }
-  },
-});
-
-// Update user username
-export const updateUsername = mutation({
-  args: {
-    username: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-
-    const normalizedUsername = args.username.trim().toLowerCase();
-
-    // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
-    const usernameRegex = /^[a-z0-9_]{3,20}$/;
-    if (!usernameRegex.test(normalizedUsername)) {
-      throw new Error(
-        'Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores'
-      );
-    }
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Check if username is already taken by another user
-    const existingUser = await ctx.db
-      .query('users')
-      .withIndex('by_username', q => q.eq('username', normalizedUsername))
-      .first();
-
-    if (existingUser && existingUser._id !== user._id) {
-      throw new Error('Username is already taken');
-    }
-
-    // Update username
-    await ctx.db.patch(user._id, {
-      username: normalizedUsername,
-      // Also update display name if it matches the old username or is empty
-      ...(user.displayName === user.username ? { displayName: normalizedUsername } : {}),
-      needsUsernameSelection: false,
-      updatedAt: Date.now(),
-    });
-
-    return user._id;
-  },
-});
-
-// Check if username is available for registration
-export const checkUsernameAvailability = query({
-  args: { username: v.string() },
-  handler: async (ctx, args) => {
-    // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
-    const usernameRegex = /^[a-z0-9_]{3,20}$/;
-    if (!usernameRegex.test(args.username)) {
-      return false;
-    }
-
-    // Check if username already exists
-    const existingUser = await ctx.db
-      .query('users')
-      .withIndex('by_username', q => q.eq('username', args.username))
-      .first();
-
-    return !existingUser; // Return true if username is available (no existing user)
-  },
-});
-
-// Get current user's username selection status
-export const getUserNeedsUsernameSelection = query({
-  args: {},
-  handler: async ctx => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
-      .first();
-
-    if (!user) {
-      return null;
-    }
-
-    return user.needsUsernameSelection ?? false;
-  },
-});
-
-// Register push notification token
-export const registerPushToken = mutation({
-  args: {
-    token: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error('Not authenticated');
-    }
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
-      .first();
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    await ctx.db.patch(user._id, {
-      pushNotificationToken: args.token,
-      updatedAt: Date.now(),
-    });
-
-    return user._id;
-  },
-});
-
-// Find a user with matching mood
-export const findMoodMatch = query({
-  args: { mood: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
@@ -450,26 +194,36 @@ export const findMoodMatch = query({
     const currentUser = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
-      .first();
+      .unique();
 
     if (!currentUser) return null;
 
-    const targetMood = args.mood || currentUser.mood;
-    if (!targetMood) return null;
+    // For MVP, just pick a random user who is not the current user
+    // In production, this would use vector search or matching logic based on 'mood'
+    const users = await ctx.db.query('users').collect();
+    const candidates = users.filter(u => u._id !== currentUser._id);
+    
+    if (candidates.length === 0) return null;
 
-    // Find up to 10 users with the same mood
-    const matches = await ctx.db
-      .query('users')
-      .withIndex('by_mood', q => q.eq('mood', targetMood))
-      .take(10);
-
-    // Filter out current user
-    const validMatches = matches.filter(u => u._id !== currentUser._id);
-
-    if (validMatches.length === 0) return null;
-
-    // Pick a random one
-    const randomIndex = Math.floor(Math.random() * validMatches.length);
-    return validMatches[randomIndex];
+    const match = candidates[Math.floor(Math.random() * candidates.length)];
+    
+    return {
+      _id: match._id,
+      username: match.username,
+      displayName: match.firstName && match.lastName ? `${match.firstName} ${match.lastName}` : match.firstName || match.username,
+      avatarUrl: match.avatarUrl,
+      mood: args.mood || "Mysterious", // Echo back the mood or a default
+    };
   },
+});
+
+export const getUser = query({
+  args: { id: v.id('users') },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
+export const generateUploadUrl = mutation(async (ctx) => {
+  return await ctx.storage.generateUploadUrl();
 });

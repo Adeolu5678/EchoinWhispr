@@ -3,7 +3,7 @@
 Version: 2.0
 Date: November 20, 2025
 Author: Specs Engineer AI
-This document outlines the critical, non-platform-specific foundational steps that must be completed before active development begins for the EchoinWhispr application. These steps are designed to streamline collaboration, prevent technical debt, and ensure a robust and scalable architecture leveraging Convex, Clerk, and modern Web2 standards.
+This document outlines the critical, non-platform-specific foundational steps that must be completed before active development begins for the Launchpad application. These steps are designed to streamline collaboration, prevent technical debt, and ensure a robust and scalable architecture leveraging Convex, Clerk, and modern Web2 standards.
 
 1. Unified Project Management & Communication Hub
    Establish a Single Source of Truth for Tasks: Set up a project management board (e.g., GitHub Projects, Jira, Trello) to track all features, bugs, and tasks for the Web frontend and Backend logic.
@@ -24,7 +24,7 @@ This document outlines the critical, non-platform-specific foundational steps th
    Set up File Storage: Configure Convex File Storage for handling user uploads (images, attachments).
 
 4. Design System & Brand Assets
-   Centralize Design: Leverage the existing design-system folder as the single "source of truth" for the entire EchoinWhispr brand. This contains:
+   Centralize Design: Leverage the existing design-system folder as the single "source of truth" for the entire Launchpad brand. This contains:
    Color Palette: All primary, secondary, and accent colors defined in [`colors.ts`](design-system/tokens/colors.ts).
    Typography: All fonts, sizes, and weights (e.g., defined in design-system/tokens/typography.ts).
    Spacing & Layout Grids: Standardized padding and margin values in design-system/tokens/spacing.ts.
