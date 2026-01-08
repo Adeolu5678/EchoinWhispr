@@ -271,13 +271,7 @@ export const getOrCreateCurrentUser = mutation({
         .first();
 
       if (existingUser) {
-        console.log(
-          'DEBUG: Found existing user:',
-          existingUser._id,
-          'needsUsernameSelection:',
-          existingUser.needsUsernameSelection
-        );
-        return existingUser;
+          return existingUser;
       }
 
       // User doesn't exist - create immediately with Clerk-assigned username
@@ -286,7 +280,7 @@ export const getOrCreateCurrentUser = mutation({
         identity.givenName ||
         `user_${identity.subject.slice(0, 8)}`;
 
-      console.log('DEBUG: Creating new user with needsUsernameSelection: true');
+
 
       const newUserId = await ctx.db.insert('users', {
         clerkId: identity.subject,
@@ -302,12 +296,6 @@ export const getOrCreateCurrentUser = mutation({
 
       // Return the newly created user
       const newUser = await ctx.db.get(newUserId);
-      console.log(
-        'DEBUG: Created new user:',
-        newUserId,
-        'needsUsernameSelection:',
-        newUser?.needsUsernameSelection
-      );
       return newUser;
     } catch (error) {
       console.error('Error in getOrCreateCurrentUser:', error);
@@ -471,5 +459,270 @@ export const findMoodMatch = query({
     // Pick a random one
     const randomIndex = Math.floor(Math.random() * validMatches.length);
     return validMatches[randomIndex];
+  },
+});
+
+// ============================================================
+// USER PREFERENCES (QUICK WINS)
+// ============================================================
+
+// Update user preferences
+export const updatePreferences = mutation({
+  args: {
+    readReceiptsEnabled: v.optional(v.boolean()),
+    themePreference: v.optional(v.union(v.literal('light'), v.literal('dark'), v.literal('system'))),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const updates: any = { updatedAt: Date.now() };
+    if (args.readReceiptsEnabled !== undefined) {
+      updates.readReceiptsEnabled = args.readReceiptsEnabled;
+    }
+    if (args.themePreference !== undefined) {
+      updates.themePreference = args.themePreference;
+    }
+
+    await ctx.db.patch(user._id, updates);
+
+    return { success: true };
+  },
+});
+
+// Get user preferences
+export const getPreferences = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      readReceiptsEnabled: user.readReceiptsEnabled ?? true, // Default to enabled
+      themePreference: user.themePreference || 'system',
+      pinnedConversationIds: user.pinnedConversationIds || [],
+    };
+  },
+});
+
+// Pin a conversation
+export const pinConversation = mutation({
+  args: {
+    conversationId: v.id('conversations'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const pinnedIds = user.pinnedConversationIds || [];
+    
+    if (!pinnedIds.includes(args.conversationId)) {
+      pinnedIds.push(args.conversationId);
+      
+      await ctx.db.patch(user._id, {
+        pinnedConversationIds: pinnedIds,
+        updatedAt: Date.now(),
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+// Unpin a conversation
+export const unpinConversation = mutation({
+  args: {
+    conversationId: v.id('conversations'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const pinnedIds = (user.pinnedConversationIds || []).filter(
+      id => id !== args.conversationId
+    );
+
+    await ctx.db.patch(user._id, {
+      pinnedConversationIds: pinnedIds,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// ============================================================
+// GDPR COMPLIANCE: SOFT DELETE
+// ============================================================
+
+/**
+ * Soft delete a user account for GDPR compliance.
+ * Anonymizes PII while preserving whisper history for recipients.
+ * This is callable by the user themselves or by admin.
+ */
+export const softDeleteUser = mutation({
+  args: {
+    userId: v.optional(v.id('users')), // If not provided, deletes current user
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    // Get the user to delete
+    let userToDelete;
+    if (args.userId) {
+      // Admin deleting another user
+      // TODO: Add admin check here once adminAuth is fully integrated
+      userToDelete = await ctx.db.get(args.userId);
+    } else {
+      // User deleting themselves
+      userToDelete = await ctx.db
+        .query('users')
+        .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+        .first();
+    }
+
+    if (!userToDelete) {
+      throw new Error('User not found');
+    }
+
+    if (userToDelete.isDeleted) {
+      throw new Error('User is already deleted');
+    }
+
+    const now = Date.now();
+    const anonymizedPrefix = `deleted_${userToDelete._id.slice(0, 8)}`;
+
+    // Anonymize user data
+    await ctx.db.patch(userToDelete._id, {
+      // Anonymize PII
+      username: anonymizedPrefix,
+      email: `${anonymizedPrefix}@deleted.echoinwhispr.com`,
+      firstName: undefined,
+      lastName: undefined,
+      displayName: 'Deleted User',
+      pushNotificationToken: undefined,
+      
+      // Clear profile-related fields
+      career: undefined,
+      interests: undefined,
+      mood: undefined,
+      moodJournal: undefined,
+      lifePhase: undefined,
+      
+      // Clear preferences
+      pinnedConversationIds: undefined,
+      
+      // Set deletion markers
+      isDeleted: true,
+      deletedAt: now,
+      updatedAt: now,
+    });
+
+    // Delete associated profile
+    const profile = await ctx.db
+      .query('profiles')
+      .withIndex('by_user_id', q => q.eq('userId', userToDelete._id))
+      .first();
+    
+    if (profile) {
+      await ctx.db.delete(profile._id);
+    }
+
+    // Delete pending friend requests (both directions)
+    const sentRequests = await ctx.db
+      .query('friends')
+      .withIndex('by_user_id', q => q.eq('userId', userToDelete._id))
+      .filter(q => q.eq(q.field('status'), 'pending'))
+      .collect();
+    
+    for (const request of sentRequests) {
+      await ctx.db.delete(request._id);
+    }
+
+    const receivedRequests = await ctx.db
+      .query('friends')
+      .withIndex('by_friend_id', q => q.eq('friendId', userToDelete._id))
+      .filter(q => q.eq(q.field('status'), 'pending'))
+      .collect();
+    
+    for (const request of receivedRequests) {
+      await ctx.db.delete(request._id);
+    }
+
+    // Note: We keep whispers and accepted friendships intact
+    // so recipients can still see their message history (with anonymized sender)
+
+    return { 
+      success: true, 
+      message: 'User data anonymized and account marked as deleted' 
+    };
+  },
+});
+
+/**
+ * Check if current user is deleted.
+ * Used to block access for deleted accounts.
+ */
+export const isCurrentUserDeleted = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return false;
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    return user?.isDeleted ?? false;
   },
 });

@@ -34,23 +34,23 @@ export default function ComposePage() {
   return (
     <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
       <div className="w-full max-w-2xl">
-        <header className="flex items-center justify-between mb-8 glass p-6 rounded-2xl border border-white/10">
-          <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between mb-6 md:mb-8 glass p-4 sm:p-6 rounded-2xl border border-white/10">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.back()}
-              className="hover:bg-white/5 -ml-2"
+              className="hover:bg-white/5 -ml-1 sm:-ml-2 touch-target h-10 w-10"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="bg-primary/20 p-2 rounded-lg">
-              <Sparkles className="w-5 h-5 text-primary" />
+            <div className="bg-primary/20 p-1.5 sm:p-2 rounded-lg">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
-            <h2 className="text-xl font-bold tracking-tight">New Whisper</h2>
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight">New Whisper</h2>
           </div>
           <div
-            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-primary/20"
+            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8 sm:size-10 ring-2 ring-primary/20"
             style={{ backgroundImage: `url(${user?.imageUrl})` }}
           ></div>
         </header>

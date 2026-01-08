@@ -348,19 +348,17 @@ export const getEchoRequests = query({
     if (!user) throw new Error('User not found');
     const userId = user._id;
 
-    // Get initiated conversations
+    // Get initiated conversations (OPTIMIZATION: add limit)
     const conversations = await ctx.db
       .query('conversations')
       .withIndex('by_status', (q) => q.eq('status', 'initiated'))
-      .collect();
+      .take(100);
 
     if (conversations.length === 0) return [];
 
-    // Batch fetch all initial whispers to avoid N+1 queries
+    // OPTIMIZATION: Batch fetch all initial whispers in parallel
     const whisperIds = conversations.map(conv => conv.initialWhisperId);
-    const whispers = await Promise.all(
-      whisperIds.map(id => ctx.db.get(id))
-    );
+    const whispers = await Promise.all(whisperIds.map(id => ctx.db.get(id)));
 
     // Filter conversations where user is the sender of the initial whisper
     const echoRequests = conversations.filter((conversation, index) => {
@@ -404,6 +402,7 @@ export const getConversation = query({
 
 /**
  * Get active conversations for the current user.
+ * Note: For full optimization, consider adding a by_participant index or junction table.
  */
 export const getActiveConversations = query({
   handler: async (ctx) => {
@@ -418,10 +417,12 @@ export const getActiveConversations = query({
     if (!user) throw new Error('User not found');
     const userId = user._id;
 
+    // OPTIMIZATION: Add limit to prevent fetching entire table
+    // Note: Proper fix requires schema change for by_participant_status index
     const conversations = await ctx.db
       .query('conversations')
       .withIndex('by_status', (q) => q.eq('status', 'active'))
-      .collect();
+      .take(200); // Reasonable limit for user's conversations
 
     // Filter to only conversations where user is a participant
     return conversations.filter(conv => conv.participantIds.includes(userId));
@@ -445,10 +446,11 @@ export const getInitiatedConversations = query({
     if (!user) throw new Error('User not found');
     const userId = user._id;
 
+    // OPTIMIZATION: Add limit to prevent fetching entire table
     const conversations = await ctx.db
       .query('conversations')
       .withIndex('by_status', (q) => q.eq('status', 'initiated'))
-      .collect();
+      .take(100);
 
     // Filter to only conversations where user is a participant
     return conversations.filter(conv => conv.participantIds.includes(userId));

@@ -27,21 +27,26 @@ import type { Friend } from '../types';
  * ```
  */
 export const useFriends = () => {
-  // Fetch friends list from Convex
-  const friendsData = useQuery(api.friends.getFriendsList);
+  // Fetch friends list from Convex (returns { friends, totalCount, hasMore })
+  const friendsData = useQuery(api.friends.getFriendsList, {});
 
   // Transform the data to match our Friend type
-  const friends: Friend[] = friendsData?.map(friendData => ({
+  // Note: getFriendsList returns an object with a friends array
+  const friendsList = friendsData?.friends ?? [];
+  
+  const friends: Friend[] = friendsList.map(friendData => ({
     _id: friendData._id,
     username: friendData.username,
     firstName: friendData.firstName,
     lastName: friendData.lastName,
     avatarUrl: friendData.avatarUrl,
     friendshipId: friendData.friendshipId,
-  })) || [];
+  }));
 
   return {
     friends,
     isLoading: friendsData === undefined,
+    totalCount: friendsData?.totalCount ?? 0,
+    hasMore: friendsData?.hasMore ?? false,
   };
 };
