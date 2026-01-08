@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
+import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
 
 /**
  * Safe user projection type to prevent data leakage.
@@ -19,6 +20,7 @@ type SafeUser = {
  * Send a friend request to another user.
  * Validates that the user is not sending a request to themselves,
  * that no existing friendship exists, and that no pending request exists.
+ * Rate limited to 30 requests per day.
  */
 export const sendFriendRequest = mutation({
   args: {
@@ -40,6 +42,9 @@ export const sendFriendRequest = mutation({
     if (!user) {
       throw new Error('User not found');
     }
+
+    // Enforce rate limit (30 requests per day)
+    await enforceRateLimit(ctx, user._id, 'SEND_FRIEND_REQUEST');
 
     // Check if friend exists
     const friend = await ctx.db.get(args.friendId);
@@ -85,6 +90,9 @@ export const sendFriendRequest = mutation({
       updatedAt: Date.now(),
       ...(args.message && { message: args.message }),
     });
+
+    // Record rate limit action
+    await recordRateLimitedAction(ctx, user._id, 'SEND_FRIEND_REQUEST');
   },
 });
 
@@ -221,13 +229,17 @@ export const removeFriend = mutation({
 
 /**
  * Get the user's friends list (accepted friendships).
- * Returns both directions of friendships.
+ * Returns both directions of friendships with pagination.
  */
 export const getFriendsList = query({
-  handler: async ctx => {
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      return [];
+      return { friends: [], totalCount: 0, hasMore: false };
     }
 
     const user = await ctx.db
@@ -236,65 +248,88 @@ export const getFriendsList = query({
       .first();
 
     if (!user) {
-      return [];
+      return { friends: [], totalCount: 0, hasMore: false };
     }
 
-    // Get friendships where user is the sender and status is accepted
+    const limit = Math.min(args.limit || 20, 50);
+    const offset = args.offset || 0;
+
+    // Get friendships where user is the sender and status is accepted (OPTIMIZATION: add limit)
     const sentFriends = await ctx.db
       .query('friends')
       .withIndex('by_user_status', q =>
         q.eq('userId', user._id).eq('status', 'accepted')
       )
-      .collect();
+      .take(200);
 
-    // Get friendships where user is the recipient and status is accepted
+    // Get friendships where user is the recipient and status is accepted (OPTIMIZATION: add limit)
     const receivedFriends = await ctx.db
       .query('friends')
       .withIndex('by_friend_status', q =>
         q.eq('friendId', user._id).eq('status', 'accepted')
       )
-      .collect();
+      .take(200);
 
     // Combine and get user details
-    const friendIds = [
-      ...sentFriends.map(f => f.friendId),
-      ...receivedFriends.map(f => f.userId),
-    ];
+    const allFriendships = [...sentFriends, ...receivedFriends];
+    const totalCount = allFriendships.length;
+    
+    // Apply pagination
+    const paginatedFriendships = allFriendships.slice(offset, offset + limit);
 
-    const friends = await Promise.all(
-      friendIds.map(async friendId => {
-        const user = await ctx.db.get(friendId);
-        if (!user) return null;
-        const profile = await ctx.db
-          .query('profiles')
-          .withIndex('by_user_id', q => q.eq('userId', friendId))
-          .first();
-        const safeUser: SafeUser = {
-          _id: user._id,
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          avatarUrl: profile?.avatarUrl,
-        };
-        return safeUser;
-      })
+    // OPTIMIZATION: Batch fetch all friend user IDs upfront to avoid N+1 queries
+    const friendIds = paginatedFriendships.map(friendship =>
+      friendship.userId === user._id ? friendship.friendId : friendship.userId
     );
 
-    // Add friendship IDs for removal
-    const friendsWithIds = friends
-      .filter((f): f is NonNullable<typeof f> => f !== null)
-      .map(friend => {
-        const friendship = [...sentFriends, ...receivedFriends].find(
-          f => f.userId === friend._id || f.friendId === friend._id
-        );
-        return {
-          ...friend,
-          friendshipId: friendship?._id || '',
-        };
-      });
+    // Batch fetch all users in parallel (single Promise.all, not sequential)
+    const friendUsers = await Promise.all(friendIds.map(id => ctx.db.get(id)));
 
-    return friendsWithIds;
+    // Create a lookup map for users
+    const userMap = new Map(
+      friendUsers.filter(Boolean).map(u => [u!._id, u!])
+    );
+
+    // Batch fetch all profiles for these users
+    const profiles = await Promise.all(
+      friendIds.map(id =>
+        ctx.db.query('profiles').withIndex('by_user_id', q => q.eq('userId', id)).first()
+      )
+    );
+
+    // Create a lookup map for profiles
+    const profileMap = new Map(
+      profiles.map((p, i) => [friendIds[i], p])
+    );
+
+    // Build response without additional DB calls
+    const friends = paginatedFriendships.map((friendship, index) => {
+      const friendId = friendIds[index];
+      const friendUser = userMap.get(friendId);
+      if (!friendUser) return null;
+
+      const profile = profileMap.get(friendId);
+      const safeUser: SafeUser = {
+        _id: friendUser._id,
+        username: friendUser.username,
+        email: friendUser.email,
+        firstName: friendUser.firstName,
+        lastName: friendUser.lastName,
+        avatarUrl: profile?.avatarUrl,
+      };
+      return {
+        ...safeUser,
+        friendshipId: friendship._id,
+      };
+    });
+
+    const validFriends = friends.filter((f): f is NonNullable<typeof f> => f !== null);
+
+    return {
+      friends: validFriends,
+      totalCount,
+      hasMore: offset + limit < totalCount,
+    };
   },
 });
 
@@ -317,38 +352,53 @@ export const getPendingRequests = query({
       return [];
     }
 
-    // Get pending friend requests where user is the recipient
+    // Get pending friend requests where user is the recipient (with limit for safety)
     const requests = await ctx.db
       .query('friends')
       .withIndex('by_friend_status', q =>
         q.eq('friendId', user._id).eq('status', 'pending')
       )
-      .collect();
+      .take(100); // OPTIMIZATION: Limit to prevent unbounded fetch
 
-    // Get sender details
-    const requestsWithSenders = await Promise.all(
-      requests.map(async request => {
-        const sender = await ctx.db.get(request.userId);
-        if (!sender) return null;
-        const profile = await ctx.db
-          .query('profiles')
-          .withIndex('by_user_id', q => q.eq('userId', request.userId))
-          .first();
-        const safeSender: SafeUser = {
-          _id: sender._id,
-          username: sender.username,
-          email: sender.email,
-          firstName: sender.firstName,
-          lastName: sender.lastName,
-          avatarUrl: profile?.avatarUrl,
-        };
-        return {
-          ...request,
-          sender: safeSender,
-          friendshipId: request._id,
-        };
-      })
+    if (requests.length === 0) return [];
+
+    // OPTIMIZATION: Batch fetch all sender IDs upfront
+    const senderIds = requests.map(r => r.userId);
+
+    // Batch fetch all senders in parallel
+    const senders = await Promise.all(senderIds.map(id => ctx.db.get(id)));
+    const senderMap = new Map(
+      senders.filter(Boolean).map(s => [s!._id, s!])
     );
+
+    // Batch fetch all profiles
+    const profiles = await Promise.all(
+      senderIds.map(id =>
+        ctx.db.query('profiles').withIndex('by_user_id', q => q.eq('userId', id)).first()
+      )
+    );
+    const profileMap = new Map(profiles.map((p, i) => [senderIds[i], p]));
+
+    // Build response without additional DB calls
+    const requestsWithSenders = requests.map(request => {
+      const sender = senderMap.get(request.userId);
+      if (!sender) return null;
+
+      const profile = profileMap.get(request.userId);
+      const safeSender: SafeUser = {
+        _id: sender._id,
+        username: sender.username,
+        email: sender.email,
+        firstName: sender.firstName,
+        lastName: sender.lastName,
+        avatarUrl: profile?.avatarUrl,
+      };
+      return {
+        ...request,
+        sender: safeSender,
+        friendshipId: request._id,
+      };
+    });
 
     return requestsWithSenders.filter(
       (r): r is NonNullable<typeof r> => r !== null
@@ -375,38 +425,53 @@ export const getSentRequests = query({
       return [];
     }
 
-    // Get pending friend requests where user is the sender
+    // Get pending friend requests where user is the sender (with limit for safety)
     const requests = await ctx.db
       .query('friends')
       .withIndex('by_user_status', q =>
         q.eq('userId', user._id).eq('status', 'pending')
       )
-      .collect();
+      .take(100); // OPTIMIZATION: Limit to prevent unbounded fetch
 
-    // Get recipient details
-    const requestsWithRecipients = await Promise.all(
-      requests.map(async request => {
-        const recipient = await ctx.db.get(request.friendId);
-        if (!recipient) return null;
-        const profile = await ctx.db
-          .query('profiles')
-          .withIndex('by_user_id', q => q.eq('userId', request.friendId))
-          .first();
-        const safeRecipient: SafeUser = {
-          _id: recipient._id,
-          username: recipient.username,
-          email: recipient.email,
-          firstName: recipient.firstName,
-          lastName: recipient.lastName,
-          avatarUrl: profile?.avatarUrl,
-        };
-        return {
-          ...request,
-          recipient: safeRecipient,
-          friendshipId: request._id,
-        };
-      })
+    if (requests.length === 0) return [];
+
+    // OPTIMIZATION: Batch fetch all recipient IDs upfront
+    const recipientIds = requests.map(r => r.friendId);
+
+    // Batch fetch all recipients in parallel
+    const recipients = await Promise.all(recipientIds.map(id => ctx.db.get(id)));
+    const recipientMap = new Map(
+      recipients.filter(Boolean).map(r => [r!._id, r!])
     );
+
+    // Batch fetch all profiles
+    const profiles = await Promise.all(
+      recipientIds.map(id =>
+        ctx.db.query('profiles').withIndex('by_user_id', q => q.eq('userId', id)).first()
+      )
+    );
+    const profileMap = new Map(profiles.map((p, i) => [recipientIds[i], p]));
+
+    // Build response without additional DB calls
+    const requestsWithRecipients = requests.map(request => {
+      const recipient = recipientMap.get(request.friendId);
+      if (!recipient) return null;
+
+      const profile = profileMap.get(request.friendId);
+      const safeRecipient: SafeUser = {
+        _id: recipient._id,
+        username: recipient.username,
+        email: recipient.email,
+        firstName: recipient.firstName,
+        lastName: recipient.lastName,
+        avatarUrl: profile?.avatarUrl,
+      };
+      return {
+        ...request,
+        recipient: safeRecipient,
+        friendshipId: request._id,
+      };
+    });
 
     return requestsWithRecipients.filter(
       (r): r is NonNullable<typeof r> => r !== null

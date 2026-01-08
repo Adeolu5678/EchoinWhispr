@@ -185,7 +185,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
             value={content}
             onChange={handleContentChange}
             maxLength={maxLength}
-            className="min-h-[160px] resize-none p-4 pr-12 bg-secondary/30 border-white/10 focus:border-primary/50 focus:ring-primary/20 text-lg transition-all duration-300"
+            className="min-h-[120px] sm:min-h-[160px] resize-none p-4 pr-12 bg-secondary/30 border-white/10 focus:border-primary/50 focus:ring-primary/20 text-lg transition-all duration-300"
           />
           <div className="absolute bottom-3 right-3 flex gap-2">
              {FEATURE_FLAGS.LOCATION_BASED_FEATURES && !isMystery && (
