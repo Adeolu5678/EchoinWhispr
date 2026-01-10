@@ -2,6 +2,8 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
 import { isAdmin, isSuperAdmin, getAdminRole, AdminRole } from './adminAuth';
+import { useQuery, usePaginatedQuery } from 'convex/react';
+import { api } from './_generated/api';
 
 /**
  * Admin module for EchoinWhispr.
@@ -282,7 +284,7 @@ export const grantAdminRole = mutation({
 
     const targetUser = await ctx.db
       .query('users')
-      .withIndex('by_username', (q) => q.eq('username', args.username.toLowerCase()))
+      .withIndex('by_username', (q) => q.eq('username', args.username))
       .first();
 
     if (!targetUser) {
@@ -362,41 +364,32 @@ export const revokeAdminRole = mutation({
 /**
  * Admin: Get all whispers with sender/recipient details (paginated).
  */
+/**
+ * Admin: Get all whispers with sender/recipient details (paginated).
+ */
 export const getAllWhispers = query({
   args: {
-    cursor: v.optional(v.string()),
-    limit: v.optional(v.number()),
+    paginationOpts: v.any(),
     search: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return { whispers: [], nextCursor: null, hasMore: false };
-    }
+    if (!identity) throw new Error('Not authenticated');
 
     // Verify admin
     const isAdminUser = await isAdmin(ctx, identity.subject);
-    if (!isAdminUser) {
-      return { whispers: [], nextCursor: null, hasMore: false };
-    }
-
-    const limit = Math.min(args.limit || 20, 50);
+    if (!isAdminUser) throw new Error('Unauthorized');
 
     // Get whispers ordered by creation time (newest first)
-    let whispers = await ctx.db
+    // Note: Search implementation would need a search index, skipping for now as per plan focus on pagination
+    const result = await ctx.db
       .query('whispers')
       .order('desc')
-      .take(limit + 1);
-
-    const hasMore = whispers.length > limit;
-    const resultWhispers = whispers.slice(0, limit);
-    const nextCursor = hasMore && resultWhispers.length > 0
-      ? resultWhispers[resultWhispers.length - 1]._id
-      : null;
+      .paginate(args.paginationOpts);
 
     // Enrich with sender/recipient usernames
     const enrichedWhispers = await Promise.all(
-      resultWhispers.map(async (whisper) => {
+      result.page.map(async (whisper) => {
         const sender = await ctx.db.get(whisper.senderId);
         const recipient = await ctx.db.get(whisper.recipientId);
         return {
@@ -417,9 +410,8 @@ export const getAllWhispers = query({
     );
 
     return {
-      whispers: enrichedWhispers,
-      nextCursor,
-      hasMore,
+      ...result,
+      page: enrichedWhispers,
     };
   },
 });

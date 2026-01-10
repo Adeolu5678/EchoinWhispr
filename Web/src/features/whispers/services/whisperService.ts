@@ -87,11 +87,11 @@ class WhisperService {
       // Fetch whispers using Convex query with retry logic
       // Note: getReceivedWhispers returns a paginated response with { whispers, nextCursor, hasMore }
       const response = await withRetry(async () => {
-        return await convex.query(api.whispers.getReceivedWhispers, {});
+        return await convex.query(api.whispers.getReceivedWhispers, { paginationOpts: { numItems: 20, cursor: null } });
       });
 
       // Extract whispers array from paginated response
-      const whispers = response?.whispers ?? [];
+      const whispers = response?.page ?? [];
 
       // Transform whispers to include sender information and computed fields
       const transformedWhispers = this.transformWhispersForDisplay(

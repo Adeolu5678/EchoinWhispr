@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+import { isAdmin } from "./adminAuth";
 
 /**
  * Daily Prompts Module (Whisper of the Day)
@@ -288,10 +289,14 @@ export const createPrompt = mutation({
     activeDate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Note: In production, add admin role check here
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
+    }
+
+    const isAdminUser = await isAdmin(ctx, identity.subject);
+    if (!isAdminUser) {
+      throw new Error("Unauthorized: Admin access required");
     }
 
     const promptId = await ctx.db.insert("dailyPrompts", {
@@ -316,6 +321,11 @@ export const schedulePrompt = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
+    }
+
+    const isAdminUser = await isAdmin(ctx, identity.subject);
+    if (!isAdminUser) {
+      throw new Error("Unauthorized: Admin access required");
     }
 
     await ctx.db.patch(args.promptId, {

@@ -284,8 +284,12 @@ export const findResonanceMatch = mutation({
     
     const recentMatchedIds = new Set(recentMatches.map(m => m.matchedUserId));
 
-    // Get all eligible users
-    const allUsers = await ctx.db.query("users").collect();
+    // Get updated users candidates (avoid full table scan)
+    const allUsers = await ctx.db
+      .query("users")
+      .withIndex("by_updated_at")
+      .order("desc")
+      .take(100);
     const eligibleUsers = allUsers.filter(u => 
       u._id !== currentUser._id && 
       !recentMatchedIds.has(u._id)

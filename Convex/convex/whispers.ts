@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, internalMutation } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
 import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
 
@@ -77,103 +77,53 @@ export const sendWhisper = mutation({
 // Get whispers received by current user (with pagination)
 export const getReceivedWhispers = query({
   args: {
-    cursor: v.optional(v.id('whispers')),
-    limit: v.optional(v.number()),
+    paginationOpts: v.any(), 
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return { whispers: [], nextCursor: null, hasMore: false };
-    }
+    if (!identity) throw new Error('Not authenticated');
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) {
-      return { whispers: [], nextCursor: null, hasMore: false };
-    }
+    if (!user) throw new Error('User not found');
 
-    const limit = Math.min(args.limit || 20, 50); // Max 50 per page
-    
-    let query = ctx.db
+    const result = await ctx.db
       .query('whispers')
       .withIndex('by_recipient', q => q.eq('recipientId', user._id))
       .filter(q => q.eq(q.field('conversationId'), undefined))
-      .order('desc');
+      .order('desc')
+      .paginate(args.paginationOpts);
 
-    // If cursor is provided, start from there
-    const whispers = await query.take(limit + 1);
-    
-    // Filter out whispers before cursor if provided
-    let filteredWhispers = whispers;
-    if (args.cursor) {
-      const cursorIndex = whispers.findIndex(w => w._id === args.cursor);
-      if (cursorIndex >= 0) {
-        filteredWhispers = whispers.slice(cursorIndex + 1);
-      }
-    }
-
-    const hasMore = filteredWhispers.length > limit;
-    const resultWhispers = filteredWhispers.slice(0, limit);
-    const nextCursor = hasMore ? resultWhispers[resultWhispers.length - 1]?._id : null;
-
-    return {
-      whispers: resultWhispers,
-      nextCursor,
-      hasMore,
-    };
+    return result;
   },
 });
 
 // Get whispers sent by current user (with pagination)
 export const getSentWhispers = query({
   args: {
-    cursor: v.optional(v.id('whispers')),
-    limit: v.optional(v.number()),
+    paginationOpts: v.any(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return { whispers: [], nextCursor: null, hasMore: false };
-    }
+    if (!identity) throw new Error('Not authenticated');
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) {
-      return { whispers: [], nextCursor: null, hasMore: false };
-    }
+    if (!user) throw new Error('User not found');
 
-    const limit = Math.min(args.limit || 20, 50);
-
-    const whispers = await ctx.db
+    const result = await ctx.db
       .query('whispers')
       .withIndex('by_sender', q => q.eq('senderId', user._id))
       .order('desc')
-      .take(limit + 1);
+      .paginate(args.paginationOpts);
 
-    // Filter out whispers before cursor if provided
-    let filteredWhispers = whispers;
-    if (args.cursor) {
-      const cursorIndex = whispers.findIndex(w => w._id === args.cursor);
-      if (cursorIndex >= 0) {
-        filteredWhispers = whispers.slice(cursorIndex + 1);
-      }
-    }
-
-    const hasMore = filteredWhispers.length > limit;
-    const resultWhispers = filteredWhispers.slice(0, limit);
-    const nextCursor = hasMore ? resultWhispers[resultWhispers.length - 1]?._id : null;
-
-    return {
-      whispers: resultWhispers,
-      nextCursor,
-      hasMore,
-    };
+    return result;
   },
 });
 
@@ -440,7 +390,6 @@ export const toggleReaction = mutation({
     const existingIndex = reactions.findIndex(
       r => r.userId === user._id && r.emoji === args.emoji
     );
-
     if (existingIndex >= 0) {
       // Remove reaction (toggle off)
       reactions.splice(existingIndex, 1);
@@ -497,6 +446,10 @@ export const sendVoiceWhisper = mutation({
       throw new Error('Sender not found');
     }
 
+    // Enforce rate limit for voice whispers
+    await enforceRateLimit(ctx, sender._id, 'SEND_WHISPER');
+    await recordRateLimitedAction(ctx, sender._id, 'SEND_WHISPER');
+
     const recipient = await ctx.db
       .query('users')
       .withIndex('by_username', q => q.eq('username', args.recipientUsername))
@@ -529,8 +482,32 @@ export const sendVoiceWhisper = mutation({
 export const getVoiceMessageUrl = query({
   args: {
     storageId: v.id('_storage'),
+    whisperId: v.id('whispers'),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const whisper = await ctx.db.get(args.whisperId);
+    if (!whisper || whisper.audioStorageId !== args.storageId) {
+      throw new Error('Voice message not found');
+    }
+
+    if (whisper.senderId !== user._id && whisper.recipientId !== user._id) {
+      throw new Error('Not authorized to access this voice message');
+    }
+
     return await ctx.storage.getUrl(args.storageId);
   },
 });
@@ -628,8 +605,8 @@ export const getScheduledWhispers = query({
   },
 });
 
-// Process scheduled whispers (would be called by a cron job)
-export const processScheduledWhispers = mutation({
+// Process scheduled whispers (Internal CRON job)
+export const processScheduledWhispers = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();

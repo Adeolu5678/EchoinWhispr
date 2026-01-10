@@ -9,15 +9,16 @@ import type { Id } from '@/lib/convex';
 
 interface VoicePlayerProps {
   storageId: Id<'_storage'>;
+  whisperId: Id<'whispers'>;
   duration: number;
 }
 
-export function VoicePlayer({ storageId, duration }: VoicePlayerProps) {
+export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const audioUrl = useQuery(api.whispers.getVoiceMessageUrl, { storageId });
+  const audioUrl = useQuery(api.whispers.getVoiceMessageUrl, { storageId, whisperId });
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -42,17 +43,21 @@ export function VoicePlayer({ storageId, duration }: VoicePlayerProps) {
       audio.removeEventListener('timeupdate', updateProgress);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, []);
+  }, [audioUrl]);
 
   const togglePlayback = () => {
     if (!audioRef.current) return;
 
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      audioRef.current.play().catch((error) => {
+        console.error('Playback failed:', error);
+        setIsPlaying(false);
+      });
+      setIsPlaying(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const formatDuration = (seconds: number) => {

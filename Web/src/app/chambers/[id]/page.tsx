@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex';
 import { useParams, useRouter } from 'next/navigation';
@@ -28,6 +28,7 @@ export default function ChamberViewPage() {
   const router = useRouter();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -54,10 +55,24 @@ export default function ChamberViewPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messagesData?.messages]);
 
-  // Typing indicator debounce
-  const handleTyping = () => {
-    setTyping({ chamberId: id as Id<'echoChambers'> });
-  };
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Typing indicator with debounce
+  const handleTyping = useCallback(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    typingTimeoutRef.current = setTimeout(() => {
+      setTyping({ chamberId: id as Id<'echoChambers'> });
+    }, 300);
+  }, [id, setTyping]);
 
   const handleSend = async () => {
     if (!message.trim()) return;

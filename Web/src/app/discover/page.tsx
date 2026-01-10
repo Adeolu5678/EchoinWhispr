@@ -180,12 +180,12 @@ export default function DiscoverPage() {
                 )}
 
                 <div className="flex gap-3 justify-center pt-4">
-                  <Link href={`/compose?to=${matchResult.matchId}`}>
-                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                  <Button asChild className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+                    <Link href={`/compose?to=${matchResult.matchId}`}>
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Send Whisper
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => {

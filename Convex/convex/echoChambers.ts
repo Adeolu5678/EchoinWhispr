@@ -246,6 +246,15 @@ export const sendMessage = mutation({
       throw new Error("Not authenticated");
     }
 
+    // Validate content length
+    if (!args.content.trim() && !args.imageUrl && !args.audioStorageId) {
+      throw new Error("Message cannot be empty");
+    }
+    
+    if (args.content.length > 2000) {
+      throw new Error("Message content must be 2000 characters or less");
+    }
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))

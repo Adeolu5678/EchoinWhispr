@@ -537,13 +537,13 @@ export const searchSkills = query({
   handler: async (ctx, args) => {
     const searchTerm = args.query.toLowerCase();
 
-    let skills = await ctx.db.query("skills").collect();
-
-    // Filter by search term
-    skills = skills.filter(s => 
-      s.skillName.includes(searchTerm) ||
-      s.description?.toLowerCase().includes(searchTerm)
-    );
+    // Use search index for performance
+    let skills = await ctx.db
+      .query("skills")
+      .withSearchIndex("search_skills", (q) => 
+        q.search("skillName", searchTerm)
+      )
+      .collect();
 
     // Filter by type if specified
     if (args.type) {

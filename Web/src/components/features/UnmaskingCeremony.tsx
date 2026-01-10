@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Sparkles, Eye, EyeOff, Heart, Clock, Check, X, AlertTriangle } from 'lucide-react';
+import { useEffect } from 'react';
 import type { Id } from '@/lib/convex';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,6 +27,18 @@ export function UnmaskingCeremony({
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiParticles, setConfettiParticles] = useState<Array<{left: string, top: string, delay: string, char: string}>>([]);
+
+  useEffect(() => {
+    if (showConfetti) {
+      setConfettiParticles([...Array(20)].map(() => ({
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        delay: `${Math.random() * 0.5}s`,
+        char: ['🎉', '✨', '🎭', '💫', '⭐'][Math.floor(Math.random() * 5)]
+      })));
+    }
+  }, [showConfetti]);
 
   const status = useQuery(api.unmasking.getUnmaskingStatus, { conversationId });
   const requestUnmasking = useMutation(api.unmasking.requestUnmasking);
@@ -296,17 +309,17 @@ export function UnmaskingCeremony({
 
         {showConfetti && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {[...Array(20)].map((_, i) => (
+            {confettiParticles.map((p, i) => (
               <div
                 key={i}
                 className="absolute text-2xl animate-bounce"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 0.5}s`,
+                  left: p.left,
+                  top: p.top,
+                  animationDelay: p.delay,
                 }}
               >
-                {['🎉', '✨', '🎭', '💫', '⭐'][Math.floor(Math.random() * 5)]}
+                {p.char}
               </div>
             ))}
           </div>

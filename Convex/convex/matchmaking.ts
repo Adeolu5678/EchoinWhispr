@@ -96,8 +96,12 @@ export const findRandomMatch = mutation({
     
     const recentMatchedIds = new Set(recentMatches.map(m => m.matchedUserId));
 
-    // Get all users except current user and recent matches
-    const allUsers = await ctx.db.query("users").collect();
+    // Get active users (optimizing: recently updated users only)
+    const allUsers = await ctx.db
+      .query("users")
+      .withIndex("by_updated_at")
+      .order("desc")
+      .take(100); // Limit to 100 active users for performance
     const eligibleUsers = allUsers.filter(u => 
       u._id !== currentUser._id && 
       !recentMatchedIds.has(u._id) &&
