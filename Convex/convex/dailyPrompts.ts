@@ -78,7 +78,9 @@ export const seedDefaultPrompts = internalMutation({
 export const getTodaysPrompt = query({
   args: {},
   handler: async (ctx) => {
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    // Use single UTC-based reference date for consistency
+    const now = new Date();
+    const today = now.toISOString().split("T")[0]; // YYYY-MM-DD
 
     // First, check if there's a scheduled prompt for today
     const scheduledPrompt = await ctx.db
@@ -91,11 +93,10 @@ export const getTodaysPrompt = query({
     }
 
     // Otherwise, get a "random" prompt based on the day
-    // Use the day of year as a deterministic "random" seed
-    const dayOfYear = Math.floor(
-      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 
-      (1000 * 60 * 60 * 24)
-    );
+    // Use UTC-based day of year as a deterministic "random" seed
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const startOfYear = Date.UTC(now.getUTCFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now.getTime() - startOfYear) / MS_PER_DAY);
 
     const allPrompts = await ctx.db.query("dailyPrompts").collect();
     
@@ -181,12 +182,12 @@ export const hasRespondedToday = query({
       return false;
     }
 
-    // Get today's prompt
-    const today = new Date().toISOString().split("T")[0];
-    const dayOfYear = Math.floor(
-      (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 
-      (1000 * 60 * 60 * 24)
-    );
+    // Get today's prompt using UTC-based calculation for consistency
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const startOfYear = Date.UTC(now.getUTCFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now.getTime() - startOfYear) / MS_PER_DAY);
 
     let todaysPrompt = await ctx.db
       .query("dailyPrompts")
@@ -347,8 +348,9 @@ export const getRandomPrompt = query({
     const excludeSet = new Set(args.excludeIds || []);
     const eligiblePrompts = allPrompts.filter(p => !excludeSet.has(p._id));
 
+    // Return null when no eligible prompts remain (all excluded)
     if (eligiblePrompts.length === 0) {
-      return allPrompts.length > 0 ? allPrompts[0] : null;
+      return null;
     }
 
     const randomIndex = Math.floor(Math.random() * eligiblePrompts.length);

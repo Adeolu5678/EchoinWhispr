@@ -1,4 +1,5 @@
 import { v } from 'convex/values';
+import { paginationOptsValidator } from 'convex/server';
 import { mutation, query } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
 
@@ -338,11 +339,10 @@ export const rejectEchoRequest = mutation({
  * Get echo requests for the current user.
  * Returns initiated conversations where the user is the sender of the initial whisper.
  * Optimized to batch whisper fetches and reduce N+1 queries.
- * Optimized to batch whisper fetches and reduce N+1 queries.
  */
 export const getEchoRequests = query({
   args: {
-    paginationOpts: v.any(),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

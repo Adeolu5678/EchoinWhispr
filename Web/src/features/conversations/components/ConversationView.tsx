@@ -40,7 +40,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -121,7 +121,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             className="flex-1 touch-target"
             disabled={isSending}

@@ -181,7 +181,7 @@ export default function DiscoverPage() {
 
                 <div className="flex gap-3 justify-center pt-4">
                   <Button asChild className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                    <Link href={`/compose?to=${matchResult.matchId}`}>
+                    <Link href="/compose">
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Send Whisper
                     </Link>
@@ -230,9 +230,9 @@ export default function DiscoverPage() {
               <h3 className="font-semibold">Recent Matches</h3>
             </div>
             <div className="space-y-3">
-              {recentMatches.map((match, i) => (
+              {recentMatches.map((match) => (
                 <div 
-                  key={i}
+                  key={match._id}
                   className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
                 >
                   <div className="flex items-center gap-3">

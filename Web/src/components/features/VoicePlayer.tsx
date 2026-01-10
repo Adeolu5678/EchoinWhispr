@@ -52,17 +52,19 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch((error) => {
-        console.error('Playback failed:', error);
-        setIsPlaying(false);
-      });
-      setIsPlaying(true);
+      audioRef.current.play()
+        .then(() => setIsPlaying(true))
+        .catch((error) => {
+          console.error('Playback failed:', error);
+          setIsPlaying(false);
+        });
     }
   };
 
   const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+    const totalSecs = Math.round(seconds);
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 

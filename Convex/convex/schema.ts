@@ -362,9 +362,6 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_skill_type', ['skillName', 'type'])
     .index('by_type', ['type'])
-    .index('by_user', ['userId'])
-    .index('by_skill_type', ['skillName', 'type'])
-    .index('by_type', ['type'])
     .index('by_category', ['category'])
     .searchIndex('search_skills', {
       searchField: 'skillName',

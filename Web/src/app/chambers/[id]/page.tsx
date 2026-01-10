@@ -24,7 +24,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import type { Id } from '@/lib/convex';
 
 export default function ChamberViewPage() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params.id;
   const router = useRouter();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -34,16 +35,21 @@ export default function ChamberViewPage() {
   const [isSending, setIsSending] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  const chamber = useQuery(api.echoChambers.getChamber, { 
-    chamberId: id as Id<'echoChambers'> 
-  });
-  const messagesData = useQuery(api.echoChambers.getMessages, { 
-    chamberId: id as Id<'echoChambers'>,
-    limit: 50
-  });
-  const typingUsers = useQuery(api.echoChambers.getTypingIndicators, {
-    chamberId: id as Id<'echoChambers'>
-  });
+  // Validate id from useParams before using
+  const validId = typeof id === 'string' && id.length > 0 ? id : null;
+
+  const chamber = useQuery(
+    api.echoChambers.getChamber, 
+    validId ? { chamberId: validId as Id<'echoChambers'> } : 'skip'
+  );
+  const messagesData = useQuery(
+    api.echoChambers.getMessages, 
+    validId ? { chamberId: validId as Id<'echoChambers'>, limit: 50 } : 'skip'
+  );
+  const typingUsers = useQuery(
+    api.echoChambers.getTypingIndicators,
+    validId ? { chamberId: validId as Id<'echoChambers'> } : 'skip'
+  );
 
   const sendMessage = useMutation(api.echoChambers.sendMessage);
   const setTyping = useMutation(api.echoChambers.setTyping);
@@ -132,12 +138,21 @@ export default function ChamberViewPage() {
     }
   };
 
-  const copyInviteLink = () => {
-    navigator.clipboard.writeText(`${window.location.origin}/chambers/join/${chamber?.inviteCode}`);
-    toast({
-      title: "Link copied!",
-      description: "Share it with others to join.",
-    });
+  const copyInviteLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/chambers/join/${chamber?.inviteCode}`);
+      toast({
+        title: "Link copied!",
+        description: "Share it with others to join.",
+      });
+    } catch (error) {
+      console.error('Copy failed:', error);
+      toast({
+        title: "Copy failed",
+        description: "Please copy the invite code manually.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!chamber) {
@@ -318,6 +333,10 @@ function MessageBubble({ message, isOwn }: { message: {
   content: string;
   createdAt: number;
 }; isOwn: boolean }) {
+  // Provide safe defaults for optional fields
+  const aliasColor = message.aliasColor || '#9ca3af'; // neutral gray
+  const aliasName = message.anonymousAlias || 'Anonymous';
+
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
       <div 
@@ -331,10 +350,10 @@ function MessageBubble({ message, isOwn }: { message: {
           <div className="flex items-center gap-2 mb-1">
             <span 
               className="w-2 h-2 rounded-full" 
-              style={{ backgroundColor: message.aliasColor }}
+              style={{ backgroundColor: aliasColor }}
             />
-            <span className="text-xs font-medium" style={{ color: message.aliasColor }}>
-              {message.anonymousAlias}
+            <span className="text-xs font-medium" style={{ color: aliasColor }}>
+              {aliasName}
             </span>
           </div>
         )}

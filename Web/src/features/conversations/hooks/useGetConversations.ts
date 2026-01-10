@@ -4,13 +4,16 @@ import { api } from '@/lib/convex';
 /**
  * Hook to fetch conversations for the current user.
  * Returns conversations where the user is a participant and status is 'active'.
+ * Note: Backend uses take(200) internally, pagination not currently supported.
  *
  * @returns Object containing conversations array, loading state, and error.
  */
 export const useGetConversations = () => {
-  // Note: Backend getActiveConversations takes paginationOpts but actually uses take(200) + filter
-  // It returns a plain array, not a paginated result object
-  const conversations = useQuery(api.conversations.getActiveConversations, { paginationOpts: { numItems: 20, cursor: null } });
+  // Backend getActiveConversations uses take(200) + filter internally
+  // paginationOpts is required by API signature but ignored by implementation
+  const conversations = useQuery(api.conversations.getActiveConversations, { 
+    paginationOpts: { numItems: 200, cursor: null } 
+  });
 
   return {
     conversations: conversations || [],
