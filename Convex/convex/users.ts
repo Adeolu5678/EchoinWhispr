@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
+import { isAdmin, isSuperAdmin } from './adminAuth';
 
 // Get current user or create if doesn't exist
 export const getCurrentUser = query({
@@ -618,7 +619,13 @@ export const softDeleteUser = mutation({
     let userToDelete;
     if (args.userId) {
       // Admin deleting another user
-      // TODO: Add admin check here once adminAuth is fully integrated
+      const isSuperAdminUser = await isSuperAdmin(ctx, identity.subject);
+      const isAdminUser = await isAdmin(ctx, identity.subject);
+      
+      if (!isSuperAdminUser && !isAdminUser) {
+        throw new Error('Unauthorized: Admin access required to delete other users');
+      }
+
       userToDelete = await ctx.db.get(args.userId);
     } else {
       // User deleting themselves

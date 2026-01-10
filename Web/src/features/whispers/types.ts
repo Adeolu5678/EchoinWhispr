@@ -16,6 +16,8 @@ export interface Whisper {
   conversationId?: string; // Future feature: links to conversation if whisper evolved
   imageUrl?: string; // Optional image attachment for the whisper
   location?: { latitude: number; longitude: number }; // Optional location data for the whisper
+  audioStorageId?: string; // Optional audio attachment
+  audioDuration?: number; // Duration of audio in seconds
 }
 
 // Extended whisper with additional computed fields for UI display

@@ -4,7 +4,7 @@ A monorepo containing the EchoinWhispr application with multiple platform implem
 
 ## Project Structure
 
-```
+```bash
 EchoinWhispr/
 ├── Web/                    # Next.js web application
 ├── ReactNative/           # React Native mobile application
@@ -18,11 +18,19 @@ EchoinWhispr/
 
 ## Technology Stack
 
+## Technology Stack
+
 - **Frontend**: Next.js (Web), React Native with Expo (Mobile), Flutter (Learning)
 - **Backend**: Convex (Real-time database and API)
 - **Authentication**: Clerk
 - **Package Manager**: pnpm (Monorepo management)
 - **Language**: TypeScript (primary), Dart (Flutter)
+- **Styling**: Tailwind CSS (Web)
+
+## Current Status (2026)
+- **Web**: Production-ready, mobile-responsive PWA-like experience.
+- **Mobile**: Native apps in development.
+
 
 ## Getting Started
 
@@ -38,6 +46,8 @@ EchoinWhispr/
 1. Install dependencies for all workspaces:
    ```bash
    pnpm install
+   ```
+
    ```
 
 2. Set up environment variables for each platform (see platform-specific READMEs)

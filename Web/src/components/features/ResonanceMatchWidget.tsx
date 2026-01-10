@@ -51,6 +51,11 @@ export function ResonanceMatchWidget() {
       }
     } catch (error) {
       console.error('Match error:', error);
+      toast({
+        title: "Match failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsMatching(false);
     }

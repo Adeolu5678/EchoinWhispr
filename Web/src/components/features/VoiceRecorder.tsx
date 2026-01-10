@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/lib/convex';
 import { Button } from '@/components/ui/button';
@@ -59,13 +59,29 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
         setDuration(d => d + 1);
       }, 1000);
     } catch (error) {
+      console.error('Recording error:', error);
       toast({
         title: "Microphone access denied",
         description: "Please allow microphone access to record voice messages.",
         variant: "destructive",
       });
+      setIsRecording(false);
     }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      // Stop all tracks
+      mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+    };
+  }, []);
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
@@ -89,6 +105,10 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
   };
 
   const discardRecording = () => {
+    // Revoke Object URL to prevent memory leak
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
     setAudioBlob(null);
     setAudioUrl(null);
     setDuration(0);
@@ -113,6 +133,10 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
         body: audioBlob,
       });
       
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
       const { storageId } = await response.json();
 
       // Send the voice whisper

@@ -139,7 +139,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
           )}
           <Button
             onClick={handleSendMessage}
-            disabled={!message.trim() || isSending}
+            disabled={(!message.trim() && !attachedImageUrl) || isSending}
             size="icon"
             className="touch-target"
           >

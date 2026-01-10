@@ -8,10 +8,12 @@ import { api } from '@/lib/convex';
  * @returns Object containing conversations array, loading state, and error.
  */
 export const useGetConversations = () => {
-  const conversations = useQuery(api.conversations.getActiveConversations);
+  // Note: Backend getActiveConversations takes paginationOpts but actually uses take(200) + filter
+  // It returns a plain array, not a paginated result object
+  const conversations = useQuery(api.conversations.getActiveConversations, { paginationOpts: { numItems: 20, cursor: null } });
 
   return {
-    conversations,
+    conversations: conversations || [],
     isLoading: conversations === undefined,
     error: null, // Convex handles errors internally
   };

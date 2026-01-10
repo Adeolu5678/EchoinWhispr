@@ -6,7 +6,7 @@ import { WhisperMonitor } from '@/features/admin/components';
 import { useAdminWhispers } from '@/features/admin/hooks';
 
 export default function AdminWhispersPage() {
-  const { whispers, isLoading, hasMore } = useAdminWhispers();
+  const { whispers, isLoading, hasMore, loadMore } = useAdminWhispers();
 
   return (
     <div className="space-y-6">
@@ -40,7 +40,7 @@ export default function AdminWhispersPage() {
         
         {hasMore && (
           <div className="mt-4 text-center">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => loadMore()} disabled={isLoading}>
               Load More
             </Button>
           </div>

@@ -34,7 +34,8 @@ export const useFriends = () => {
   // Note: getFriendsList returns an object with a friends array
   const friendsList = friendsData?.friends ?? [];
   
-  const friends: Friend[] = friendsList.map(friendData => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const friends: Friend[] = friendsList.map((friendData: any) => ({
     _id: friendData._id,
     username: friendData.username,
     firstName: friendData.firstName,

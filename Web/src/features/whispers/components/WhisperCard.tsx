@@ -14,6 +14,8 @@ import {
   CheckCircle2, Clock, User, MapPin, MessageCircle, 
   Link as LinkIcon, ImageOff, Eye
 } from 'lucide-react';
+import { VoicePlayer } from '@/components/features/VoicePlayer';
+import { Id } from '@/lib/convex';
 
 interface WhisperCardProps {
   whisper: WhisperWithSender;
@@ -177,6 +179,17 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
                   src={whisper.imageUrl} 
                   alt="Whisper image attachment" 
                 />
+              )}
+
+              {/* Voice Message */}
+              {whisper.audioStorageId && (
+                <div className="mt-3">
+                  <VoicePlayer
+                    storageId={whisper.audioStorageId as Id<'_storage'>}
+                    whisperId={whisper._id as Id<'whispers'>}
+                    duration={whisper.audioDuration || 0}
+                  />
+                </div>
               )}
 
               {/* Location display */}

@@ -83,7 +83,8 @@ export default defineSchema({
     // Add indexes for search/filtering if needed, though full text search might be better for interests
     .index('by_career', ['career'])
     .index('by_mood', ['mood'])
-    .index('by_life_phase', ['lifePhase']),
+    .index('by_life_phase', ['lifePhase'])
+    .index('by_updated_at', ['updatedAt']),
 
   // Whispers table - core messaging functionality
   whispers: defineTable({
@@ -149,12 +150,14 @@ export default defineSchema({
     // === NEW: Quick Wins ===
     isArchived: v.optional(v.boolean()),
     isPinned: v.optional(v.boolean()),
+    initialSenderId: v.optional(v.id("users")), // Added for optimized echo request fetching
   })
     .index("by_participant_key", ["participantKey"])
     .index("by_initial_whisper", ["initialWhisperId"])
     .index("by_status", ["status"])
     .index("by_participants", ["participantIds"])
-    .index("by_archived", ["isArchived"]),
+    .index("by_archived", ["isArchived"])
+    .index("by_initial_sender_status", ["initialSenderId", "status"]),
 
   // User profiles table - additional user information
   profiles: defineTable({
@@ -359,7 +362,14 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_skill_type', ['skillName', 'type'])
     .index('by_type', ['type'])
-    .index('by_category', ['category']),
+    .index('by_user', ['userId'])
+    .index('by_skill_type', ['skillName', 'type'])
+    .index('by_type', ['type'])
+    .index('by_category', ['category'])
+    .searchIndex('search_skills', {
+      searchField: 'skillName',
+      filterFields: ['type', 'category'],
+    }),
 
   skillMatches: defineTable({
     teacherId: v.id('users'),

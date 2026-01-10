@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from 'convex/react';
+import { useQuery, usePaginatedQuery } from 'convex/react';
 import { api } from '@/lib/convex';
 import type { Id } from '@/lib/convex';
 
@@ -42,13 +42,18 @@ export function useAdminData() {
  * Hook for admin whisper monitoring.
  */
 export function useAdminWhispers() {
-  const whispersData = useQuery(api.admin.getAllWhispers, { limit: 20 });
+  const { results, status, loadMore } = usePaginatedQuery(
+    api.admin.getAllWhispers,
+    {},
+    { initialNumItems: 20 }
+  );
 
   return {
-    whispers: whispersData?.whispers ?? [],
-    hasMore: whispersData?.hasMore ?? false,
-    nextCursor: whispersData?.nextCursor ?? null,
-    isLoading: whispersData === undefined,
+    whispers: results ?? [],
+    hasMore: status === 'CanLoadMore',
+    isLoading: status === 'LoadingFirstPage',
+    loadMore: () => loadMore(20),
+    status,
   };
 }
 
