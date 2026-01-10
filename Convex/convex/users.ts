@@ -548,13 +548,11 @@ export const pinConversation = mutation({
       throw new Error('User not found');
     }
 
-    const pinnedIds = user.pinnedConversationIds || [];
+    const currentPinned = user.pinnedConversationIds || [];
     
-    if (!pinnedIds.includes(args.conversationId)) {
-      pinnedIds.push(args.conversationId);
-      
+    if (!currentPinned.includes(args.conversationId)) {
       await ctx.db.patch(user._id, {
-        pinnedConversationIds: pinnedIds,
+        pinnedConversationIds: [...currentPinned, args.conversationId],
         updatedAt: Date.now(),
       });
     }

@@ -85,7 +85,10 @@ class WhisperService {
       }
 
       // Fetch whispers using Convex query with retry logic
-      // Note: getReceivedWhispers returns a paginated response with { whispers, nextCursor, hasMore }
+      // Fetch whispers using Convex query with retry logic
+      // Note: Currently limited to first page (20 items). For users with >20 whispers,
+      // pagination would need to be implemented by accepting a cursor parameter
+      // and forwarding it to paginationOpts.cursor
       const response = await withRetry(async () => {
         return await convex.query(api.whispers.getReceivedWhispers, { paginationOpts: { numItems: 20, cursor: null } });
       });

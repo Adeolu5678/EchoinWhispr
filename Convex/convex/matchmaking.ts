@@ -31,9 +31,11 @@ function calculateMatchScore(
   const user1Interests = user1.interests || [];
   const user2Interests = user2.interests || [];
   
+  // Precompute lowercased Set for efficient case-insensitive lookup
+  const user2InterestsLower = new Set(user2Interests.map(i => i.toLowerCase()));
+  
   for (const interest of user1Interests) {
-    if (user2Interests.includes(interest.toLowerCase()) || 
-        user2Interests.some(i => i.toLowerCase() === interest.toLowerCase())) {
+    if (user2InterestsLower.has(interest.toLowerCase())) {
       sharedInterests.push(interest);
       score += 3;
     }

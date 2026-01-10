@@ -19,7 +19,13 @@ export default function AdminWhispersPage() {
             ({whispers.length} whispers)
           </span>
         </div>
-        <Button variant="outline" size="sm" className="gap-2" disabled={isLoading}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-2" 
+          disabled={isLoading}
+          onClick={() => window.location.reload()}
+        >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
