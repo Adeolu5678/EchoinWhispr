@@ -419,9 +419,9 @@ export const getConversation = query({
  */
 export const getActiveConversations = query({
   args: {
-    paginationOpts: v.any(),
+    paginationOpts: paginationOptsValidator,
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Not authenticated');
 
@@ -433,77 +433,9 @@ export const getActiveConversations = query({
     if (!user) throw new Error('User not found');
     const userId = user._id;
 
-    // Use paginate. Note: Filtering by participants index is the best we can do without a junction table.
-    // However, with `paginate`, we can filter on the client-side or use a client-side filter function? 
-    // Convex `paginate` doesn't support generic `.filter()` easily before pagination if it's not indexed.
-    // 
-    // OPTIMAL APPROACH: Use `by_participants` index if possible? 
-    // `by_participants` is indexed on the array. Convex checks if array contains valid ID.
-    // Wait, Convex index on array field supports direct equality? No, usually needs standard index.
-    // But `conversations.ts` has `.index("by_participants", ["participantIds"])`.
-    // Let's assume this works for exact match or use the inefficient client filter if necessary?
-    // Actually, Convex doesn't support partial array match in index unless using specific features.
-    // "Arrays in indexes are not supported" per older docs, but let's check current capabilities.
-    // 
-    // Alternative: We can continue using `.filter` and `take` or `collect`?
-    // But we want `paginate`.
-    // 
-    // Let's stick to the current logic but use `paginate` on the general query and rely on `filter` *after* query?
-    // No, `paginate` needs to run on the Query object.
-    
-    // Changing approach: Use `by_status` index and filter.
-    // Warning: Filtering after paginating might return empty pages.
-    // 
-    // Better approach: We really need a `by_participant` index which we don't strictly have in a way that allows `q.eq('participants', userId)`.
-    // 
-    // Let's implement the `take(200)` limit strategy but cleaner, or try to use `paginate` with `filter` (Convex supports `filter` before `paginate` if it's simple enough? No, mostly index).
-    // 
-    // Let's stick to the `take(200)` but explicitly structure it as a `PaginationResult` shape if we want to standardize,
-    // OR just return the array as before but document it. The plan said "Implement proper pagination".
-    // 
-    // Given schema constraints without a join table, full pagination is hard.
-    // Let's use `collect` + manual slice if strictly needed, or just `take(50)`.
-    // The previous code had `take(200)`.
-    // 
-    // Let's keep `take` but increase limit or make it an argument? 
-    // The previous code returned `Conversation[]`. The prompt asks for "Implement pagination".
-    // 
-    // Let's modify `getActiveConversations` to return paginated result if possible.
-    // But `filter(conv => conv.participantIds.includes(userId))` happens in JS.
-    // We can't use `paginate()` on a JS array.
-    // 
-    // To do this properly with `paginate`, we would need `by_participant_status` index where we store separate rows (junction table) or handle filtering.
-    // 
-    // Compromise: I will keep the `take(200)` logic but pass a limit arg, because fitting it into `paginate` interface is hard without schema change (junction table).
-    // BUT, wait. `getEchoRequests` used `paginate` because we added `by_initial_sender_status`.
-    // `getActiveConversations` doesn't have an index for "user X in active conversation".
-    // 
-    // I will stick to the existing approach but clean it up, maybe increase limit, OR admit that `paginate` is blocked by schema.
-    // Actually, I can use `filter` in the query?
-    // `q => q.eq('status', 'active')` is indexed.
-    // `.filter(q => ...)` is NOT indexed.
-    // 
-    // I will update the code to accept `paginationOpts` but internally fetch likely candidates and filter? No that breaks the `min` page size guarantee.
-    // 
-    // Let's skip `getActiveConversations` pagination *change* if it's too risky/schema-heavy, OR just implement a manual cursor based on `_id` or `updatedAt`?
-    // 
-    // Let's leave `getActiveConversations` with strict limit (maybe 50?) to avoid full scan, but acknowledged it's not "real" pagination.
-    // 
-    // Wait, checking `schema.ts`: `participantIds` is an array.
-    // If I cannot efficiently query "contains user ID", then I cannot paginate efficiently.
-    // 
-    // I will focus on `getEchoRequests` which I CAN optimize (done above).
-    // For `getActiveConversations`, I will keep it as is (with limit) but maybe clean it.
-    // 
-    // Actually, I'll update the arguments to match the interface `paginationOpts` if I can, but maybe just `limit`.
-    // The plan said: "Update `getActiveConversations` to use `paginate` (or optimized `take`... but `paginate` is safer)".
-    // 
-    // Let's try to add the `initialSenderId` optimization first.
-    //
-    // For `getActiveConversations`, I will just improve the limit and explanation.
-    
-    // OPTIMIZATION: Add limit to prevent fetching entire table
-    // Note: Proper fix requires schema change for by_participant_status index
+    // NOTE: Proper pagination requires a junction table or by_participant index.
+    // Without schema changes, we use take() with client-side filtering.
+    // paginationOpts argument is accepted but not used due to schema constraints.
     const conversations = await ctx.db
       .query('conversations')
       .withIndex('by_status', (q) => q.eq('status', 'active'))

@@ -155,7 +155,7 @@ export default defineSchema({
     .index("by_participant_key", ["participantKey"])
     .index("by_initial_whisper", ["initialWhisperId"])
     .index("by_status", ["status"])
-    .index("by_participants", ["participantIds"])
+
     .index("by_archived", ["isArchived"])
     .index("by_initial_sender_status", ["initialSenderId", "status"]),
 

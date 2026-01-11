@@ -234,7 +234,7 @@ export const getMatchStats = query({
     const allMatches = await ctx.db
       .query("matchHistory")
       .withIndex("by_user", (q) => q.eq("userId", currentUser._id))
-      .collect();
+      .take(1000); // Limit for performance
 
     // Calculate stats
     const totalMatches = allMatches.length;

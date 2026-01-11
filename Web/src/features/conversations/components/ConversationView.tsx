@@ -57,7 +57,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] md:h-[calc(100vh-140px)]">
+    <div className="flex flex-col h-[calc(100dvh-120px)] md:h-[calc(100dvh-140px)]">
       {/* Conversation Header */}
       <Card className="mb-4 flex-shrink-0">
         <CardHeader className="pb-3">
@@ -133,6 +133,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
               size="icon"
               disabled={isSending}
               className="touch-target"
+              aria-label={showImageUpload ? 'Close image upload' : 'Attach image'}
             >
               <Paperclip className="h-4 w-4" />
             </Button>
@@ -142,6 +143,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
             disabled={(!message.trim() && !attachedImageUrl) || isSending}
             size="icon"
             className="touch-target"
+            aria-label="Send message"
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -178,6 +180,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
               variant="destructive"
               size="sm"
               className="absolute -top-2 -right-2 h-6 w-6 p-0"
+              aria-label="Remove attached image"
             >
               <X className="h-3 w-3" />
             </Button>

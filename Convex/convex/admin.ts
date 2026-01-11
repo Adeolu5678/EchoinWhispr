@@ -196,12 +196,16 @@ export const approveAdminRequest = mutation({
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .first();
 
+    if (!reviewerUser) {
+      throw new Error('Reviewer user record not found');
+    }
+
     const now = Date.now();
 
     // Update request status
     await ctx.db.patch(args.requestId, {
       status: 'approved',
-      reviewedBy: reviewerUser?._id,
+      reviewedBy: reviewerUser._id,
       reviewedAt: now,
     });
 
@@ -210,7 +214,7 @@ export const approveAdminRequest = mutation({
       userId: request.userId,
       clerkId: request.clerkId,
       role: 'admin',
-      grantedBy: reviewerUser?._id,
+      grantedBy: reviewerUser._id,
       createdAt: now,
     });
 
@@ -251,9 +255,13 @@ export const rejectAdminRequest = mutation({
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .first();
 
+    if (!reviewerUser) {
+      throw new Error('Reviewer user record not found');
+    }
+
     await ctx.db.patch(args.requestId, {
       status: 'rejected',
-      reviewedBy: reviewerUser?._id,
+      reviewedBy: reviewerUser._id,
       reviewedAt: Date.now(),
     });
 
@@ -304,11 +312,15 @@ export const grantAdminRole = mutation({
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
       .first();
 
+    if (!granterUser) {
+      throw new Error('Granter user record not found');
+    }
+
     await ctx.db.insert('adminRoles', {
       userId: targetUser._id,
       clerkId: targetUser.clerkId,
       role: 'admin',
-      grantedBy: granterUser?._id,
+      grantedBy: granterUser._id,
       createdAt: Date.now(),
     });
 
@@ -362,13 +374,12 @@ export const revokeAdminRole = mutation({
 /**
  * Admin: Get all whispers with sender/recipient details (paginated).
  */
-/**
- * Admin: Get all whispers with sender/recipient details (paginated).
- */
 export const getAllWhispers = query({
   args: {
-    paginationOpts: v.any(),
-    search: v.optional(v.string()),
+    paginationOpts: v.object({
+      numItems: v.number(),
+      cursor: v.union(v.string(), v.null()),
+    }),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
