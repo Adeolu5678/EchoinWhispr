@@ -33,6 +33,7 @@ export default function ChamberViewPage() {
   
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isActionPending, setIsActionPending] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   // Validate id from useParams before using
@@ -72,21 +73,23 @@ export default function ChamberViewPage() {
 
   // Typing indicator with debounce
   const handleTyping = useCallback(() => {
+    if (!validId) return;
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
     typingTimeoutRef.current = setTimeout(() => {
-      setTyping({ chamberId: id as Id<'echoChambers'> });
+      setTyping({ chamberId: validId as Id<'echoChambers'> });
     }, 300);
-  }, [id, setTyping]);
+  }, [validId, setTyping]);
 
   const handleSend = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !validId) return;
 
     setIsSending(true);
     try {
       await sendMessage({
-        chamberId: id as Id<'echoChambers'>,
+        chamberId: validId as Id<'echoChambers'>,
         content: message.trim(),
       });
       setMessage('');
@@ -103,8 +106,11 @@ export default function ChamberViewPage() {
   };
 
   const handleLeave = async () => {
+    if (!validId) return;
+
+    setIsActionPending(true);
     try {
-      await leaveChamber({ chamberId: id as Id<'echoChambers'> });
+      await leaveChamber({ chamberId: validId as Id<'echoChambers'> });
       toast({
         title: "Left chamber",
         description: "You've left this echo chamber.",
@@ -117,12 +123,17 @@ export default function ChamberViewPage() {
         description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsActionPending(false);
     }
   };
 
   const handleDelete = async () => {
+    if (!validId) return;
+
+    setIsActionPending(true);
     try {
-      await deleteChamber({ chamberId: id as Id<'echoChambers'> });
+      await deleteChamber({ chamberId: validId as Id<'echoChambers'> });
       toast({
         title: "Chamber deleted",
         description: "The chamber has been permanently deleted.",
@@ -135,6 +146,8 @@ export default function ChamberViewPage() {
         description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsActionPending(false);
     }
   };
 
@@ -302,6 +315,7 @@ export default function ChamberViewPage() {
               <Button 
                 variant="destructive" 
                 onClick={handleDelete}
+                disabled={isActionPending}
                 className="w-full"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -311,6 +325,7 @@ export default function ChamberViewPage() {
               <Button 
                 variant="outline" 
                 onClick={handleLeave}
+                disabled={isActionPending}
                 className="w-full"
               >
                 <LogOut className="w-4 h-4 mr-2" />
