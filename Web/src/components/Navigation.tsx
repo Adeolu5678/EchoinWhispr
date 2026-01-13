@@ -35,39 +35,45 @@ export const Navigation = () => {
   }, []);
 
   /**
-   * Navigation items configuration
+   * Primary navigation items - shown directly in header
    */
-  const navigationItems = useMemo(() => {
-    const baseItems = [
-      {
-        href: '/',
-        label: 'Home',
-        icon: Home,
-        description: 'View received whispers and home feed',
-      },
-      {
-        href: '/discover',
-        label: 'Discover',
-        icon: Compass,
-        description: 'Find new connections based on interests',
-      },
+  const primaryNavItems = useMemo(() => [
+    {
+      href: '/',
+      label: 'Home',
+      icon: Home,
+      description: 'View received whispers and home feed',
+    },
+    {
+      href: '/discover',
+      label: 'Discover',
+      icon: Compass,
+      description: 'Find new connections based on interests',
+    },
+    {
+      href: '/compose',
+      label: 'Compose',
+      icon: Send,
+      description: 'Create and send new whispers',
+    },
+    {
+      href: '/inbox',
+      label: 'Inbox',
+      icon: Inbox,
+      description: 'View all received whispers',
+    },
+  ], []);
+
+  /**
+   * Secondary navigation items - shown in UserMenu dropdown
+   */
+  const secondaryNavItems = useMemo(() => {
+    const items = [
       {
         href: '/chambers',
         label: 'Chambers',
         icon: Radio,
         description: 'Anonymous group conversations',
-      },
-      {
-        href: '/compose',
-        label: 'Compose',
-        icon: Send,
-        description: 'Create and send new whispers',
-      },
-      {
-        href: '/inbox',
-        label: 'Inbox',
-        icon: Inbox,
-        description: 'View all received whispers',
       },
       {
         href: '/skills',
@@ -84,7 +90,7 @@ export const Navigation = () => {
     ];
 
     if (FEATURE_FLAGS.FRIENDS) {
-      baseItems.push({
+      items.push({
         href: '/friends',
         label: 'Friends',
         icon: Users,
@@ -92,24 +98,34 @@ export const Navigation = () => {
       });
     }
 
-    if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
-      baseItems.push({
-        href: '/profile',
-        label: 'Profile',
-        icon: User,
-        description: 'Edit your profile information',
-      });
+    return items;
+  }, []);
 
-      baseItems.push({
-        href: '/settings',
-        label: 'Settings',
-        icon: SettingsIcon,
-        description: 'Manage your preferences',
-      });
+  /**
+   * All navigation items for mobile menu
+   */
+  const allNavItems = useMemo(() => {
+    const items = [...primaryNavItems, ...secondaryNavItems];
+    
+    if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
+      items.push(
+        {
+          href: '/profile',
+          label: 'Profile',
+          icon: User,
+          description: 'Edit your profile information',
+        },
+        {
+          href: '/settings',
+          label: 'Settings',
+          icon: SettingsIcon,
+          description: 'Manage your preferences',
+        }
+      );
     }
 
-    return baseItems;
-  }, []);
+    return items;
+  }, [primaryNavItems, secondaryNavItems]);
 
   /**
    * Check if current path matches navigation item
@@ -168,9 +184,9 @@ export const Navigation = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Primary items only */}
           <div className="hidden md:flex items-center gap-1">
-            {navigationItems.map(item => (
+            {primaryNavItems.map(item => (
               <NavigationLink
                 key={item.href}
                 href={item.href}
@@ -184,7 +200,7 @@ export const Navigation = () => {
 
           {/* User Menu and Mobile Toggle */}
           <div className="flex items-center gap-3">
-            <UserMenu user={user} />
+            <UserMenu user={user} secondaryNavItems={secondaryNavItems} />
 
             {/* Mobile menu button */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -201,7 +217,7 @@ export const Navigation = () => {
               <SheetContent side="left" className="w-72 glass border-r border-white/5 p-0">
                 <MobileNavigation
                   user={user}
-                  navigationItems={navigationItems}
+                  navigationItems={allNavItems}
                   isActiveRoute={isActiveRoute}
                   onClose={closeMobileMenu}
                 />
