@@ -1,15 +1,21 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { WhisperWithSender } from '../types';
 import { useMarkAsRead } from '../hooks/useWhispers';
 import { formatDistanceToNow } from 'date-fns';
 import { useFeatureFlag } from '@/hooks/useFeatureFlags';
-import { CheckCircle2, Clock, User, MapPin, MessageCircle, Link as LinkIcon } from 'lucide-react';
+import { 
+  CheckCircle2, Clock, User, MapPin, MessageCircle, 
+  Link as LinkIcon, ImageOff, Eye
+} from 'lucide-react';
+import { VoicePlayer } from '@/components/features/VoicePlayer';
+import { Id } from '@/lib/convex';
 
 interface WhisperCardProps {
   whisper: WhisperWithSender;
@@ -21,15 +27,51 @@ interface WhisperCardProps {
 }
 
 /**
- * WhisperCard component for displaying individual whispers
- * Shows whisper content, metadata, and provides mark as read functionality
- *
- * @param whisper - The whisper data to display
- * @param showMarkAsRead - Whether to show the mark as read button
- * @param onMarkAsRead - Optional callback when whisper is marked as read
- * @param onReply - Optional callback when user wants to reply (Echo Back)
- * @param onChain - Optional callback when user wants to add to chain
- * @param className - Additional CSS classes
+ * Image component with error fallback for whisper attachments.
+ */
+const ImageWithFallback = ({ src, alt }: { src: string; alt: string }) => {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (hasError) {
+    return (
+      <div className="mt-4 flex items-center gap-2 p-4 rounded-lg glass text-muted-foreground">
+        <ImageOff className="w-5 h-5" />
+        <span className="text-sm">Image could not be loaded</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 relative rounded-lg overflow-hidden">
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/5 animate-pulse rounded-lg" />
+      )}
+      <Image
+        src={src}
+        alt={alt}
+        width={400}
+        height={300}
+        className="w-full max-w-sm h-auto rounded-lg object-cover transition-transform duration-300 hover:scale-[1.02]"
+        priority={false}
+        onLoad={() => setIsLoading(false)}
+        onError={() => {
+          console.error('Failed to load image:', src);
+          setHasError(true);
+        }}
+      />
+    </div>
+  );
+};
+
+/**
+ * Premium WhisperCard component with glassmorphism effects.
+ * 
+ * Features:
+ * - Glass card styling with hover glow
+ * - Read/unread visual distinction
+ * - Smooth animations
+ * - Action buttons with improved styling
  */
 export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
   ({ whisper, showMarkAsRead = true, onMarkAsRead, onReply, onChain, className = '' }) => {
@@ -39,17 +81,12 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
     const isImageUploadsEnabled = useFeatureFlag('IMAGE_UPLOADS');
     const isLocationEnabled = useFeatureFlag('LOCATION_BASED_FEATURES');
 
-    /**
-     * Handles marking the whisper as read
-     * Calls the hook and optional callback
-     */
     const handleMarkAsRead = useCallback(async (e: React.MouseEvent) => {
-      e.preventDefault(); // Prevent link navigation
+      e.preventDefault();
       try {
         await markAsRead(whisper._id);
         onMarkAsRead?.(whisper._id);
       } catch (error) {
-        // Error handling is managed by the hook with toast notifications
         console.error('Failed to mark whisper as read:', error);
       }
     }, [whisper._id, markAsRead, onMarkAsRead]);
@@ -64,9 +101,6 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
       onChain?.(whisper._id);
     }, [whisper._id, onChain]);
 
-    /**
-     * Formats the timestamp for display
-     */
     const formattedTime = useMemo(() => {
       try {
         return formatDistanceToNow(new Date(whisper._creationTime), {
@@ -77,153 +111,151 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
       }
     }, [whisper._creationTime, whisper.relativeTime]);
 
-    /**
-     * Determines the card styling based on read status
-     */
-    const cardClassName = useMemo(() => {
-      const baseClasses = 'transition-all duration-200 hover:shadow-md';
-      const statusClasses = whisper.isRead
-        ? 'bg-muted/30 border-muted'
-        : 'bg-background border-border shadow-sm';
-
-      return `${baseClasses} ${statusClasses} ${className}`.trim();
-    }, [whisper.isRead, className]);
-
-    /**
-     * Determines the content styling based on read status
-     */
-    const contentClassName = useMemo(() => {
-      return whisper.isRead
-        ? 'text-muted-foreground'
-        : 'text-foreground font-medium';
-    }, [whisper.isRead]);
+    const cardVariant = whisper.isRead ? 'default' : 'interactive';
 
     return (
-      <Link href={`/whispers/${whisper._id}`} className="block">
+      <Link href={`/whispers/${whisper._id}`} className="block group">
         <Card
-          className={cardClassName}
+          variant={cardVariant}
+          className={`
+            transition-all duration-300
+            ${whisper.isRead 
+              ? 'opacity-75 hover:opacity-100' 
+              : 'border-primary/20 hover:border-primary/40'
+            }
+            ${className}
+          `}
           role="article"
           aria-label="Whisper message"
         >
-          <CardContent className="p-4">
-          <div className="space-y-3">
-            {/* Header with sender info and timestamp */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="w-4 h-4" aria-hidden="true" />
-                <span>
-                  {isConversationEvolutionEnabled &&
-                  whisper.conversationId
-                    ? whisper.senderName || 'Anonymous'
-                    : 'Anonymous'}
-                </span>
-              </div>
+          <CardContent className="p-5">
+            <div className="space-y-4">
+              {/* Header with sender info and timestamp */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  {/* Avatar placeholder */}
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center">
+                    <User className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium">
+                      {isConversationEvolutionEnabled && whisper.conversationId
+                        ? whisper.senderName || 'Anonymous'
+                        : 'Anonymous'}
+                    </span>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" aria-hidden="true" />
+                      <time dateTime={new Date(whisper._creationTime).toISOString()}>
+                        {formattedTime}
+                      </time>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" aria-hidden="true" />
-                <time dateTime={new Date(whisper._creationTime).toISOString()}>
-                  {formattedTime}
-                </time>
-              </div>
-            </div>
-
-            {/* Whisper content */}
-            <div className={`text-sm leading-relaxed ${contentClassName}`}>
-              {whisper.content}
-            </div>
-            {/* Image display */}
-            {isImageUploadsEnabled && whisper.imageUrl && (
-              <div className="mt-3">
-                <Image
-                  src={whisper.imageUrl}
-                  alt="Whisper image"
-                  width={400}
-                  height={300}
-                  className="w-full max-w-sm h-auto rounded-lg object-cover"
-                  priority={false}
-                  onError={(e) => {
-                    console.error('Failed to load image:', whisper.imageUrl);
-                    // Hide the image on error
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Location display */}
-            {isLocationEnabled && whisper.location && (
-              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" aria-hidden="true" />
-                <span>
-                  Location: {whisper.location.latitude.toFixed(4)}, {whisper.location.longitude.toFixed(4)}
-                </span>
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex justify-end pt-2 border-t border-border/50 gap-2">
-              {/* Reply / Echo Back */}
-              {isConversationEvolutionEnabled && !whisper.isOwnWhisper && onReply && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleReply}
-                  className="h-8 px-3 text-xs gap-1"
-                  aria-label="Reply to whisper"
-                >
-                  <MessageCircle className="w-3 h-3" />
-                  Echo Back
-                </Button>
-              )}
-
-              {/* Add to Chain */}
-              {isWhisperChainsEnabled && whisper.isOwnWhisper && onChain && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleChain}
-                  className="h-8 px-3 text-xs gap-1"
-                  aria-label="Add to chain"
-                >
-                  <LinkIcon className="w-3 h-3" />
-                  Chain
-                </Button>
-              )}
-
-              {showMarkAsRead && !whisper.isRead && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleMarkAsRead}
-                  disabled={isLoading}
-                  className="h-8 px-3 text-xs"
-                  aria-label={`Mark whisper as read`}
-                >
-                  {isLoading ? (
-                    'Marking...'
-                  ) : (
-                    <>
-                      <CheckCircle2
-                        className="w-3 h-3 mr-1"
-                        aria-hidden="true"
-                      />
-                      Mark as Read
-                    </>
+                {/* Status indicators */}
+                <div className="flex items-center gap-2">
+                  {!whisper.isRead && (
+                    <Badge variant="glow" size="sm" dot dotColor="bg-primary">
+                      New
+                    </Badge>
                   )}
-                </Button>
-              )}
-            </div>
-
-            {/* Read indicator */}
-            {whisper.isRead && (
-              <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
-                <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
-                <span>Read</span>
+                  {whisper.isRead && (
+                    <Badge variant="muted" size="sm">
+                      <Eye className="w-3 h-3 mr-1" />
+                      Read
+                    </Badge>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+
+              {/* Whisper content */}
+              <div className={`text-sm leading-relaxed ${whisper.isRead ? 'text-muted-foreground' : 'text-foreground'}`}>
+                {whisper.content}
+              </div>
+
+              {/* Image display */}
+              {isImageUploadsEnabled && whisper.imageUrl && (
+                <ImageWithFallback 
+                  src={whisper.imageUrl} 
+                  alt="Whisper image attachment" 
+                />
+              )}
+
+              {/* Voice Message */}
+              {whisper.audioStorageId && (
+                <div className="mt-3">
+                  <VoicePlayer
+                    storageId={whisper.audioStorageId as Id<'_storage'>}
+                    whisperId={whisper._id as Id<'whispers'>}
+                    duration={whisper.audioDuration || 0}
+                  />
+                </div>
+              )}
+
+              {/* Location display */}
+              {isLocationEnabled && whisper.location && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground glass px-3 py-2 rounded-lg w-fit">
+                  <MapPin className="w-4 h-4 text-accent" aria-hidden="true" />
+                  <span>
+                    {whisper.location.latitude.toFixed(4)}, {whisper.location.longitude.toFixed(4)}
+                  </span>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex justify-end pt-3 border-t border-white/5 gap-2">
+                {/* Reply / Echo Back */}
+                {isConversationEvolutionEnabled && !whisper.isOwnWhisper && onReply && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleReply}
+                    className="h-8 px-3 text-xs gap-1.5 hover:text-accent hover:bg-accent/10"
+                    aria-label="Reply to whisper"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Echo Back
+                  </Button>
+                )}
+
+                {/* Add to Chain */}
+                {isWhisperChainsEnabled && whisper.isOwnWhisper && onChain && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleChain}
+                    className="h-8 px-3 text-xs gap-1.5 hover:text-primary hover:bg-primary/10"
+                    aria-label="Add to chain"
+                  >
+                    <LinkIcon className="w-3.5 h-3.5" />
+                    Chain
+                  </Button>
+                )}
+
+                {/* Mark as Read */}
+                {showMarkAsRead && !whisper.isRead && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleMarkAsRead}
+                    disabled={isLoading}
+                    className="h-8 px-3 text-xs gap-1.5 hover:text-success hover:bg-success/10"
+                    aria-label="Mark whisper as read"
+                  >
+                    {isLoading ? (
+                      <span className="animate-pulse">Marking...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Mark as Read
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </Link>
     );
   }

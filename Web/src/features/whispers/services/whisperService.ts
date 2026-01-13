@@ -85,10 +85,16 @@ class WhisperService {
       }
 
       // Fetch whispers using Convex query with retry logic
-      // Note: getReceivedWhispers doesn't require userId parameter
-      const whispers = await withRetry(async () => {
-        return await convex.query(api.whispers.getReceivedWhispers);
+      // Fetch whispers using Convex query with retry logic
+      // Note: Currently limited to first page (20 items). For users with >20 whispers,
+      // pagination would need to be implemented by accepting a cursor parameter
+      // and forwarding it to paginationOpts.cursor
+      const response = await withRetry(async () => {
+        return await convex.query(api.whispers.getReceivedWhispers, { paginationOpts: { numItems: 20, cursor: null } });
       });
+
+      // Extract whispers array from paginated response
+      const whispers = response?.page ?? [];
 
       // Transform whispers to include sender information and computed fields
       const transformedWhispers = this.transformWhispersForDisplay(

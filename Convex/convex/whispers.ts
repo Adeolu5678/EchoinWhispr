@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, internalMutation } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
+import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
 
 // Send a whisper to another user
 export const sendWhisper = mutation({
@@ -35,6 +36,9 @@ export const sendWhisper = mutation({
       throw new Error('Sender not found');
     }
 
+    // Enforce rate limit (20 whispers per hour)
+    await enforceRateLimit(ctx, sender._id, 'SEND_WHISPER');
+
     // Get recipient
     const recipient = await ctx.db
       .query('users')
@@ -63,60 +67,63 @@ export const sendWhisper = mutation({
       createdAt: now,
     });
 
+    // Record rate limit action
+    await recordRateLimitedAction(ctx, sender._id, 'SEND_WHISPER');
+
     return whisperId;
   },
 });
 
-// Get whispers received by current user
+// Get whispers received by current user (with pagination)
 export const getReceivedWhispers = query({
-  args: {},
-  handler: async ctx => {
+  args: {
+    paginationOpts: v.any(), 
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return [];
-    }
+    if (!identity) throw new Error('Not authenticated');
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) {
-      return [];
-    }
+    if (!user) throw new Error('User not found');
 
-    return await ctx.db
+    const result = await ctx.db
       .query('whispers')
       .withIndex('by_recipient', q => q.eq('recipientId', user._id))
       .filter(q => q.eq(q.field('conversationId'), undefined))
       .order('desc')
-      .collect();
+      .paginate(args.paginationOpts);
+
+    return result;
   },
 });
 
-// Get whispers sent by current user
+// Get whispers sent by current user (with pagination)
 export const getSentWhispers = query({
-  args: {},
-  handler: async ctx => {
+  args: {
+    paginationOpts: v.any(),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return [];
-    }
+    if (!identity) throw new Error('Not authenticated');
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) {
-      return [];
-    }
+    if (!user) throw new Error('User not found');
 
-    return await ctx.db
+    const result = await ctx.db
       .query('whispers')
       .withIndex('by_sender', q => q.eq('senderId', user._id))
       .order('desc')
-      .collect();
+      .paginate(args.paginationOpts);
+
+    return result;
   },
 });
 
@@ -179,12 +186,14 @@ export const getUnreadWhisperCount = query({
       return 0;
     }
 
+    // OPTIMIZATION: Use .take() with a reasonable limit instead of .collect()
+    // This returns an approximate count for UI purposes without fetching all records
     const unreadWhispers = await ctx.db
       .query('whispers')
       .withIndex('by_recipient', q => q.eq('recipientId', user._id))
       .filter(q => q.eq(q.field('isRead'), false))
       .filter(q => q.eq(q.field('conversationId'), undefined))
-      .collect();
+      .take(100); // Cap at 100 for performance
 
     return unreadWhispers.length;
   },
@@ -339,3 +348,523 @@ export const getWhisperChain = query({
     return chain.sort((a, b) => (a.chainOrder || 0) - (b.chainOrder || 0));
   },
 });
+
+// ============================================================
+// QUICK WINS FEATURES
+// ============================================================
+
+// === EMOJI REACTIONS ===
+
+// Add or remove a reaction to a whisper
+export const toggleReaction = mutation({
+  args: {
+    whisperId: v.id('whispers'),
+    emoji: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const whisper = await ctx.db.get(args.whisperId);
+    if (!whisper) {
+      throw new Error('Whisper not found');
+    }
+
+    // User must be part of the whisper (sender or recipient)
+    if (whisper.senderId !== user._id && whisper.recipientId !== user._id) {
+      throw new Error('Not authorized to react to this whisper');
+    }
+
+    const reactions = whisper.reactions || [];
+    const existingIndex = reactions.findIndex(
+      r => r.userId === user._id && r.emoji === args.emoji
+    );
+    if (existingIndex >= 0) {
+      // Remove reaction (toggle off)
+      reactions.splice(existingIndex, 1);
+    } else {
+      // Add reaction
+      reactions.push({
+        userId: user._id,
+        emoji: args.emoji,
+        createdAt: Date.now(),
+      });
+    }
+
+    await ctx.db.patch(args.whisperId, { reactions });
+
+    return { success: true, added: existingIndex < 0 };
+  },
+});
+
+// === VOICE WHISPERS ===
+
+// Generate upload URL for voice message
+export const generateVoiceUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+// Send a voice whisper
+export const sendVoiceWhisper = mutation({
+  args: {
+    recipientUsername: v.string(),
+    audioStorageId: v.id('_storage'),
+    audioDuration: v.number(),
+    isVoiceModulated: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const sender = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!sender) {
+      throw new Error('Sender not found');
+    }
+
+    // Enforce rate limit for voice whispers
+    await enforceRateLimit(ctx, sender._id, 'SEND_WHISPER');
+    await recordRateLimitedAction(ctx, sender._id, 'SEND_WHISPER');
+
+    const recipient = await ctx.db
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', args.recipientUsername))
+      .first();
+
+    if (!recipient) {
+      throw new Error('Recipient not found');
+    }
+
+    if (sender._id === recipient._id) {
+      throw new Error('Cannot send whisper to yourself');
+    }
+
+    const whisperId = await ctx.db.insert('whispers', {
+      senderId: sender._id,
+      recipientId: recipient._id,
+      content: "🎤 Voice message", // Placeholder content
+      audioStorageId: args.audioStorageId,
+      audioDuration: args.audioDuration,
+      isVoiceModulated: args.isVoiceModulated,
+      isRead: false,
+      createdAt: Date.now(),
+    });
+
+    return whisperId;
+  },
+});
+
+// Get voice message URL
+export const getVoiceMessageUrl = query({
+  args: {
+    storageId: v.id('_storage'),
+    whisperId: v.id('whispers'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const whisper = await ctx.db.get(args.whisperId);
+    if (!whisper || whisper.audioStorageId !== args.storageId) {
+      throw new Error('Voice message not found');
+    }
+
+    if (whisper.senderId !== user._id && whisper.recipientId !== user._id) {
+      throw new Error('Not authorized to access this voice message');
+    }
+
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
+// === MESSAGE SCHEDULING ===
+
+// Schedule a whisper for future delivery
+export const scheduleWhisper = mutation({
+  args: {
+    recipientUsername: v.string(),
+    content: v.string(),
+    scheduledFor: v.number(), // Timestamp
+    imageUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (args.content.length > 280) {
+      throw new Error('Whisper content must be 280 characters or less');
+    }
+
+    if (args.scheduledFor <= Date.now()) {
+      throw new Error('Scheduled time must be in the future');
+    }
+
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const sender = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!sender) {
+      throw new Error('Sender not found');
+    }
+
+    const recipient = await ctx.db
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', args.recipientUsername))
+      .first();
+
+    if (!recipient) {
+      throw new Error('Recipient not found');
+    }
+
+    if (sender._id === recipient._id) {
+      throw new Error('Cannot send whisper to yourself');
+    }
+
+    const whisperId = await ctx.db.insert('whispers', {
+      senderId: sender._id,
+      recipientId: recipient._id,
+      content: args.content.trim(),
+      imageUrl: args.imageUrl,
+      isRead: false,
+      createdAt: Date.now(),
+      scheduledFor: args.scheduledFor,
+      isScheduled: true,
+    });
+
+    return whisperId;
+  },
+});
+
+// Get scheduled whispers for the current user
+export const getScheduledWhispers = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    return await ctx.db
+      .query('whispers')
+      .withIndex('by_scheduled', q => q.eq('isScheduled', true))
+      .filter(q => 
+        q.and(
+          q.eq(q.field('senderId'), user._id),
+          q.gt(q.field('scheduledFor'), Date.now())
+        )
+      )
+      .order('asc')
+      .collect();
+  },
+});
+
+// Process scheduled whispers (Internal CRON job)
+export const processScheduledWhispers = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+
+    const dueWhispers = await ctx.db
+      .query('whispers')
+      .withIndex('by_scheduled', q => q.eq('isScheduled', true))
+      .filter(q => q.lte(q.field('scheduledFor'), now))
+      .collect();
+
+    for (const whisper of dueWhispers) {
+      await ctx.db.patch(whisper._id, {
+        isScheduled: false,
+        scheduledFor: undefined,
+      });
+    }
+
+    return { processed: dueWhispers.length };
+  },
+});
+
+// Cancel a scheduled whisper
+export const cancelScheduledWhisper = mutation({
+  args: {
+    whisperId: v.id('whispers'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const whisper = await ctx.db.get(args.whisperId);
+    if (!whisper) {
+      throw new Error('Whisper not found');
+    }
+
+    if (whisper.senderId !== user._id) {
+      throw new Error('Not authorized to cancel this whisper');
+    }
+
+    if (!whisper.isScheduled) {
+      throw new Error('This whisper is not scheduled');
+    }
+
+    await ctx.db.delete(args.whisperId);
+
+    return { success: true };
+  },
+});
+
+// === ARCHIVING ===
+
+// Archive a whisper
+export const archiveWhisper = mutation({
+  args: {
+    whisperId: v.id('whispers'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const whisper = await ctx.db.get(args.whisperId);
+    if (!whisper) {
+      throw new Error('Whisper not found');
+    }
+
+    if (whisper.recipientId !== user._id && whisper.senderId !== user._id) {
+      throw new Error('Not authorized to archive this whisper');
+    }
+
+    await ctx.db.patch(args.whisperId, { isArchived: true });
+
+    return { success: true };
+  },
+});
+
+// Unarchive a whisper
+export const unarchiveWhisper = mutation({
+  args: {
+    whisperId: v.id('whispers'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const whisper = await ctx.db.get(args.whisperId);
+    if (!whisper) {
+      throw new Error('Whisper not found');
+    }
+
+    if (whisper.recipientId !== user._id && whisper.senderId !== user._id) {
+      throw new Error('Not authorized to unarchive this whisper');
+    }
+
+    await ctx.db.patch(args.whisperId, { isArchived: false });
+
+    return { success: true };
+  },
+});
+
+// Get archived whispers
+export const getArchivedWhispers = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    // OPTIMIZATION: Add .take() limits to prevent unbounded fetches
+    const [received, sent] = await Promise.all([
+      ctx.db
+        .query('whispers')
+        .withIndex('by_recipient', q => q.eq('recipientId', user._id))
+        .filter(q => q.eq(q.field('isArchived'), true))
+        .take(50),
+      ctx.db
+        .query('whispers')
+        .withIndex('by_sender', q => q.eq('senderId', user._id))
+        .filter(q => q.eq(q.field('isArchived'), true))
+        .take(50),
+    ]);
+
+    return [...received, ...sent].sort((a, b) => b.createdAt - a.createdAt);
+  },
+});
+
+// === TYPING INDICATORS ===
+
+// Set typing status for a conversation between two users
+export const setTypingStatus = mutation({
+  args: {
+    otherUserId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return;
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return;
+    }
+
+    // Get or create conversation
+    const participantKey = [user._id, args.otherUserId].sort().join('-');
+    const conversation = await ctx.db
+      .query('conversations')
+      .withIndex('by_participant_key', q => q.eq('participantKey', participantKey))
+      .first();
+
+    if (!conversation) {
+      // No conversation yet, don't create typing indicator
+      return;
+    }
+
+    // Check for existing indicator
+    const existing = await ctx.db
+      .query('typingIndicators')
+      .withIndex('by_conversation', q => q.eq('conversationId', conversation._id))
+      .filter(q => q.eq(q.field('userId'), user._id))
+      .first();
+
+    const now = Date.now();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { lastTypingAt: now });
+    } else {
+      await ctx.db.insert('typingIndicators', {
+        conversationId: conversation._id,
+        userId: user._id,
+        lastTypingAt: now,
+      });
+    }
+  },
+});
+
+// Get typing status for a conversation
+export const getTypingStatus = query({
+  args: {
+    conversationId: v.id('conversations'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { isTyping: false };
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return { isTyping: false };
+    }
+
+    // Get typing indicators from last 5 seconds, excluding current user
+    const fiveSecondsAgo = Date.now() - 5000;
+
+    const typing = await ctx.db
+      .query('typingIndicators')
+      .withIndex('by_conversation', q => q.eq('conversationId', args.conversationId))
+      .filter(q => 
+        q.and(
+          q.gt(q.field('lastTypingAt'), fiveSecondsAgo),
+          q.neq(q.field('userId'), user._id)
+        )
+      )
+      .first();
+
+    return { isTyping: !!typing };
+  },
+});
+

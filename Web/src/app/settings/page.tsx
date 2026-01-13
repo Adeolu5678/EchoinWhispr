@@ -1,13 +1,76 @@
 'use client';
 
+import { useState } from 'react';
 import { useFeatureFlag } from '@/hooks/useFeatureFlags';
 import { MysterySettings } from '@/features/whispers/components/MysterySettings';
 import { NotificationSettings } from '@/features/profile/components/NotificationSettings';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { RequestAdminModal } from '@/features/admin/components';
+import { useAdminData } from '@/features/admin/hooks';
+import { Settings as SettingsIcon, Eye, Moon, Sun, Monitor, Heart, Briefcase, GraduationCap, Palette, Shield, Crown, ArrowRight } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/lib/convex';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 export default function SettingsPage() {
+  const { toast } = useToast();
+  const [adminModalOpen, setAdminModalOpen] = useState(false);
   const isMysteryWhispersEnabled = useFeatureFlag('MYSTERY_WHISPERS');
   const isPushNotificationsEnabled = useFeatureFlag('PUSH_NOTIFICATIONS');
+  const { isAdmin, myRequestStatus } = useAdminData();
+
+  const preferences = useQuery(api.users.getPreferences);
+  const resonancePrefs = useQuery(api.resonance.getResonancePreferences);
+  const lifePhases = useQuery(api.resonance.getLifePhases);
+  const currentUser = useQuery(api.users.getCurrentUser);
+
+  const updatePreferences = useMutation(api.users.updatePreferences);
+  const updateResonancePrefs = useMutation(api.resonance.updateResonancePreferences);
+  const updateLifePhase = useMutation(api.resonance.updateLifePhase);
+  const updateMentorship = useMutation(api.resonance.updateMentorshipPreferences);
+
+  const handlePreferenceChange = async (key: string, value: unknown) => {
+    try {
+      await updatePreferences({ [key]: value });
+      toast({ title: "Settings saved" });
+    } catch (error) {
+      toast({ title: "Failed to save", variant: "destructive" });
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleResonanceChange = async (updates: any) => {
+    try {
+      await updateResonancePrefs(updates);
+      toast({ title: "Preferences updated" });
+    } catch (error) {
+      toast({ title: "Failed to update", variant: "destructive" });
+    }
+  };
+
+  const handleLifePhaseChange = async (phase: string) => {
+    try {
+      await updateLifePhase({ lifePhase: phase });
+      toast({ title: "Life phase updated" });
+    } catch (error) {
+      toast({ title: "Failed to update", variant: "destructive" });
+    }
+  };
+
+  const handleMentorshipChange = async (key: string, value: boolean) => {
+    try {
+      await updateMentorship({ [key]: value });
+      toast({ title: "Mentorship settings updated" });
+    } catch (error) {
+      toast({ title: "Failed to update", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
@@ -22,31 +85,235 @@ export default function SettingsPage() {
           </div>
         </header>
 
-        <div className="space-y-6">
-          {isMysteryWhispersEnabled && (
-            <div className="glass rounded-2xl border border-white/10 overflow-hidden p-1">
-              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6">
-                <MysterySettings />
-              </div>
-            </div>
-          )}
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-secondary/50 p-1 rounded-xl">
+            <TabsTrigger value="general" className="rounded-lg">
+              <Palette className="w-4 h-4 mr-2" />
+              General
+            </TabsTrigger>
+            <TabsTrigger value="resonance" className="rounded-lg">
+              <Heart className="w-4 h-4 mr-2" />
+              Resonance
+            </TabsTrigger>
+            <TabsTrigger value="privacy" className="rounded-lg">
+              <Shield className="w-4 h-4 mr-2" />
+              Privacy
+            </TabsTrigger>
+          </TabsList>
 
-          {isPushNotificationsEnabled && (
-            <div className="glass rounded-2xl border border-white/10 overflow-hidden p-1">
-              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6">
-                <NotificationSettings />
+          {/* General Settings */}
+          <TabsContent value="general" className="space-y-4">
+            <Card className="glass border-white/10 p-6">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Palette className="w-5 h-5 text-purple-400" />
+                Appearance
+              </h2>
+              <div>
+                <Label className="mb-3 block">Theme</Label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={preferences?.themePreference === 'light' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handlePreferenceChange('themePreference', 'light')}
+                  >
+                    <Sun className="w-4 h-4 mr-2" />
+                    Light
+                  </Button>
+                  <Button
+                    variant={preferences?.themePreference === 'dark' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handlePreferenceChange('themePreference', 'dark')}
+                  >
+                    <Moon className="w-4 h-4 mr-2" />
+                    Dark
+                  </Button>
+                  <Button
+                    variant={!preferences?.themePreference || preferences?.themePreference === 'system' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handlePreferenceChange('themePreference', 'system')}
+                  >
+                    <Monitor className="w-4 h-4 mr-2" />
+                    System
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-          
-          {!isMysteryWhispersEnabled && !isPushNotificationsEnabled && (
-             <div className="glass rounded-2xl border border-white/10 overflow-hidden p-1">
-              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6 text-center text-muted-foreground">
-                No settings available at this time.
+            </Card>
+
+            {isMysteryWhispersEnabled && (
+              <div className="glass rounded-2xl border border-white/10 overflow-hidden p-1">
+                <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6">
+                  <MysterySettings />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+
+            {isPushNotificationsEnabled && (
+              <div className="glass rounded-2xl border border-white/10 overflow-hidden p-1">
+                <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6">
+                  <NotificationSettings />
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Resonance Settings */}
+          <TabsContent value="resonance" className="space-y-4">
+            <Card className="glass border-white/10 p-6">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-indigo-400" />
+                Life Phase
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Help us match you with people in similar life stages
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {lifePhases?.map((phase) => (
+                  <Badge
+                    key={phase.id}
+                    variant={currentUser?.lifePhase === phase.id ? 'default' : 'secondary'}
+                    className="cursor-pointer"
+                    onClick={() => handleLifePhaseChange(phase.id)}
+                  >
+                    {phase.label}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+
+            <Card className="glass border-white/10 p-6">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Heart className="w-5 h-5 text-pink-400" />
+                Matching Preferences
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Similar Mood</Label>
+                    <p className="text-xs text-muted-foreground">Match with people feeling the same way</p>
+                  </div>
+                  <Switch
+                    checked={resonancePrefs?.preferSimilarMood ?? true}
+                    onCheckedChange={(checked) => handleResonanceChange({ ...resonancePrefs, preferSimilarMood: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Complementary Vibes</Label>
+                    <p className="text-xs text-muted-foreground">Match with people who balance your mood</p>
+                  </div>
+                  <Switch
+                    checked={resonancePrefs?.preferComplementaryMood ?? false}
+                    onCheckedChange={(checked) => handleResonanceChange({ ...resonancePrefs, preferComplementaryMood: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Same Life Phase</Label>
+                    <p className="text-xs text-muted-foreground">Connect with people at similar life stages</p>
+                  </div>
+                  <Switch
+                    checked={resonancePrefs?.matchLifePhase ?? true}
+                    onCheckedChange={(checked) => handleResonanceChange({ ...resonancePrefs, matchLifePhase: checked })}
+                  />
+                </div>
+              </div>
+            </Card>
+
+            <Card className="glass border-white/10 p-6">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <GraduationCap className="w-5 h-5 text-green-400" />
+                Mentorship
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Seeking a Mentor</Label>
+                    <p className="text-xs text-muted-foreground">Get matched with people willing to guide</p>
+                  </div>
+                  <Switch
+                    checked={currentUser?.seekingMentorship ?? false}
+                    onCheckedChange={(checked) => handleMentorshipChange('seekingMentorship', checked)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Offering Mentorship</Label>
+                    <p className="text-xs text-muted-foreground">Help guide others on their journey</p>
+                  </div>
+                  <Switch
+                    checked={currentUser?.offeringMentorship ?? false}
+                    onCheckedChange={(checked) => handleMentorshipChange('offeringMentorship', checked)}
+                  />
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Privacy Settings */}
+          <TabsContent value="privacy" className="space-y-4">
+            <Card className="glass border-white/10 p-6">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Eye className="w-5 h-5 text-cyan-400" />
+                Message Privacy
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Read Receipts</Label>
+                    <p className="text-xs text-muted-foreground">Let others know when you&apos;ve read their messages</p>
+                  </div>
+                  <Switch
+                    checked={preferences?.readReceiptsEnabled ?? true}
+                    onCheckedChange={(checked) => handlePreferenceChange('readReceiptsEnabled', checked)}
+                  />
+                </div>
+              </div>
+            </Card>
+
+            {/* Admin Access Section */}
+            <Card className="glass border-white/10 p-6">
+              <h2 className="font-semibold mb-4 flex items-center gap-2">
+                <Crown className="w-5 h-5 text-amber-400" />
+                Admin Access
+              </h2>
+              {isAdmin ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    You have admin privileges. Access the admin dashboard to monitor whispers.
+                  </p>
+                  <Link href="/admin">
+                    <Button className="gap-2">
+                      <Shield className="w-4 h-4" />
+                      Open Admin Dashboard
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+                </div>
+              ) : myRequestStatus?.status === 'pending' ? (
+                <div className="space-y-3">
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                    <p className="text-sm text-amber-400">
+                      Your admin request is pending review.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Request admin privileges to monitor all whispers and see sender/recipient details.
+                  </p>
+                  <Button onClick={() => setAdminModalOpen(true)} variant="outline" className="gap-2">
+                    <Shield className="w-4 h-4" />
+                    Request Admin Access
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Admin Request Modal */}
+        <RequestAdminModal open={adminModalOpen} onOpenChange={setAdminModalOpen} />
       </div>
     </div>
   );

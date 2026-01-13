@@ -13,13 +13,23 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as admin from "../admin.js";
+import type * as adminAuth from "../adminAuth.js";
+import type * as analytics from "../analytics.js";
 import type * as conversations from "../conversations.js";
+import type * as dailyPrompts from "../dailyPrompts.js";
+import type * as echoChambers from "../echoChambers.js";
 import type * as featureFlags from "../featureFlags.js";
 import type * as fileStorage from "../fileStorage.js";
 import type * as friends from "../friends.js";
+import type * as matchmaking from "../matchmaking.js";
 import type * as mysteryWhispers from "../mysteryWhispers.js";
 import type * as profiles from "../profiles.js";
+import type * as rateLimits from "../rateLimits.js";
+import type * as resonance from "../resonance.js";
+import type * as skillExchange from "../skillExchange.js";
 import type * as subscriptions from "../subscriptions.js";
+import type * as unmasking from "../unmasking.js";
 import type * as users from "../users.js";
 import type * as webhooks from "../webhooks.js";
 import type * as whispers from "../whispers.js";
@@ -33,13 +43,23 @@ import type * as whispers from "../whispers.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
+  adminAuth: typeof adminAuth;
+  analytics: typeof analytics;
   conversations: typeof conversations;
+  dailyPrompts: typeof dailyPrompts;
+  echoChambers: typeof echoChambers;
   featureFlags: typeof featureFlags;
   fileStorage: typeof fileStorage;
   friends: typeof friends;
+  matchmaking: typeof matchmaking;
   mysteryWhispers: typeof mysteryWhispers;
   profiles: typeof profiles;
+  rateLimits: typeof rateLimits;
+  resonance: typeof resonance;
+  skillExchange: typeof skillExchange;
   subscriptions: typeof subscriptions;
+  unmasking: typeof unmasking;
   users: typeof users;
   webhooks: typeof webhooks;
   whispers: typeof whispers;
