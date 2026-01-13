@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useClerk } from '@clerk/nextjs';
-import { User, Settings, LogOut, ChevronDown, Sparkles } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown, Sparkles, LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/features/subscription/hooks/useSubscription';
 import { SubscriptionModal } from '@/features/subscription/components/SubscriptionModal';
@@ -22,6 +22,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 interface UserMenuProps {
   /** The authenticated user object from Clerk */
   user: ReturnType<typeof useUser>['user'];
+  /** Secondary navigation items to show in dropdown */
+  secondaryNavItems?: Array<{
+    href: string;
+    label: string;
+    icon: LucideIcon;
+    description: string;
+  }>;
 }
 
 /**
@@ -42,7 +49,7 @@ interface UserMenuProps {
  * @param props - The component props
  * @returns {JSX.Element} The rendered user menu
  */
-export const UserMenu = ({ user }: UserMenuProps) => {
+export const UserMenu = ({ user, secondaryNavItems = [] }: UserMenuProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const router = useRouter();
   const { signOut } = useClerk();
@@ -173,6 +180,26 @@ export const UserMenu = ({ user }: UserMenuProps) => {
                 <Sparkles className="h-4 w-4" />
                 <span>Upgrade to Premium</span>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+
+          {/* Secondary Navigation Items */}
+          {secondaryNavItems.length > 0 && (
+            <>
+              {secondaryNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <DropdownMenuItem
+                    key={item.href}
+                    className="flex items-center space-x-2 cursor-pointer"
+                    onClick={() => router.push(item.href)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </DropdownMenuItem>
+                );
+              })}
               <DropdownMenuSeparator />
             </>
           )}

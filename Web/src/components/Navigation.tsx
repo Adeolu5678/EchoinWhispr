@@ -4,7 +4,10 @@ import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { Menu, Home, Send, Inbox, Users, User, Sparkles, Settings as SettingsIcon } from 'lucide-react';
+import { 
+  Menu, Home, Send, Inbox, Users, User, Sparkles, 
+  Settings as SettingsIcon, Compass, Radio, Lightbulb, BarChart3 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NavigationLink } from './NavigationLink';
 import { UserMenu } from './UserMenu';
@@ -15,60 +18,79 @@ import { FEATURE_FLAGS } from '@/config/featureFlags';
 /**
  * Main navigation component for the EchoinWhispr web application.
  *
- * This component provides the primary navigation structure for authenticated users,
- * including desktop and mobile navigation options. It displays the app logo,
- * navigation links, and user menu based on authentication status.
- *
  * Features:
+ * - Premium glass morphism styling with gradient accents
  * - Responsive design with mobile hamburger menu
+ * - Animated logo with glow effect
+ * - Active route highlighting with glow indicators
  * - Integration with Clerk authentication
- * - Active route highlighting
- * - Mobile-first approach with collapsible navigation
- * - Performance optimizations with React.memo and useCallback
- *
- * @returns {JSX.Element} The rendered navigation component
  */
 export const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
 
-  /**
-   * Close mobile menu
-   * Uses useCallback for performance optimization
-   */
   const closeMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
   }, []);
 
   /**
-   * Navigation items configuration
-   * Memoized to prevent unnecessary re-renders
+   * Primary navigation items - shown directly in header
    */
-  const navigationItems = useMemo(() => {
-    const baseItems = [
+  const primaryNavItems = useMemo(() => [
+    {
+      href: '/',
+      label: 'Home',
+      icon: Home,
+      description: 'View received whispers and home feed',
+    },
+    {
+      href: '/discover',
+      label: 'Discover',
+      icon: Compass,
+      description: 'Find new connections based on interests',
+    },
+    {
+      href: '/compose',
+      label: 'Compose',
+      icon: Send,
+      description: 'Create and send new whispers',
+    },
+    {
+      href: '/inbox',
+      label: 'Inbox',
+      icon: Inbox,
+      description: 'View all received whispers',
+    },
+  ], []);
+
+  /**
+   * Secondary navigation items - shown in UserMenu dropdown
+   */
+  const secondaryNavItems = useMemo(() => {
+    const items = [
       {
-        href: '/',
-        label: 'Home',
-        icon: Home,
-        description: 'View received whispers and home feed',
+        href: '/chambers',
+        label: 'Chambers',
+        icon: Radio,
+        description: 'Anonymous group conversations',
       },
       {
-        href: '/compose',
-        label: 'Compose',
-        icon: Send,
-        description: 'Create and send new whispers',
+        href: '/skills',
+        label: 'Skills',
+        icon: Lightbulb,
+        description: 'Teach and learn from others',
       },
       {
-        href: '/inbox',
-        label: 'Inbox',
-        icon: Inbox,
-        description: 'View all received whispers',
+        href: '/insights',
+        label: 'Insights',
+        icon: BarChart3,
+        description: 'View your connection analytics',
       },
     ];
 
     if (FEATURE_FLAGS.FRIENDS) {
-      baseItems.push({
+      items.push({
         href: '/friends',
         label: 'Friends',
         icon: Users,
@@ -76,28 +98,37 @@ export const Navigation = () => {
       });
     }
 
-    if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
-      baseItems.push({
-        href: '/profile',
-        label: 'Profile',
-        icon: User,
-        description: 'Edit your profile information',
-      });
-
-      baseItems.push({
-        href: '/settings',
-        label: 'Settings',
-        icon: SettingsIcon,
-        description: 'Manage your preferences',
-      });
-    }
-
-    return baseItems;
+    return items;
   }, []);
 
   /**
+   * All navigation items for mobile menu
+   */
+  const allNavItems = useMemo(() => {
+    const items = [...primaryNavItems, ...secondaryNavItems];
+    
+    if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
+      items.push(
+        {
+          href: '/profile',
+          label: 'Profile',
+          icon: User,
+          description: 'Edit your profile information',
+        },
+        {
+          href: '/settings',
+          label: 'Settings',
+          icon: SettingsIcon,
+          description: 'Manage your preferences',
+        }
+      );
+    }
+
+    return items;
+  }, [primaryNavItems, secondaryNavItems]);
+
+  /**
    * Check if current path matches navigation item
-   * Uses useCallback for performance optimization
    */
   const isActiveRoute = useCallback(
     (href: string) => {
@@ -109,17 +140,18 @@ export const Navigation = () => {
     [pathname]
   );
 
-  // Show loading state while Clerk is loading
+  // Loading state
   if (!isLoaded) {
     return (
-      <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+      <nav className="fixed top-0 w-full z-50 glass border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="h-8 w-32 bg-primary/20 animate-pulse rounded"></div>
+              <div className="h-9 w-9 bg-primary/20 animate-pulse rounded-lg" />
+              <div className="h-6 w-28 bg-primary/20 animate-pulse rounded ml-2 hidden sm:block" />
             </div>
             <div className="flex items-center space-x-4">
-              <div className="h-8 w-8 bg-primary/20 animate-pulse rounded-full"></div>
+              <div className="h-9 w-9 bg-primary/20 animate-pulse rounded-full" />
             </div>
           </div>
         </div>
@@ -133,7 +165,7 @@ export const Navigation = () => {
   }
 
   return (
-    <nav className="fixed top-0 w-full z-50 glass border-b border-white/10">
+    <nav className="fixed top-0 w-full z-50 glass md:glass border-b border-white/5 bg-background/90 md:bg-transparent backdrop-blur-lg md:backdrop-blur-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -143,16 +175,18 @@ export const Navigation = () => {
               className="flex items-center gap-2 group"
               onClick={closeMobileMenu}
             >
-              <div className="bg-primary/20 p-2 rounded-lg group-hover:bg-primary/30 transition-colors">
-                <Sparkles className="w-5 h-5 text-primary" />
+              <div className="relative bg-gradient-to-br from-primary to-accent p-2 rounded-lg shadow-glow-sm group-hover:shadow-glow transition-all duration-300 group-hover:scale-105">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold tracking-tight hidden sm:block">EchoinWhispr</span>
+              <span className="text-xl font-display font-bold tracking-tight hidden sm:block group-hover:text-gradient transition-all duration-300">
+                EchoinWhispr
+              </span>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Primary items only */}
           <div className="hidden md:flex items-center gap-1">
-            {navigationItems.map(item => (
+            {primaryNavItems.map(item => (
               <NavigationLink
                 key={item.href}
                 href={item.href}
@@ -165,8 +199,8 @@ export const Navigation = () => {
           </div>
 
           {/* User Menu and Mobile Toggle */}
-          <div className="flex items-center gap-4">
-            <UserMenu user={user} />
+          <div className="flex items-center gap-3">
+            <UserMenu user={user} secondaryNavItems={secondaryNavItems} />
 
             {/* Mobile menu button */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -174,16 +208,16 @@ export const Navigation = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden hover:bg-white/5"
+                  className="md:hidden hover:bg-white/5 h-11 w-11 touch-target"
                   aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 glass border-r border-white/10 p-0">
+              <SheetContent side="left" className="w-72 glass border-r border-white/5 p-0">
                 <MobileNavigation
                   user={user}
-                  navigationItems={navigationItems}
+                  navigationItems={allNavItems}
                   isActiveRoute={isActiveRoute}
                   onClose={closeMobileMenu}
                 />

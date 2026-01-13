@@ -51,7 +51,6 @@ export const useFriendRequests = () => {
     sender: requestData.sender ? {
       _id: requestData.sender._id,
       username: requestData.sender.username,
-      email: requestData.sender.email,
       firstName: requestData.sender.firstName,
       lastName: requestData.sender.lastName,
       friendshipId: requestData._id,
@@ -71,7 +70,6 @@ export const useFriendRequests = () => {
     recipient: requestData.recipient ? {
       _id: requestData.recipient._id,
       username: requestData.recipient.username,
-      email: requestData.recipient.email,
       firstName: requestData.recipient.firstName,
       lastName: requestData.recipient.lastName,
       friendshipId: requestData._id,

@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { enforceAdmin } from './adminAuth';
 
 /**
  * Get all feature flags.
@@ -37,7 +38,7 @@ export const getFeatureFlag = query({
 
 /**
  * Set a feature flag.
- * This should ideally be protected by an admin check in a real production app.
+ * PROTECTED: Only admins can modify feature flags.
  */
 export const setFeatureFlag = mutation({
   args: {
@@ -46,9 +47,12 @@ export const setFeatureFlag = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // In a real app, check for admin privileges here
-    // const identity = await ctx.auth.getUserIdentity();
-    // if (!isAdmin(identity)) throw new Error("Unauthorized");
+    // Enforce admin authorization
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+    await enforceAdmin(ctx, identity.subject);
 
     const existingFlag = await ctx.db
       .query('featureFlags')
@@ -81,14 +85,14 @@ export const initializeDefaultFlags = mutation({
   args: {},
   handler: async (ctx) => {
     const defaults = [
-      { name: 'CONVERSATION_EVOLUTION', enabled: false, description: 'Allow whispers to evolve into conversations' },
-      { name: 'IMAGE_UPLOADS', enabled: false, description: 'Allow image uploads in whispers and messages' },
-      { name: 'PROFILE_PICTURES', enabled: false, description: 'Allow users to upload profile pictures' },
-      { name: 'USER_PROFILE_EDITING', enabled: false, description: 'Allow users to edit their profiles' },
-      { name: 'PUSH_NOTIFICATIONS', enabled: true, description: 'Enable push notification infrastructure' },
-      { name: 'LOCATION_BASED_FEATURES', enabled: true, description: 'Enable location-based feature infrastructure' },
-      { name: 'WHISPER_CHAINS', enabled: false, description: 'Allow users to reply to their own whispers' },
-      { name: 'MYSTERY_WHISPERS', enabled: false, description: 'Allow sending whispers to random users' },
+      { name: 'CONVERSATION_EVOLUTION', enabled: true, description: 'Allow whispers to evolve into conversations' },
+      { name: 'IMAGE_UPLOADS', enabled: true, description: 'Allow image uploads in whispers and messages' },
+      { name: 'PROFILE_PICTURES', enabled: true, description: 'Allow users to upload profile pictures' },
+      { name: 'USER_PROFILE_EDITING', enabled: true, description: 'Allow users to edit their profiles' },
+      { name: 'PUSH_NOTIFICATIONS', enabled: false, description: 'Enable push notification infrastructure' },
+      { name: 'LOCATION_BASED_FEATURES', enabled: false, description: 'Enable location-based feature infrastructure' },
+      { name: 'WHISPER_CHAINS', enabled: true, description: 'Allow users to reply to their own whispers' },
+      { name: 'MYSTERY_WHISPERS', enabled: true, description: 'Allow sending whispers to random users' },
       { name: 'FRIENDS', enabled: true, description: 'Enable friend management features' },
     ];
 

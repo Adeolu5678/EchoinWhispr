@@ -14,7 +14,6 @@ export type UserId = string;
 export interface FriendUser {
   _id: UserId;
   username: string;
-  email: string;
   firstName?: string;
   lastName?: string;
   avatarUrl?: string;
@@ -69,7 +68,6 @@ export interface Friend {
 export interface UserSearchResult {
   _id: UserId;
   username: string;
-  email: string;
   firstName?: string;
   lastName?: string;
 }

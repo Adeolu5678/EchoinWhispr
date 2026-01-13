@@ -1,23 +1,23 @@
 # EchoinWhispr
 
-A fully decentralized social dApp on Hedera for anonymous persona-based connections, bridging the Web3-Web2 divide with end-to-end encryption, HCS routing, and IPFS storage.
+A social application for anonymous persona-based connections, featuring real-time messaging, interest-based matchmaking, and private conversations with Convex as the backend.
 
 ## Overview
 
-EchoinWhispr is a decentralized social application that enables trust by design through immutable smart contracts, anonymous merit-based networking, and a decentralized architecture without central servers. It targets Web3 echo chamber users, Web2 intimidated users, and real-world wall users by providing a Web2-friendly UX with powerful Web3 privacy features.
+EchoinWhispr is a social application that enables trust-based connections through anonymous merit-based networking. It provides a familiar UX with powerful privacy features, targeting users who want meaningful connections without revealing their identity until they choose to.
 
 ## Key Features
 
-- **Hedera Wallet Authentication**: Secure, decentralized identity management
+- **Clerk Authentication**: Secure identity management
 - **Persona Management**: Anonymous profiles based on career, interests, and mood
-- **Subscription Service**: HTS token-based premium features
+- **Premium Features**: Subscription-based enhancements
 - **Search & Matching**: Find connections by career, interests, and mood
-- **Anonymous Conversations**: End-to-end encrypted messaging with rich media support
-- **Decentralized Storage**: IPFS for content, HCS for routing, no central servers
+- **Anonymous Conversations**: Private messaging with rich media support
+- **Real-time Backend**: Powered by Convex for live updates
 
 ## Project Structure
 
-```
+```bash
 EchoinWhispr/
 ├── Web/                    # Next.js web application
 │   └── Tailored Instructions/
@@ -34,13 +34,17 @@ EchoinWhispr/
 
 ## Technology Stack
 
-- **Blockchain**: Hedera (Smart Contracts, Consensus Service, Token Service)
-- **Frontend**: Next.js (Web), React Native with Expo (Mobile)
-- **Storage**: IPFS/Filecoin for decentralized content storage
-- **Encryption**: ECIES for end-to-end encryption
-- **Authentication**: Hedera WalletConnect
+- **Frontend**: Next.js (Web), React Native with Expo (Mobile), Flutter (Learning)
+- **Backend**: Convex (Real-time database and API)
+- **Authentication**: Clerk
 - **Package Manager**: pnpm (Monorepo management)
-- **Language**: TypeScript, Solidity
+- **Language**: TypeScript (primary), Dart (Flutter)
+- **Styling**: Tailwind CSS (Web)
+
+## Current Status (2026)
+
+- **Web**: Production-ready, mobile-responsive PWA-like experience.
+- **Mobile**: Native apps in development.
 
 ## Getting Started
 
@@ -58,7 +62,7 @@ EchoinWhispr/
    pnpm install
    ```
 
-2. Set up environment variables (see individual READMEs for details)
+2. Set up environment variables for each platform (see platform-specific READMEs)
 
 ### Development Scripts
 

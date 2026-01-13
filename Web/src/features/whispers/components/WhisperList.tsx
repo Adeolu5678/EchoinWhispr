@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { WhisperCard } from './WhisperCard';
 import { EmptyWhisperState } from './EmptyWhisperState';
 import { useReceivedWhispers } from '../hooks/useWhispers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { WhisperListSkeleton } from '@/components/ui/skeletons';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { WhisperWithSender } from '../types';
 
@@ -81,27 +83,12 @@ export const WhisperList: React.FC<WhisperListProps> = React.memo(
     );
 
     /**
-     * Memoized loading skeleton component
+     * Memoized loading skeleton component using shared skeletons
      */
     const LoadingSkeleton = useMemo(
       () => (
-        <div className="space-y-4" role="status" aria-label="Loading whispers">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="h-4 bg-muted rounded w-24" />
-                    <div className="h-3 bg-muted rounded w-16" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-muted rounded w-full" />
-                    <div className="h-4 bg-muted rounded w-3/4" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div role="status" aria-label="Loading whispers">
+          <WhisperListSkeleton count={3} />
         </div>
       ),
       []
@@ -242,19 +229,49 @@ export const WhisperList: React.FC<WhisperListProps> = React.memo(
           </Button>
         </div>
 
-        <div className="space-y-4" role="list" aria-label="Whispers list">
-          {whispers.map(whisper => (
-            <div key={whisper._id.toString()} role="listitem">
-              <WhisperCard
-                whisper={whisper}
-                showMarkAsRead={showMarkAsRead}
-                onMarkAsRead={handleWhisperMarkAsRead}
-                onReply={onReply}
-                onChain={onChain}
-              />
-            </div>
-          ))}
-        </div>
+        <AnimatePresence mode="popLayout">
+          <motion.div 
+            className="space-y-4" 
+            role="list" 
+            aria-label="Whispers list"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: {
+                transition: {
+                  staggerChildren: 0.08,
+                },
+              },
+            }}
+          >
+            {whispers.map((whisper) => (
+              <motion.div 
+                key={whisper._id.toString()} 
+                role="listitem"
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { 
+                    opacity: 1, 
+                    y: 0, 
+                    transition: { 
+                      duration: 0.4, 
+                      ease: [0.25, 0.1, 0.25, 1] 
+                    } 
+                  },
+                }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <WhisperCard
+                  whisper={whisper}
+                  showMarkAsRead={showMarkAsRead}
+                  onMarkAsRead={handleWhisperMarkAsRead}
+                  onReply={onReply}
+                  onChain={onChain}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </div>
     );
   }

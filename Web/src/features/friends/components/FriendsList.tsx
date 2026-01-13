@@ -1,7 +1,9 @@
 'use client';
 
+import { motion, AnimatePresence } from 'framer-motion';
 import { Users } from 'lucide-react';
 import { FriendCard } from './FriendCard';
+import { FriendListSkeleton } from '@/components/ui/skeletons';
 import type { FriendListProps } from '../types';
 
 /**
@@ -9,7 +11,7 @@ import type { FriendListProps } from '../types';
  *
  * Shows a scrollable list of FriendCard components, handles loading states,
  * and displays appropriate empty state messages. Uses responsive design
- * and proper spacing.
+ * and proper spacing. Features staggered entrance animations.
  *
  * @param friends - Array of friend data to display
  * @param onRemoveFriend - Callback function to handle friend removal
@@ -18,38 +20,67 @@ import type { FriendListProps } from '../types';
 export const FriendsList = ({ friends, onRemoveFriend, isLoading }: FriendListProps) => {
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, index) => (
-          <div key={index} className="animate-pulse">
-            <div className="h-20 bg-gray-200 rounded-lg"></div>
-          </div>
-        ))}
+      <div role="status" aria-label="Loading friends">
+        <FriendListSkeleton count={3} />
       </div>
     );
   }
 
   if (friends.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Users className="h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No friends yet</h3>
-        <p className="text-gray-500 max-w-sm">
+      <motion.div 
+        className="flex flex-col items-center justify-center py-12 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <Users className="h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-medium mb-2">No friends yet</h3>
+        <p className="text-muted-foreground max-w-sm">
           Start connecting with others by sending friend requests. Your friends will appear here once they accept.
         </p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="space-y-4 max-h-96 overflow-y-auto">
-      {friends.map((friend) => (
-        <FriendCard
-          key={friend.friendshipId}
-          friend={friend}
-          onRemove={onRemoveFriend}
-          isRemoving={false} // TODO: Implement individual loading states if needed
-        />
-      ))}
-    </div>
+    <AnimatePresence mode="popLayout">
+      <motion.div 
+        className="space-y-3 max-h-96 overflow-y-auto"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          visible: {
+            transition: {
+              staggerChildren: 0.06,
+            },
+          },
+        }}
+      >
+        {friends.map((friend) => (
+          <motion.div
+            key={friend.friendshipId}
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { 
+                opacity: 1, 
+                x: 0, 
+                transition: { 
+                  duration: 0.3, 
+                  ease: [0.25, 0.1, 0.25, 1] 
+                } 
+              },
+            }}
+            exit={{ opacity: 0, x: 20 }}
+          >
+            <FriendCard
+              friend={friend}
+              onRemove={onRemoveFriend}
+              isRemoving={false}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
+    </AnimatePresence>
   );
 };

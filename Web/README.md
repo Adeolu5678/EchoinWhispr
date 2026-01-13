@@ -20,18 +20,20 @@ This Web folder contains the complete codebase for the EchoinWhispr web applicat
    Package Management: PNPM
    PNPM is used for efficient package management, especially beneficial in monorepo setups, offering speed and disk space savings.
 
-3. Core Functionality (Minimum Viable Product - MVP)
-   The initial release of the EchoinWhispr web application focuses on a lean Minimum Viable Product (MVP) to ensure rapid development and a solid foundation.
-   User Authentication: Secure user sign-up and login via Clerk.
-   Sending Whispers: Users can compose and send anonymous one-way text messages.
-   Receiving Whispers: Users can view whispers sent to them.
+3. Current Feature Status (2026)
+   The application has evolved beyond the initial MVP. Key implemented features include:
+   - **Mobile-Responsive Design**: A PWA-like experience with bottom navigation and optimized layouts for all devices.
+   - **Conversation Evolution**: The "Whisper" to "Conversation" flow is fully functional.
+   - **Admin System**: Comprehensive dashboard for role management and content moderation.
+   - **Authentication**: Usage of Clerk v6 for secure access.
+   - **UI/UX**: Refined, glassmorphic design system using Shadcn UI.
 
 4. Scalability & Future Features
-   The application is designed with a modular architecture and incorporates feature flags to enable easy integration of future functionalities without extensive refactoring. This "foundation-first" approach means that while certain advanced features are not active in the MVP, the structural elements are in place for their seamless addition in later iterations. Future features include (but are not limited to):
-   Conversation Evolution: Transitioning one-way whispers into two-way, mutually revealed conversations.
-   Image Uploads: Functionality to attach images to whispers or for profile pictures.
-   Profile Management: Comprehensive user profile customization.
-   Location-Based Features: Future integration of location-specific functionalities.
+   The application is designed with a modular architecture and incorporates feature flags to enable easy integration of future functionalities without extensive refactoring. This "foundation-first" approach means that while certain advanced features are not active in the MVP, the structural elements are in place for their seamless addition in later iterations.   Future features include (but are not limited to):
+   - **Payments**: Stripe integration for Premium subscriptions (Framework present, pending full rollout).
+   - **Native Mobile Apps**: Dedicated React Native and Flutter applications.
+   - **Advanced Location Features**: Geolocation-based discovery.
+
 
 5. Project Management & Development Workflow
    Development of the web application follows a "Human-in-the-Loop" workflow. AI agents generate code based on detailed prompts, and you, as the sole human developer, act as the project orchestrator.

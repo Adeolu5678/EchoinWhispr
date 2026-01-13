@@ -40,7 +40,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -57,9 +57,9 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[600px]">
+    <div className="flex flex-col h-[calc(100dvh-120px)] md:h-[calc(100dvh-140px)]">
       {/* Conversation Header */}
-      <Card className="mb-4">
+      <Card className="mb-4 flex-shrink-0">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <User className="h-5 w-5" />
@@ -71,9 +71,9 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
         </CardHeader>
       </Card>
 
-      {/* Messages Area */}
-      <Card className="flex-1 mb-4">
-        <CardContent className="p-4 h-96 overflow-y-auto">
+      {/* Messages Area - scrollable */}
+      <Card className="flex-1 mb-4 overflow-hidden">
+        <CardContent className="p-4 h-full overflow-y-auto scrollbar-hide">
           {messages && messages.length > 0 ? (
              <div className="space-y-4">
                {messages.map((msg: Doc<'messages'>) => (
@@ -82,7 +82,7 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
                    className={`flex ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                  >
                    <div
-                     className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                     className={`max-w-[75%] sm:max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                        msg.senderId === user?.id
                          ? 'bg-primary text-primary-foreground'
                          : 'bg-muted'
@@ -115,71 +115,78 @@ export const ConversationView: React.FC<{ conversationId: string }> = ({ convers
         </CardContent>
       </Card>
 
-      {/* Message Input */}
-      <div className="flex gap-2">
-        <Input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Type your message..."
-          className="flex-1"
-          disabled={isSending}
-        />
-        {FEATURE_FLAGS.CONVERSATION_EVOLUTION && (
-          <Button
-            onClick={() => setShowImageUpload(!showImageUpload)}
-            variant="outline"
-            size="icon"
+      {/* Message Input - sticky at bottom */}
+      <div className="flex-shrink-0 sticky bottom-0 bg-background/95 backdrop-blur-sm pt-2 pb-2 md:pb-0 safe-bottom">
+        <div className="flex gap-2">
+          <Input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your message..."
+            className="flex-1 touch-target"
             disabled={isSending}
-          >
-            <Paperclip className="h-4 w-4" />
-          </Button>
-        )}
-        <Button
-          onClick={handleSendMessage}
-          disabled={!message.trim() || isSending}
-          size="icon"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
-      {FEATURE_FLAGS.CONVERSATION_EVOLUTION && showImageUpload && (
-        <FileUpload
-          onFileUploaded={(storageId, url) => {
-            setAttachedImageUrl(url);
-            setPreviewImageUrl(url);
-            setShowImageUpload(false);
-          }}
-          onUploadError={(error) => {
-            console.error('Image upload error:', error);
-            setShowImageUpload(false);
-          }}
-          onUploadCancel={() => setShowImageUpload(false)}
-          className="mt-2"
-        />
-      )}
-      {FEATURE_FLAGS.CONVERSATION_EVOLUTION && previewImageUrl && (
-        <div className="mt-2 relative inline-block">
-          <Image
-            src={previewImageUrl}
-            alt="Preview"
-            width={100}
-            height={100}
-            className="rounded-md object-cover"
           />
+          {FEATURE_FLAGS.CONVERSATION_EVOLUTION && (
+            <Button
+              onClick={() => setShowImageUpload(!showImageUpload)}
+              variant="outline"
+              size="icon"
+              disabled={isSending}
+              className="touch-target"
+              aria-label={showImageUpload ? 'Close image upload' : 'Attach image'}
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
+          )}
           <Button
-            onClick={() => {
-              setAttachedImageUrl(undefined);
-              setPreviewImageUrl(undefined);
-            }}
-            variant="destructive"
-            size="sm"
-            className="absolute -top-2 -right-2 h-6 w-6 p-0"
+            onClick={handleSendMessage}
+            disabled={(!message.trim() && !attachedImageUrl) || isSending}
+            size="icon"
+            className="touch-target"
+            aria-label="Send message"
           >
-            <X className="h-3 w-3" />
+            <Send className="h-4 w-4" />
           </Button>
         </div>
-      )}
+        {FEATURE_FLAGS.CONVERSATION_EVOLUTION && showImageUpload && (
+          <FileUpload
+            onFileUploaded={(storageId, url) => {
+              setAttachedImageUrl(url);
+              setPreviewImageUrl(url);
+              setShowImageUpload(false);
+            }}
+            onUploadError={(error) => {
+              console.error('Image upload error:', error);
+              setShowImageUpload(false);
+            }}
+            onUploadCancel={() => setShowImageUpload(false)}
+            className="mt-2"
+          />
+        )}
+        {FEATURE_FLAGS.CONVERSATION_EVOLUTION && previewImageUrl && (
+          <div className="mt-2 relative inline-block">
+            <Image
+              src={previewImageUrl}
+              alt="Preview"
+              width={100}
+              height={100}
+              className="rounded-md object-cover"
+            />
+            <Button
+              onClick={() => {
+                setAttachedImageUrl(undefined);
+                setPreviewImageUrl(undefined);
+              }}
+              variant="destructive"
+              size="sm"
+              className="absolute -top-2 -right-2 h-6 w-6 p-0"
+              aria-label="Remove attached image"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -92,17 +92,17 @@ export default function InboxPage() {
   return (
     <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
       <div className="w-full max-w-4xl">
-        <header className="flex items-center justify-between mb-8 glass p-6 rounded-2xl border border-white/10">
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8 glass p-4 sm:p-6 rounded-2xl border border-white/10">
           <div className="flex items-center gap-3">
-            <div className="bg-primary/20 p-2.5 rounded-xl">
-              <Sparkles className="w-6 h-6 text-primary" />
+            <div className="bg-primary/20 p-2 sm:p-2.5 rounded-xl">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Your Inbox</h1>
-              <p className="text-muted-foreground text-sm">Manage your whispers and conversations</p>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Your Inbox</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm hidden sm:block">Manage your whispers and conversations</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <UnreadCountBadge unreadCount={totalUnreadCount} />
             <RefreshButton
               refetchWhispers={refetchAll}
@@ -114,20 +114,22 @@ export default function InboxPage() {
         <div className="glass rounded-2xl border border-white/10 overflow-hidden p-1">
           <div className="bg-card/50 backdrop-blur-sm rounded-xl p-6">
             <Tabs defaultValue="whispers" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6 bg-secondary/50 p-1 rounded-xl">
+              <TabsList className="grid w-full grid-cols-2 mb-6 bg-secondary/50 p-1 rounded-xl h-auto">
                 <TabsTrigger 
                   value="whispers" 
-                  className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
+                  className="rounded-lg py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
                 >
                   <Inbox className="w-4 h-4 mr-2" />
-                  Whispers
+                  <span className="hidden sm:inline">Whispers</span>
+                  <span className="sm:hidden">Inbox</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="conversations" 
-                  className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
+                  className="rounded-lg py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300"
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
-                  Conversations
+                  <span className="hidden sm:inline">Conversations</span>
+                  <span className="sm:hidden">Chats</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -161,7 +163,7 @@ export default function InboxPage() {
       </div>
 
       <Dialog open={!!replyWhisperId} onOpenChange={(open) => !open && setReplyWhisperId(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[calc(100vw-32px)] max-w-md mx-auto">
           <DialogHeader>
             <DialogTitle>Echo Back</DialogTitle>
           </DialogHeader>

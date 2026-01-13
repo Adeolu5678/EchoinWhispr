@@ -2,19 +2,39 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+/**
+ * Premium Card component with glassmorphism effects.
+ * 
+ * Features:
+ * - Glass morphism background with subtle gradient
+ * - Smooth hover animations with glow effects
+ * - Consistent border styling
+ */
 const Card = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'rounded-lg border bg-card text-card-foreground shadow-sm',
-      className
-    )}
-    {...props}
-  />
-));
+  React.HTMLAttributes<HTMLDivElement> & {
+    variant?: 'default' | 'glass' | 'elevated' | 'interactive';
+  }
+>(({ className, variant = 'default', ...props }, ref) => {
+  const variants = {
+    default: 'glass-card',
+    glass: 'glass',
+    elevated: 'glass-card shadow-elevated',
+    interactive: 'glass-card-hover cursor-pointer',
+  };
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'rounded-xl text-card-foreground',
+        variants[variant],
+        className
+      )}
+      {...props}
+    />
+  );
+});
 Card.displayName = 'Card';
 
 const CardHeader = React.forwardRef<
@@ -36,7 +56,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      'text-2xl font-semibold leading-none tracking-tight',
+      'text-xl font-semibold font-display leading-none tracking-tight',
       className
     )}
     {...props}
@@ -50,7 +70,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
+    className={cn('text-sm text-muted-foreground leading-relaxed', className)}
     {...props}
   />
 ));
