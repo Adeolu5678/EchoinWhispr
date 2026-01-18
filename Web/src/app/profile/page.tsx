@@ -42,7 +42,8 @@ export default function ProfilePage() {
   const myChambers = useQuery(api.echoChambers.getMyChambers);
   const friendsList = useQuery(api.friends.getFriendsList, { limit: 10 });
   const whispersCountQuery = useQuery(api.whispers.getReceivedWhispersCount);
-  const whispersCount = whispersCountQuery ?? 0;
+  const whispersCount = whispersCountQuery?.count ?? 0;
+  const whispersCountCapped = whispersCountQuery?.capped ?? false;
 
   // Mutations
   const updateProfile = useMutation(api.users.updateUserProfile);
@@ -216,7 +217,12 @@ export default function ProfilePage() {
 
                 <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4" />
-                  Joined {new Date(currentUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  Joined {(() => {
+                    if (!currentUser?.createdAt) return 'Unknown';
+                    const date = new Date(currentUser.createdAt);
+                    if (isNaN(date.getTime())) return 'Unknown';
+                    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                  })()}
                 </div>
 
                 {/* Interests */}
@@ -291,7 +297,7 @@ export default function ProfilePage() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center mx-auto mb-2">
                 <MessageSquare className="w-5 h-5 text-white" />
               </div>
-              <p className="text-2xl font-bold">{whispersCount}</p>
+              <p className="text-2xl font-bold">{whispersCountCapped ? '99+' : whispersCount}</p>
               <p className="text-xs text-muted-foreground">Whispers</p>
             </Card>
           </Link>

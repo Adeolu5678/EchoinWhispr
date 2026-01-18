@@ -123,12 +123,13 @@ export const getReceivedWhispers = query({
 });
 
 // Get count of received whispers for current user (lightweight alternative)
+// Returns { count, capped } to indicate if results were truncated
 export const getReceivedWhispersCount = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      return 0;
+      return { count: 0, capped: false };
     }
 
     const user = await ctx.db
@@ -137,7 +138,7 @@ export const getReceivedWhispersCount = query({
       .first();
 
     if (!user) {
-      return 0;
+      return { count: 0, capped: false };
     }
 
     // Count whispers not part of a conversation (standalone whispers)
@@ -147,7 +148,10 @@ export const getReceivedWhispersCount = query({
       .filter(q => q.eq(q.field('conversationId'), undefined))
       .take(100); // Cap at 100 for performance
 
-    return whispers.length;
+    // Indicate if count was capped at 100
+    return whispers.length === 100 
+      ? { count: 100, capped: true } 
+      : { count: whispers.length, capped: false };
   },
 });
 
