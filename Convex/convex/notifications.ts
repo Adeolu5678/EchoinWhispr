@@ -215,39 +215,8 @@ export const clearAllNotifications = mutation({
 });
 
 // Internal: Create a notification (server-side only for security)
+// Accepts 'friend_accepted' type and converts it to 'friend_request' for storage
 export const createNotification = internalMutation({
-  args: {
-    userId: v.id('users'),
-    type: v.union(
-      v.literal('whisper'),
-      v.literal('friend_request'),
-      v.literal('chamber'),
-      v.literal('resonance'),
-      v.literal('system')
-    ),
-    title: v.string(),
-    message: v.string(),
-    actionUrl: v.optional(v.string()),
-    metadata: v.optional(v.any()),
-  },
-  handler: async (ctx, args) => {
-    const notificationId = await ctx.db.insert('notifications', {
-      userId: args.userId,
-      type: args.type,
-      title: args.title,
-      message: args.message,
-      read: false,
-      actionUrl: args.actionUrl,
-      metadata: args.metadata,
-      createdAt: Date.now(),
-    });
-
-    return notificationId;
-  },
-});
-
-// Internal mutation: Create notification (for internal use by other modules)
-export const createNotificationInternal = internalMutation({
   args: {
     userId: v.id('users'),
     type: v.union(
@@ -266,6 +235,7 @@ export const createNotificationInternal = internalMutation({
   handler: async (ctx, args) => {
     const notificationId = await ctx.db.insert('notifications', {
       userId: args.userId,
+      // Map friend_accepted to friend_request for storage compatibility
       type: args.type === 'friend_accepted' ? 'friend_request' : args.type,
       title: args.title,
       message: args.message,
@@ -278,6 +248,9 @@ export const createNotificationInternal = internalMutation({
     return notificationId;
   },
 });
+
+// Alias for backward compatibility - points to consolidated createNotification
+export const createNotificationInternal = createNotification;
 
 // Internal mutation: Create or update aggregated chamber notification
 export const createOrUpdateChamberNotification = internalMutation({

@@ -18,8 +18,9 @@ export const sendWhisper = mutation({
       throw new Error('Whisper content must be 280 characters or less');
     }
 
-    if (args.content.trim().length === 0) {
-      throw new Error('Whisper content cannot be empty');
+    // Allow image-only whispers - only reject if both content and imageUrl are empty
+    if (args.content.trim().length === 0 && !args.imageUrl) {
+      throw new Error('Whisper must have content or an image');
     }
 
     const identity = await ctx.auth.getUserIdentity();
