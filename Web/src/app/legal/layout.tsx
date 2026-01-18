@@ -6,11 +6,11 @@ import { ArrowLeft, FileText, Shield, Cookie, Users, Mail } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 
 const legalLinks = [
-  { href: '/legal/terms', label: 'Terms of Service', icon: FileText },
-  { href: '/legal/privacy', label: 'Privacy Policy', icon: Shield },
-  { href: '/legal/cookies', label: 'Cookie Policy', icon: Cookie },
-  { href: '/legal/guidelines', label: 'Community Guidelines', icon: Users },
-  { href: '/contact', label: 'Contact Us', icon: Mail },
+  { href: '/legal/terms', label: 'Terms of Service', shortLabel: 'Terms', icon: FileText },
+  { href: '/legal/privacy', label: 'Privacy Policy', shortLabel: 'Privacy', icon: Shield },
+  { href: '/legal/cookies', label: 'Cookie Policy', shortLabel: 'Cookies', icon: Cookie },
+  { href: '/legal/guidelines', label: 'Community Guidelines', shortLabel: 'Guidelines', icon: Users },
+  { href: '/contact', label: 'Contact Us', shortLabel: 'Contact', icon: Mail },
 ];
 
 export default function LegalLayout({
@@ -115,7 +115,7 @@ export default function LegalLayout({
                   href={link.href}
                   className="hover:text-primary transition-colors duration-200"
                 >
-                  {link.label.split(' ')[0]}
+                  {link.shortLabel}
                 </Link>
               ))}
             </div>

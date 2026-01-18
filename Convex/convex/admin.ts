@@ -128,6 +128,7 @@ export const requestAdminPromotion = mutation({
       userId: user._id,
       clerkId: identity.subject,
       reason: args.reason.trim(),
+      requestType: 'admin',
       status: 'pending',
       createdAt: Date.now(),
     });
@@ -222,14 +223,32 @@ export const approveAdminRequest = mutation({
       reviewedAt: now,
     });
 
-    // Create admin role
-    await ctx.db.insert('adminRoles', {
-      userId: request.userId,
-      clerkId: request.clerkId,
-      role: 'admin',
-      grantedBy: reviewerUser._id,
-      createdAt: now,
-    });
+    // Determine role based on requestType
+    const roleToGrant = request.requestType === 'super_admin' ? 'super_admin' : 'admin';
+
+    // Check if user already has an admin role (for super_admin promotion requests)
+    const existingRole = await ctx.db
+      .query('adminRoles')
+      .withIndex('by_user_id', (q) => q.eq('userId', request.userId))
+      .first();
+
+    if (existingRole) {
+      // Update existing role if promoting to super_admin
+      if (roleToGrant === 'super_admin' && existingRole.role !== 'super_admin') {
+        await ctx.db.patch(existingRole._id, {
+          role: 'super_admin',
+        });
+      }
+    } else {
+      // Create new admin role
+      await ctx.db.insert('adminRoles', {
+        userId: request.userId,
+        clerkId: request.clerkId,
+        role: roleToGrant,
+        grantedBy: reviewerUser._id,
+        createdAt: now,
+      });
+    }
 
     return { success: true };
   },
@@ -518,7 +537,8 @@ export const requestSuperAdminPromotion = mutation({
     const requestId = await ctx.db.insert('adminRequests', {
       userId: user._id,
       clerkId: identity.subject,
-      reason: `[SUPER ADMIN REQUEST] ${args.reason.trim()}`,
+      reason: args.reason.trim(),
+      requestType: 'super_admin',
       status: 'pending',
       createdAt: Date.now(),
     });

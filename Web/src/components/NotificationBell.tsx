@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
-import { api } from '@/lib/convex';
+import { api, Id } from '@/lib/convex';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { 
@@ -47,7 +47,7 @@ export function NotificationBell() {
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
   const deleteNotification = useMutation(api.notifications.deleteNotification);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -55,33 +55,53 @@ export function NotificationBell() {
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleNotificationClick = async (notification: {
-    _id: string;
+    _id: Id<'notifications'>;
     read: boolean;
     actionUrl?: string;
   }) => {
-    if (!notification.read) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await markAsRead({ notificationId: notification._id as any });
-    }
-    if (notification.actionUrl) {
-      router.push(notification.actionUrl);
-      setIsOpen(false);
+    try {
+      if (!notification.read) {
+        await markAsRead({ notificationId: notification._id });
+      }
+      if (notification.actionUrl) {
+        router.push(notification.actionUrl);
+        setIsOpen(false);
+      }
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
     }
   };
 
   const handleMarkAllRead = async () => {
-    await markAllAsRead();
+    try {
+      await markAllAsRead();
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+    }
   };
 
-  const handleDelete = async (e: React.MouseEvent, notificationId: string) => {
+  const handleDelete = async (e: React.MouseEvent, notificationId: Id<'notifications'>) => {
     e.stopPropagation();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await deleteNotification({ notificationId: notificationId as any });
+    try {
+      await deleteNotification({ notificationId });
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+    }
   };
 
   const notifications = notificationsData?.notifications || [];
@@ -167,7 +187,7 @@ export function NotificationBell() {
                             <span>{notification.message}</span>
                           </p>
                           {/* Show message count for chamber notifications */}
-                          {notification.type === 'chamber' && notification.metadata?.messageCount > 1 && (
+                          {notification.type === 'chamber' && (notification.metadata?.messageCount ?? 0) > 1 && (
                             <p className="text-[10px] text-amber-400 mt-0.5">
                               {notification.metadata.messageCount > 99 ? '99+' : notification.metadata.messageCount} new messages
                             </p>
@@ -184,8 +204,9 @@ export function NotificationBell() {
                                   className="h-6 w-6 hover:bg-white/10"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    markAsRead({ notificationId: notification._id as any });
+                                    markAsRead({ notificationId: notification._id as Id<'notifications'> }).catch(
+                                      (err) => console.error('Failed to mark as read:', err)
+                                    );
                                   }}
                                 >
                                   <Check className="w-3 h-3" />
@@ -195,7 +216,7 @@ export function NotificationBell() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-6 w-6 hover:bg-red-500/20 hover:text-red-400"
-                                onClick={(e) => handleDelete(e, notification._id)}
+                                onClick={(e) => handleDelete(e, notification._id as Id<'notifications'>)}
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>

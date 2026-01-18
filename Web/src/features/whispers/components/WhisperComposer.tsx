@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { useSendWhisper } from '../hooks/useWhispers';
 import { useSendMysteryWhisper } from '../hooks/useMysteryWhispers';
 import { useLocation } from '@/hooks/useLocation';
@@ -84,6 +84,15 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  }, [imagePreview]);
+
+  // Cleanup blob URL on unmount or when preview changes
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
   }, [imagePreview]);
 
   const handleImageButtonClick = useCallback(() => {

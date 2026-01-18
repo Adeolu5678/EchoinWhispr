@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   MessageSquare, 
@@ -36,6 +37,7 @@ import { useUser } from '@clerk/nextjs';
  */
 export function Dashboard() {
   const { user } = useUser();
+  const router = useRouter();
   
   // Fetch all the necessary data
   const currentUser = useQuery(api.users.getCurrentUser);
@@ -192,7 +194,7 @@ export function Dashboard() {
                   <p className="text-muted-foreground mb-4">No whispers yet. Start connecting!</p>
                   <Button 
                     className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                    onClick={(e) => { e.preventDefault(); window.location.href = '/discover'; }}
+                    onClick={(e) => { e.preventDefault(); router.push('/discover'); }}
                   >
                     <Compass className="w-4 h-4 mr-2" /> Discover People
                   </Button>
@@ -202,7 +204,7 @@ export function Dashboard() {
                   {whispers.slice(0, 4).map((whisper) => (
                     <div 
                       key={whisper._id} 
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/whispers/${whisper._id}`; }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/whispers/${whisper._id}`); }}
                       className={`p-4 rounded-xl transition-all duration-200 cursor-pointer ${
                         whisper.isRead 
                           ? 'bg-white/5 hover:bg-white/10 border border-transparent' 
@@ -251,12 +253,10 @@ export function Dashboard() {
                 </Badge>
               </div>
               <div className="space-y-3">
-                {myChambers?.filter(Boolean).slice(0, 4).map((chamber) => {
-                  if (!chamber) return null;
-                  return (
+                {myChambers?.filter((c): c is NonNullable<typeof c> => c !== null && c !== undefined).slice(0, 4).map((chamber) => (
                     <div 
                       key={chamber._id} 
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `/chambers/${chamber._id}`; }}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/chambers/${chamber._id}`); }}
                       className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-200 border border-white/5 hover:border-amber-500/30 cursor-pointer group/chamber relative"
                     >
                       {/* Unread count badge */}
@@ -292,8 +292,7 @@ export function Dashboard() {
                         </p>
                       )}
                     </div>
-                  );
-                })}
+                  ))}
                 {(!myChambers || myChambers.length === 0) && (
                   <div className="text-center py-8 text-muted-foreground">
                     <Radio className="w-12 h-12 mx-auto mb-3 opacity-30" />

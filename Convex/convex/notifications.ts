@@ -30,29 +30,32 @@ export const getNotifications = query({
 
     const limit = args.limit || 20;
 
-    // Get notifications
-    let notificationsQuery = ctx.db
+    // Get notifications - use index-based filter when unreadOnly is true
+    let notifications;
+    if (args.unreadOnly) {
+      notifications = await ctx.db
+        .query('notifications')
+        .withIndex('by_user_read', (q) => q.eq('userId', user._id).eq('read', false))
+        .order('desc')
+        .take(limit);
+    } else {
+      notifications = await ctx.db
+        .query('notifications')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .order('desc')
+        .take(limit);
+    }
+
+    // Get unread count using index-based query (efficient)
+    const unreadNotifications = await ctx.db
       .query('notifications')
-      .withIndex('by_user', (q) => q.eq('userId', user._id))
-      .order('desc');
-
-    const notifications = await notificationsQuery.take(limit);
-
-    // Filter if unreadOnly
-    const filteredNotifications = args.unreadOnly
-      ? notifications.filter((n) => !n.read)
-      : notifications;
-
-    // Get unread count
-    const allNotifications = await ctx.db
-      .query('notifications')
-      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .withIndex('by_user_read', (q) => q.eq('userId', user._id).eq('read', false))
       .collect();
 
-    const unreadCount = allNotifications.filter((n) => !n.read).length;
+    const unreadCount = unreadNotifications.length;
 
     return {
-      notifications: filteredNotifications,
+      notifications,
       unreadCount,
     };
   },
@@ -139,9 +142,11 @@ export const markAllAsRead = mutation({
       .withIndex('by_user_read', (q) => q.eq('userId', user._id).eq('read', false))
       .collect();
 
-    for (const notification of unreadNotifications) {
-      await ctx.db.patch(notification._id, { read: true });
-    }
+    await Promise.all(
+      unreadNotifications.map((notification) =>
+        ctx.db.patch(notification._id, { read: true })
+      )
+    );
 
     return { success: true, count: unreadNotifications.length };
   },
@@ -201,16 +206,16 @@ export const clearAllNotifications = mutation({
       .withIndex('by_user', (q) => q.eq('userId', user._id))
       .collect();
 
-    for (const notification of notifications) {
-      await ctx.db.delete(notification._id);
-    }
+    await Promise.all(
+      notifications.map((notification) => ctx.db.delete(notification._id))
+    );
 
     return { success: true, count: notifications.length };
   },
 });
 
-// Internal: Create a notification (called by other mutations)
-export const createNotification = mutation({
+// Internal: Create a notification (server-side only for security)
+export const createNotification = internalMutation({
   args: {
     userId: v.id('users'),
     type: v.union(
@@ -286,6 +291,7 @@ export const createOrUpdateChamberNotification = internalMutation({
   },
   handler: async (ctx, args) => {
     // Find existing unread chamber notification for this chamber
+    // Query already filters by chamberId in metadata, no need for redundant .find()
     const existingNotifications = await ctx.db
       .query('notifications')
       .withIndex('by_user', (q) => q.eq('userId', args.userId))
@@ -298,9 +304,8 @@ export const createOrUpdateChamberNotification = internalMutation({
       )
       .collect();
 
-    const existingNotification = existingNotifications.find(
-      (n) => n.metadata?.chamberId === args.chamberId
-    );
+    // Use the collected array directly - no redundant find() needed
+    const existingNotification = existingNotifications.length > 0 ? existingNotifications[0] : null;
 
     if (existingNotification) {
       // Update existing notification

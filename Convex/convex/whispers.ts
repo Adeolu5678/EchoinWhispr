@@ -121,6 +121,35 @@ export const getReceivedWhispers = query({
   },
 });
 
+// Get count of received whispers for current user (lightweight alternative)
+export const getReceivedWhispersCount = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return 0;
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return 0;
+    }
+
+    // Count whispers not part of a conversation (standalone whispers)
+    const whispers = await ctx.db
+      .query('whispers')
+      .withIndex('by_recipient', q => q.eq('recipientId', user._id))
+      .filter(q => q.eq(q.field('conversationId'), undefined))
+      .take(100); // Cap at 100 for performance
+
+    return whispers.length;
+  },
+});
+
 // Get whispers sent by current user (with pagination)
 export const getSentWhispers = query({
   args: {

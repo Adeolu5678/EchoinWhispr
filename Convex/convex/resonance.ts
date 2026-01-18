@@ -232,7 +232,6 @@ export const getResonancePreferences = query({
 
     // Return preferences with lifePhase from user
     return {
-      ...prefs,
       preferSimilarMood: prefs?.preferSimilarMood ?? true,
       preferComplementaryMood: prefs?.preferComplementaryMood ?? false,
       matchLifePhase: prefs?.matchLifePhase ?? true,

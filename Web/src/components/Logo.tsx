@@ -16,9 +16,9 @@ interface LogoProps {
 }
 
 const sizeConfig = {
-  sm: { height: 48, width: 48, iconSize: 40 },
-  md: { height: 56, width: 56, iconSize: 48 },
-  lg: { height: 72, width: 72, iconSize: 64 },
+  sm: { height: 48, width: 48 },
+  md: { height: 56, width: 56 },
+  lg: { height: 72, width: 72 },
 };
 
 /**
