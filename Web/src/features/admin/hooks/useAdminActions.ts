@@ -23,6 +23,10 @@ export function useAdminActions() {
   // Grant/revoke roles
   const grantRoleMutation = useMutation(api.admin.grantAdminRole);
   const revokeRoleMutation = useMutation(api.admin.revokeAdminRole);
+  
+  // Super admin management
+  const promoteToSuperAdminMutation = useMutation(api.admin.promoteToSuperAdmin);
+  const initializeFirstSuperAdminMutation = useMutation(api.admin.initializeFirstSuperAdmin);
 
   const requestPromotion = async (reason: string) => {
     setIsLoading(true);
@@ -134,6 +138,50 @@ export function useAdminActions() {
     }
   };
 
+  const promoteToSuperAdmin = async (userId: string) => {
+    setIsLoading(true);
+    try {
+      await promoteToSuperAdminMutation({ userId: userId as Id<'users'> });
+      toast({
+        title: 'Promoted to Super Admin',
+        description: 'User has been promoted to super admin.',
+      });
+      return true;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast({
+        title: 'Promotion Failed',
+        description: errorMessage || 'Failed to promote user.',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const initializeFirstSuperAdmin = async () => {
+    setIsLoading(true);
+    try {
+      const result = await initializeFirstSuperAdminMutation();
+      toast({
+        title: 'Super Admin Initialized',
+        description: result?.message || 'You are now a super admin!',
+      });
+      return true;
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast({
+        title: 'Initialization Failed',
+        description: errorMessage || 'Failed to initialize super admin.',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isLoading,
     requestPromotion,
@@ -141,5 +189,7 @@ export function useAdminActions() {
     rejectRequest,
     grantAdminRole,
     revokeAdminRole,
+    promoteToSuperAdmin,
+    initializeFirstSuperAdmin,
   };
 }

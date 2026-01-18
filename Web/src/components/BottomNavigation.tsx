@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { 
-  Home, Send, Inbox, MessageSquare, User, Plus
+  Home, Send, Inbox, Radio, User, Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
@@ -70,9 +70,9 @@ export const BottomNavigation = () => {
         isPrimary: true,
       },
       {
-        href: '/conversations',
-        label: 'Chats',
-        icon: MessageSquare,
+        href: '/chambers',
+        label: 'Chambers',
+        icon: Radio,
       },
     ];
 

@@ -1,38 +1,31 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
-import Link from 'next/link';
+import { useCallback, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { 
-  Menu, Home, Send, Inbox, Users, User, Sparkles, 
-  Settings as SettingsIcon, Compass, Radio, Lightbulb, BarChart3 
+  Home, Send, Inbox, Users, 
+  Compass, Radio, Lightbulb, BarChart3 
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { NavigationLink } from './NavigationLink';
 import { UserMenu } from './UserMenu';
-import { MobileNavigation } from './MobileNavigation';
-import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
+import { NotificationBell } from './NotificationBell';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
+import { Logo } from './Logo';
 
 /**
  * Main navigation component for the EchoinWhispr web application.
  *
  * Features:
  * - Premium glass morphism styling with gradient accents
- * - Responsive design with mobile hamburger menu
+ * - Responsive design
  * - Animated logo with glow effect
  * - Active route highlighting with glow indicators
  * - Integration with Clerk authentication
  */
 export const Navigation = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
-
-  const closeMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(false);
-  }, []);
 
   /**
    * Primary navigation items - shown directly in header
@@ -98,34 +91,11 @@ export const Navigation = () => {
       });
     }
 
+    // Note: Profile and Settings are hardcoded in UserMenu, not here
+    // to avoid duplicates
+
     return items;
   }, []);
-
-  /**
-   * All navigation items for mobile menu
-   */
-  const allNavItems = useMemo(() => {
-    const items = [...primaryNavItems, ...secondaryNavItems];
-    
-    if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
-      items.push(
-        {
-          href: '/profile',
-          label: 'Profile',
-          icon: User,
-          description: 'Edit your profile information',
-        },
-        {
-          href: '/settings',
-          label: 'Settings',
-          icon: SettingsIcon,
-          description: 'Manage your preferences',
-        }
-      );
-    }
-
-    return items;
-  }, [primaryNavItems, secondaryNavItems]);
 
   /**
    * Check if current path matches navigation item
@@ -170,18 +140,7 @@ export const Navigation = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link
-              href="/"
-              className="flex items-center gap-2 group"
-              onClick={closeMobileMenu}
-            >
-              <div className="relative bg-gradient-to-br from-primary to-accent p-2 rounded-lg shadow-glow-sm group-hover:shadow-glow transition-all duration-300 group-hover:scale-105">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-display font-bold tracking-tight hidden sm:block group-hover:text-gradient transition-all duration-300">
-                EchoinWhispr
-              </span>
-            </Link>
+            <Logo size="sm" />
           </div>
 
           {/* Desktop Navigation - Primary items only */}
@@ -193,36 +152,14 @@ export const Navigation = () => {
                 icon={item.icon}
                 label={item.label}
                 isActive={isActiveRoute(item.href)}
-                onClick={closeMobileMenu}
               />
             ))}
           </div>
 
-          {/* User Menu and Mobile Toggle */}
+          {/* User Menu */}
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <UserMenu user={user} secondaryNavItems={secondaryNavItems} />
-
-            {/* Mobile menu button */}
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden hover:bg-white/5 h-11 w-11 touch-target"
-                  aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72 glass border-r border-white/5 p-0">
-                <MobileNavigation
-                  user={user}
-                  navigationItems={allNavItems}
-                  isActiveRoute={isActiveRoute}
-                  onClose={closeMobileMenu}
-                />
-              </SheetContent>
-            </Sheet>
           </div>
         </div>
       </div>

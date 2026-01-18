@@ -287,6 +287,8 @@ export default defineSchema({
     aliasColor: v.optional(v.string()), // Unique color for each member
     role: v.union(v.literal('creator'), v.literal('member')),
     joinedAt: v.number(),
+    hasChangedAlias: v.optional(v.boolean()), // Track if user has changed their alias (one-time only)
+    lastReadAt: v.optional(v.number()), // Track when user last read messages in this chamber
   })
     .index('by_chamber', ['chamberId'])
     .index('by_user', ['userId'])
@@ -440,5 +442,26 @@ export default defineSchema({
   })
     .index('by_chamber', ['chamberId'])
     .index('by_chamber_user', ['chamberId', 'userId']), // OPTIMIZATION: For efficient typing indicator lookup
+
+  // === In-App Notifications ===
+  notifications: defineTable({
+    userId: v.id('users'),
+    type: v.union(
+      v.literal('whisper'),         // New whisper received
+      v.literal('friend_request'),  // Friend request sent/accepted
+      v.literal('chamber'),         // Chamber invite or activity
+      v.literal('resonance'),       // Resonance match found
+      v.literal('system')           // System announcements
+    ),
+    title: v.string(),
+    message: v.string(),
+    read: v.boolean(),
+    actionUrl: v.optional(v.string()),  // Where to navigate when clicked
+    metadata: v.optional(v.any()),      // Additional data (sender ID, chamber ID, etc.)
+    createdAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_read', ['userId', 'read'])
+    .index('by_created', ['createdAt']),
 });
 

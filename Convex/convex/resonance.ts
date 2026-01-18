@@ -230,13 +230,15 @@ export const getResonancePreferences = query({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .first();
 
-    // Return defaults if no preferences set
-    return prefs || {
-      preferSimilarMood: true,
-      preferComplementaryMood: false,
-      matchLifePhase: true,
-      preferMentor: false,
-      preferMentee: false,
+    // Return preferences with lifePhase from user
+    return {
+      ...prefs,
+      preferSimilarMood: prefs?.preferSimilarMood ?? true,
+      preferComplementaryMood: prefs?.preferComplementaryMood ?? false,
+      matchLifePhase: prefs?.matchLifePhase ?? true,
+      preferMentor: prefs?.preferMentor ?? false,
+      preferMentee: prefs?.preferMentee ?? false,
+      lifePhase: user.lifePhase,
     };
   },
 });
