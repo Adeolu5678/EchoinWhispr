@@ -1,4 +1,5 @@
 import { Cookie } from 'lucide-react';
+import { LEGAL_LAST_UPDATED } from '../constants';
 
 export default function CookiePolicyPage() {
   return (
@@ -10,7 +11,7 @@ export default function CookiePolicyPage() {
         </div>
         <div>
           <h1 className="text-3xl md:text-4xl font-display font-bold mb-1">Cookie Policy</h1>
-          <p className="text-muted-foreground text-sm">Last updated: January 15, 2026</p>
+          <p className="text-muted-foreground text-sm">Last updated: {LEGAL_LAST_UPDATED}</p>
         </div>
       </div>
 
@@ -77,12 +78,13 @@ export default function CookiePolicyPage() {
         <h2 className="legal-heading">3. Specific Cookies We Use</h2>
         <div className="overflow-x-auto">
           <table className="legal-table">
+            <caption className="sr-only">Cookie usage and duration</caption>
             <thead>
               <tr>
-                <th>Cookie Name</th>
-                <th>Type</th>
-                <th>Purpose</th>
-                <th>Duration</th>
+                <th scope="col">Cookie Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Purpose</th>
+                <th scope="col">Duration</th>
               </tr>
             </thead>
             <tbody>

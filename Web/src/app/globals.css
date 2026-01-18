@@ -125,15 +125,15 @@
   .glass-card {
     background: linear-gradient(
       145deg,
-      rgba(168, 85, 247, 0.04) 0%,
+      hsl(var(--primary) / 0.04) 0%,
       rgba(20, 20, 22, 0.98) 15%,
       rgba(18, 18, 20, 0.98) 50%,
       rgba(20, 20, 22, 0.98) 85%,
-      rgba(217, 70, 239, 0.03) 100%
+      hsl(var(--accent) / 0.03) 100%
     );
     backdrop-filter: blur(32px) saturate(200%);
     -webkit-backdrop-filter: blur(32px) saturate(200%);
-    border: 1px solid rgba(168, 85, 247, 0.08);
+    border: 1px solid hsl(var(--primary) / 0.08);
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.25),
       0 0 0 1px rgba(255, 255, 255, 0.03),
@@ -543,13 +543,13 @@
   0%,
   100% {
     box-shadow:
-      0 0 20px rgba(168, 85, 247, 0.25),
+      0 0 20px hsl(var(--primary) / 0.25),
       0 4px 12px rgba(0, 0, 0, 0.2);
   }
   50% {
     box-shadow:
-      0 0 28px rgba(168, 85, 247, 0.35),
-      0 0 40px rgba(217, 70, 239, 0.12),
+      0 0 28px hsl(var(--primary) / 0.35),
+      0 0 40px hsl(var(--accent) / 0.12),
       0 4px 16px rgba(0, 0, 0, 0.25);
   }
 }

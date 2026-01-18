@@ -1,4 +1,5 @@
 import { Users } from 'lucide-react';
+import { LEGAL_LAST_UPDATED } from '../constants';
 
 export default function CommunityGuidelinesPage() {
   return (
@@ -10,7 +11,7 @@ export default function CommunityGuidelinesPage() {
         </div>
         <div>
           <h1 className="text-3xl md:text-4xl font-display font-bold mb-1">Community Guidelines</h1>
-          <p className="text-muted-foreground text-sm">Last updated: January 15, 2026</p>
+          <p className="text-muted-foreground text-sm">Last updated: {LEGAL_LAST_UPDATED}</p>
         </div>
       </div>
 

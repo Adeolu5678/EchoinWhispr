@@ -41,7 +41,8 @@ export default function ProfilePage() {
   const resonancePrefs = useQuery(api.resonance.getResonancePreferences);
   const myChambers = useQuery(api.echoChambers.getMyChambers);
   const friendsList = useQuery(api.friends.getFriendsList, { limit: 10 });
-  const whispersCount = useQuery(api.whispers.getReceivedWhispersCount);
+  const whispersCountQuery = useQuery(api.whispers.getReceivedWhispersCount);
+  const whispersCount = whispersCountQuery ?? 0;
 
   // Mutations
   const updateProfile = useMutation(api.users.updateUserProfile);
