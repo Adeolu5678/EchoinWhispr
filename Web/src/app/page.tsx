@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@clerk/nextjs';
-import { WhisperFeed } from '@/features/whispers/components/WhisperFeed';
+import { Dashboard } from '@/components/Dashboard';
 import LandingPage from '@/components/LandingPage';
 
 /**
@@ -9,7 +9,7 @@ import LandingPage from '@/components/LandingPage';
  *
  * Checks authentication status and renders appropriate content.
  * For unauthenticated users, displays the comprehensive landing page.
- * For authenticated users, displays the whisper feed.
+ * For authenticated users, displays the app dashboard with activity summary.
  *
  * @returns {JSX.Element} The rendered page
  */
@@ -20,5 +20,6 @@ export default function HomePage() {
     return <LandingPage />;
   }
 
-  return <WhisperFeed />;
+  return <Dashboard />;
 }
+

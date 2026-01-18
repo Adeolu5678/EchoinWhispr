@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { useFeatureFlag } from '@/hooks/useFeatureFlags';
 import { MysterySettings } from '@/features/whispers/components/MysterySettings';
 import { NotificationSettings } from '@/features/profile/components/NotificationSettings';
@@ -20,6 +21,7 @@ import Link from 'next/link';
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const isMysteryWhispersEnabled = useFeatureFlag('MYSTERY_WHISPERS');
   const isPushNotificationsEnabled = useFeatureFlag('PUSH_NOTIFICATIONS');
@@ -29,15 +31,28 @@ export default function SettingsPage() {
   const resonancePrefs = useQuery(api.resonance.getResonancePreferences);
   const lifePhases = useQuery(api.resonance.getLifePhases);
   const currentUser = useQuery(api.users.getCurrentUser);
+  const hasAdmins = useQuery(api.admin.hasAdmins);
 
   const updatePreferences = useMutation(api.users.updatePreferences);
   const updateResonancePrefs = useMutation(api.resonance.updateResonancePreferences);
   const updateLifePhase = useMutation(api.resonance.updateLifePhase);
   const updateMentorship = useMutation(api.resonance.updateMentorshipPreferences);
+  const initializeFirstSuperAdmin = useMutation(api.admin.initializeFirstSuperAdmin);
+
+  // Sync saved theme preference from Convex to next-themes on load
+  useEffect(() => {
+    if (preferences?.themePreference && preferences.themePreference !== theme) {
+      setTheme(preferences.themePreference);
+    }
+  }, [preferences?.themePreference, setTheme, theme]);
 
   const handlePreferenceChange = async (key: string, value: unknown) => {
     try {
       await updatePreferences({ [key]: value });
+      // If changing theme preference, also update next-themes
+      if (key === 'themePreference') {
+        setTheme(value as string);
+      }
       toast({ title: "Settings saved" });
     } catch (error) {
       toast({ title: "Failed to save", variant: "destructive" });
@@ -47,7 +62,15 @@ export default function SettingsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleResonanceChange = async (updates: any) => {
     try {
-      await updateResonancePrefs(updates);
+      // Ensure all required fields are present with defaults
+      const currentPrefs = {
+        preferSimilarMood: resonancePrefs?.preferSimilarMood ?? true,
+        preferComplementaryMood: resonancePrefs?.preferComplementaryMood ?? false,
+        matchLifePhase: resonancePrefs?.matchLifePhase ?? true,
+        preferMentor: resonancePrefs?.preferMentor ?? false,
+        preferMentee: resonancePrefs?.preferMentee ?? false,
+      };
+      await updateResonancePrefs({ ...currentPrefs, ...updates });
       toast({ title: "Preferences updated" });
     } catch (error) {
       toast({ title: "Failed to update", variant: "destructive" });
@@ -56,8 +79,10 @@ export default function SettingsPage() {
 
   const handleLifePhaseChange = async (phase: string) => {
     try {
-      await updateLifePhase({ lifePhase: phase });
-      toast({ title: "Life phase updated" });
+      // If same phase is clicked, unselect it
+      const newPhase = currentUser?.lifePhase === phase ? '' : phase;
+      await updateLifePhase({ lifePhase: newPhase });
+      toast({ title: newPhase ? "Life phase updated" : "Life phase cleared" });
     } catch (error) {
       toast({ title: "Failed to update", variant: "destructive" });
     }
@@ -112,7 +137,7 @@ export default function SettingsPage() {
                 <Label className="mb-3 block">Theme</Label>
                 <div className="flex gap-2">
                   <Button
-                    variant={preferences?.themePreference === 'light' ? 'default' : 'outline'}
+                    variant={theme === 'light' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handlePreferenceChange('themePreference', 'light')}
                   >
@@ -120,7 +145,7 @@ export default function SettingsPage() {
                     Light
                   </Button>
                   <Button
-                    variant={preferences?.themePreference === 'dark' ? 'default' : 'outline'}
+                    variant={theme === 'dark' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handlePreferenceChange('themePreference', 'dark')}
                   >
@@ -128,7 +153,7 @@ export default function SettingsPage() {
                     Dark
                   </Button>
                   <Button
-                    variant={!preferences?.themePreference || preferences?.themePreference === 'system' ? 'default' : 'outline'}
+                    variant={theme === 'system' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handlePreferenceChange('themePreference', 'system')}
                   >
@@ -193,7 +218,7 @@ export default function SettingsPage() {
                   </div>
                   <Switch
                     checked={resonancePrefs?.preferSimilarMood ?? true}
-                    onCheckedChange={(checked) => handleResonanceChange({ ...resonancePrefs, preferSimilarMood: checked })}
+                    onCheckedChange={(checked) => handleResonanceChange({ preferSimilarMood: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -203,7 +228,7 @@ export default function SettingsPage() {
                   </div>
                   <Switch
                     checked={resonancePrefs?.preferComplementaryMood ?? false}
-                    onCheckedChange={(checked) => handleResonanceChange({ ...resonancePrefs, preferComplementaryMood: checked })}
+                    onCheckedChange={(checked) => handleResonanceChange({ preferComplementaryMood: checked })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -213,7 +238,7 @@ export default function SettingsPage() {
                   </div>
                   <Switch
                     checked={resonancePrefs?.matchLifePhase ?? true}
-                    onCheckedChange={(checked) => handleResonanceChange({ ...resonancePrefs, matchLifePhase: checked })}
+                    onCheckedChange={(checked) => handleResonanceChange({ matchLifePhase: checked })}
                   />
                 </div>
               </div>
@@ -276,7 +301,30 @@ export default function SettingsPage() {
                 <Crown className="w-5 h-5 text-amber-400" />
                 Admin Access
               </h2>
-              {isAdmin ? (
+              {/* Show initialize button when no admins exist */}
+              {hasAdmins === false ? (
+                <div className="space-y-3">
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                    <p className="text-sm text-amber-400">
+                      No admins exist yet. Be the first super admin!
+                    </p>
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await initializeFirstSuperAdmin();
+                        toast({ title: 'Success', description: 'You are now a super admin!' });
+                      } catch (error) {
+                        toast({ title: 'Error', description: error instanceof Error ? error.message : 'Failed to initialize', variant: 'destructive' });
+                      }
+                    }}
+                    className="gap-2 bg-amber-500 hover:bg-amber-600"
+                  >
+                    <Crown className="w-4 h-4" />
+                    Become First Super Admin
+                  </Button>
+                </div>
+              ) : isAdmin ? (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">
                     You have admin privileges. Access the admin dashboard to monitor whispers.

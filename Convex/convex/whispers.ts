@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query, internalMutation } from './_generated/server';
+import { internal } from './_generated/api';
 import { Doc, Id } from './_generated/dataModel';
 import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
 
@@ -70,6 +71,20 @@ export const sendWhisper = mutation({
     // Record rate limit action
     await recordRateLimitedAction(ctx, sender._id, 'SEND_WHISPER');
 
+    // Create notification for recipient
+    const messagePreview = args.content.trim().length > 50 
+      ? args.content.trim().slice(0, 50) + '...' 
+      : args.content.trim();
+    
+    await ctx.scheduler.runAfter(0, internal.notifications.createNotificationInternal, {
+      userId: recipient._id,
+      type: 'whisper',
+      title: 'New Whisper',
+      message: args.imageUrl ? `📷 ${messagePreview || '[Image]'}` : messagePreview,
+      actionUrl: '/inbox',
+      metadata: { whisperId, hasImage: !!args.imageUrl },
+    });
+
     return whisperId;
   },
 });
@@ -81,14 +96,19 @@ export const getReceivedWhispers = query({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    if (!identity) {
+      // Return empty page instead of throwing to prevent UI errors during auth loading
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) throw new Error('User not found');
+    if (!user) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const result = await ctx.db
       .query('whispers')
@@ -108,14 +128,18 @@ export const getSentWhispers = query({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    if (!identity) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) throw new Error('User not found');
+    if (!user) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const result = await ctx.db
       .query('whispers')

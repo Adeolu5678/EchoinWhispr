@@ -45,22 +45,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body 
         className={`${inter.variable} ${outfit.variable} font-sans bg-background text-foreground antialiased`}
       >
         <Providers>
           <FeatureFlagProvider>
-            {/* Subtle background glow effect */}
-            <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-              <div className="orb-primary w-[600px] h-[600px] -top-48 -left-48 opacity-30" />
-              <div className="orb-accent w-[500px] h-[500px] -bottom-32 -right-32 opacity-20" />
-            </div>
+            {/* Global background - clean solid color, page-specific decorations handled by individual pages */}
             
             <div className="relative flex flex-col min-h-screen">
               <Navigation />
               <UsernameSelectionHandler />
-              <main className="flex flex-1 justify-center w-full pb-20 md:pb-0">
+              <main className="flex-1 w-full pb-20 md:pb-0">
                 {children}
               </main>
               <BottomNavigation />
