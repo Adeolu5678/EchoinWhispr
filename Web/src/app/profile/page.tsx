@@ -58,9 +58,10 @@ export default function ProfilePage() {
     interests: '',
   });
 
-  // Initialize edit data when user data loads
+  // Initialize edit data when user data loads (only when not actively editing)
   useEffect(() => {
-    if (currentUser) {
+    // Guard: Only initialize when not actively editing to preserve in-progress edits
+    if (currentUser && !isEditing) {
       setEditData({
         displayName: currentUser.displayName || '',
         career: currentUser.career || '',
@@ -68,7 +69,7 @@ export default function ProfilePage() {
         interests: currentUser.interests?.join(', ') || '',
       });
     }
-  }, [currentUser]);
+  }, [currentUser, isEditing]);
 
   // Computed values
   const chambersCount = myChambers?.length || 0;

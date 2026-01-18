@@ -28,7 +28,8 @@ export const getNotifications = query({
       return { notifications: [], unreadCount: 0 };
     }
 
-    const limit = args.limit || 20;
+    // Clamp limit to reasonable range (1-100) to prevent arbitrarily large requests
+    const limit = Math.min(Math.max(args.limit ?? 20, 1), 100);
 
     // Get notifications - use index-based filter when unreadOnly is true
     let notifications;
@@ -293,8 +294,8 @@ export const createOrUpdateChamberNotification = internalMutation({
           messageCount: currentCount,
           latestSenderAlias: args.senderAlias,
           hasImage: args.hasImage || existingNotification.metadata?.hasImage,
+          updatedAt: Date.now(), // Track last update time in metadata to preserve createdAt
         },
-        createdAt: Date.now(), // Update timestamp to bring to top
       });
       return existingNotification._id;
     } else {
