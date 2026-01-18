@@ -238,12 +238,14 @@ export const updateAlias = mutation({
       .filter((q) => q.eq(q.field("senderId"), user._id))
       .collect();
 
-    // Update each message with the new alias
-    for (const message of userMessages) {
-      await ctx.db.patch(message._id, {
-        anonymousAlias: trimmedAlias,
-      });
-    }
+    // Update each message with the new alias in parallel
+    await Promise.all(
+      userMessages.map((message) =>
+        ctx.db.patch(message._id, {
+          anonymousAlias: trimmedAlias,
+        })
+      )
+    );
 
     return { 
       success: true, 
@@ -379,19 +381,21 @@ export const sendMessage = mutation({
         ? args.content.trim().slice(0, 40) + '...'
         : args.content.trim();
 
-      // Create aggregated notification for each member (except sender)
-      for (const member of members) {
-        if (member.userId !== user._id) {
-          await ctx.scheduler.runAfter(0, internal.notifications.createOrUpdateChamberNotification, {
-            userId: member.userId,
-            chamberId: args.chamberId,
-            chamberName: chamber.name,
-            senderAlias: membership.anonymousAlias,
-            messagePreview: args.imageUrl ? '[Image]' : messagePreview,
-            hasImage: !!args.imageUrl,
-          });
-        }
-      }
+      // Schedule notifications for all members except sender in parallel
+      await Promise.all(
+        members
+          .filter((member) => member.userId !== user._id)
+          .map((member) =>
+            ctx.scheduler.runAfter(0, internal.notifications.createOrUpdateChamberNotification, {
+              userId: member.userId,
+              chamberId: args.chamberId,
+              chamberName: chamber.name,
+              senderAlias: membership.anonymousAlias,
+              messagePreview: args.imageUrl ? '[Image]' : messagePreview,
+              hasImage: !!args.imageUrl,
+            })
+          )
+      );
     }
 
     return { messageId };
@@ -724,16 +728,9 @@ export const getMyChambers = query({
           return { alias: "You", isOwnMessage: true };
         }
         
-        // Get the sender's membership to find their alias
-        const senderMembership = await ctx.db
-          .query("echoChamberMembers")
-          .withIndex("by_chamber_user", q => 
-            q.eq("chamberId", msg.chamberId).eq("userId", msg.senderId)
-          )
-          .first();
-        
+        // Use the alias stored in the message itself (more efficient)
         return { 
-          alias: senderMembership?.anonymousAlias || "Anonymous", 
+          alias: msg.anonymousAlias || "Anonymous", 
           isOwnMessage: false 
         };
       })
@@ -997,16 +994,35 @@ export const updateChamber = mutation({
       throw new Error("Only the creator can edit this chamber");
     }
 
+    // Validate name if provided
+    if (args.name !== undefined) {
+      const trimmedName = args.name.trim();
+      if (trimmedName.length === 0) {
+        throw new Error("Invalid name: Chamber name cannot be empty");
+      }
+      if (trimmedName.length < 2) {
+        throw new Error("Invalid name: Chamber name must be at least 2 characters");
+      }
+      if (trimmedName.length > 50) {
+        throw new Error("Invalid name: Chamber name must be 50 characters or less");
+      }
+    }
+
+    // Validate description if provided
+    if (args.description !== undefined && args.description.trim().length > 500) {
+      throw new Error("Invalid description: Description must be 500 characters or less");
+    }
+
     // Build update object
     const updates: { description?: string; name?: string; updatedAt: number } = {
       updatedAt: Date.now(),
     };
     
     if (args.description !== undefined) {
-      updates.description = args.description;
+      updates.description = args.description.trim();
     }
     if (args.name !== undefined) {
-      updates.name = args.name;
+      updates.name = args.name.trim();
     }
 
     await ctx.db.patch(args.chamberId, updates);

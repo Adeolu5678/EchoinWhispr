@@ -100,10 +100,12 @@ export default function ChamberViewPage() {
   }, []);
 
   // Mark messages as read when entering the chamber and track unread count
+  const hasUpdatedLastRead = useRef(false);
+  
   useEffect(() => {
     if (!validId || !chamber || !messagesData) return;
     
-    // Store the initial unread count and last read timestamp (only once)
+    // Store the initial unread count (only once)
     if (initialUnreadCount === null && chamber.userLastReadAt !== undefined) {
       const lastRead = chamber.userLastReadAt || 0;
       
@@ -114,8 +116,11 @@ export default function ChamberViewPage() {
       setInitialUnreadCount(unreadMessages.length);
     }
     
-    // Update lastReadAt in the backend
-    updateLastReadAt({ chamberId: validId as Id<'echoChambers'> }).catch(console.error);
+    // Update lastReadAt in the backend (only once per session)
+    if (!hasUpdatedLastRead.current && chamber.userLastReadAt !== undefined) {
+      hasUpdatedLastRead.current = true;
+      updateLastReadAt({ chamberId: validId as Id<'echoChambers'> }).catch(console.error);
+    }
   }, [validId, chamber, messagesData, initialUnreadCount, updateLastReadAt]);
 
   // Handle ?settings=true query param
@@ -168,6 +173,15 @@ export default function ChamberViewPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  }, [imagePreview]);
+
+  // Cleanup blob URL on unmount or when preview changes
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
   }, [imagePreview]);
 
   const handleSend = async () => {

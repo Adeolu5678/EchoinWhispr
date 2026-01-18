@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
@@ -69,6 +69,15 @@ export default function WhisperDetailPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  }, [imagePreview]);
+
+  // Cleanup blob URL on unmount or when preview changes
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
   }, [imagePreview]);
 
   /**

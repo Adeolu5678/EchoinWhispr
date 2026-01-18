@@ -41,15 +41,14 @@ export default function ProfilePage() {
   const resonancePrefs = useQuery(api.resonance.getResonancePreferences);
   const myChambers = useQuery(api.echoChambers.getMyChambers);
   const friendsList = useQuery(api.friends.getFriendsList, { limit: 10 });
-  const whispers = useQuery(api.whispers.getReceivedWhispers, { 
-    paginationOpts: { numItems: 100, cursor: null } 
-  });
+  const whispersCount = useQuery(api.whispers.getReceivedWhispersCount);
 
   // Mutations
   const updateProfile = useMutation(api.users.updateUserProfile);
 
   // Edit state
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState({
     displayName: '',
     career: '',
@@ -72,7 +71,6 @@ export default function ProfilePage() {
   // Computed values
   const chambersCount = myChambers?.length || 0;
   const friendCount = friendsList?.totalCount || 0;
-  const whispersCount = whispers?.page?.length || 0;
 
   // Helper function to calculate profile completeness
   const getProfileCompleteness = (): number => {
@@ -101,6 +99,8 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       await updateProfile({
         displayName: editData.displayName || undefined,
@@ -113,6 +113,8 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast({ title: 'Failed to update profile', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -242,9 +244,9 @@ export default function ProfilePage() {
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={handleSave} className="bg-primary hover:bg-primary/90">
+                    <Button size="sm" onClick={handleSave} disabled={isSaving} className="bg-primary hover:bg-primary/90">
                       <Save className="w-4 h-4 mr-2" />
-                      Save
+                      {isSaving ? 'Saving...' : 'Save'}
                     </Button>
                     <Button size="sm" variant="outline" onClick={handleCancel} className="border-white/20 hover:bg-white/10">
                       <X className="w-4 h-4" />

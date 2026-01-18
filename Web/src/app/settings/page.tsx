@@ -44,7 +44,8 @@ export default function SettingsPage() {
     if (preferences?.themePreference && preferences.themePreference !== theme) {
       setTheme(preferences.themePreference);
     }
-  }, [preferences?.themePreference, setTheme, theme]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferences?.themePreference, setTheme]);
 
   const handlePreferenceChange = async (key: string, value: unknown) => {
     try {

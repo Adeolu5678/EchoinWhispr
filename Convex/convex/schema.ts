@@ -28,6 +28,7 @@ export default defineSchema({
     clerkId: v.string(),
     reason: v.string(),
     status: v.union(v.literal('pending'), v.literal('approved'), v.literal('rejected')),
+    requestType: v.optional(v.union(v.literal('admin'), v.literal('super_admin'))),
     reviewedBy: v.optional(v.id('users')),
     reviewedAt: v.optional(v.number()),
     createdAt: v.number(),

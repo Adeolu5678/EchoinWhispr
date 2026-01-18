@@ -1,5 +1,3 @@
-'use client';
-
 import { Cookie } from 'lucide-react';
 
 export default function CookiePolicyPage() {

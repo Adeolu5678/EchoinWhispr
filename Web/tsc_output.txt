@@ -1,0 +1,14 @@
+﻿src/components/Dashboard.tsx(258,28): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(259,107): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(263,24): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(265,28): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(265,63): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(270,82): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(273,26): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(275,24): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(275,47): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(277,59): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(278,30): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(280,28): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(283,28): error TS18047: 'chamber' is possibly 'null'.
+src/components/Dashboard.tsx(284,57): error TS18047: 'chamber' is possibly 'null'.
