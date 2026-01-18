@@ -12,7 +12,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 import { 
   Radio, 
   Plus, 
@@ -22,9 +24,11 @@ import {
   Copy, 
   MessageSquare,
   Sparkles,
-  Hash
+  Hash,
+  MoreVertical,
+  Settings,
+  Image as ImageIcon
 } from 'lucide-react';
-import Link from 'next/link';
 
 export default function ChambersPage() {
   const { toast } = useToast();
@@ -142,6 +146,30 @@ export default function ChambersPage() {
     });
   };
 
+  const handleJoinPublic = async (inviteCode: string) => {
+    try {
+      const result = await joinChamber({ inviteCode });
+      if (result.alreadyMember) {
+        toast({
+          title: "Already a member",
+          description: `You're already ${result.anonymousAlias}`,
+        });
+      } else {
+        toast({
+          title: "Joined! 🎉",
+          description: `You are now ${result.anonymousAlias}`,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast({
+        title: "Failed to join",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -233,21 +261,23 @@ export default function ChambersPage() {
           </TabsContent>
 
           <TabsContent value="discover" className="space-y-4">
-            {publicChambers?.length === 0 && (
+            {publicChambers?.filter((c) => !c.isMember).length === 0 && (
               <Card className="glass border-white/10 p-12 text-center">
                 <Globe className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
                 <h3 className="text-xl font-semibold mb-2">No public chambers</h3>
                 <p className="text-muted-foreground">
-                  Be the first to create a public chamber!
+                  Be the first to create a public chamber or you&apos;ve already joined them all!
                 </p>
               </Card>
             )}
 
-            {publicChambers?.filter((c) => c !== null).map((chamber) => (
+            {publicChambers?.filter((c) => c !== null && !c.isMember).map((chamber) => (
               <ChamberCard 
                 key={chamber._id} 
                 chamber={chamber} 
                 onCopyLink={copyInviteLink}
+                showJoinButton={true}
+                onJoin={handleJoinPublic}
               />
             ))}
           </TabsContent>
@@ -344,75 +374,160 @@ export default function ChambersPage() {
 function ChamberCard({ 
   chamber, 
   onCopyLink,
-  showAlias = false 
+  showAlias = false,
+  showJoinButton = false,
+  onJoin,
 }: { 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chamber: any; 
   onCopyLink: (code: string) => void;
   showAlias?: boolean;
+  showJoinButton?: boolean;
+  onJoin?: (code: string) => Promise<void>;
 }) {
+  const [isJoiningCard, setIsJoiningCard] = useState(false);
+  const router = useRouter();
+
+  const handleJoinClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onJoin || !chamber.inviteCode) return;
+    setIsJoiningCard(true);
+    try {
+      await onJoin(chamber.inviteCode);
+    } finally {
+      setIsJoiningCard(false);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (!showJoinButton) {
+      router.push(`/chambers/${chamber._id}`);
+    }
+  };
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (chamber.inviteCode) {
+      onCopyLink(chamber.inviteCode);
+    }
+  };
+
+  const handleSettingsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Navigate to chamber with settings dialog open
+    router.push(`/chambers/${chamber._id}?settings=true`);
+  };
+
   return (
-    <Card className="glass border-white/10 p-6 hover:bg-white/5 transition-colors">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold">{chamber.name}</h3>
-            {chamber.isPublic ? (
-              <Badge variant="secondary" className="bg-green-500/20 text-green-300">
-                <Globe className="w-3 h-3 mr-1" />
-                Public
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="bg-amber-500/20 text-amber-300">
-                <Lock className="w-3 h-3 mr-1" />
-                Private
-              </Badge>
-            )}
+    <Card 
+      className={`glass border-white/10 p-6 transition-colors relative ${!showJoinButton ? 'hover:bg-white/5 cursor-pointer' : ''}`}
+      onClick={handleCardClick}
+    >
+      {/* Top right actions */}
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        {/* Unread count badge */}
+        {chamber.unreadCount > 0 && (
+          <div className="min-w-6 h-6 px-2 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">
+            {chamber.unreadCount > 99 ? '99+' : chamber.unreadCount}
           </div>
-          
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-            <span className="flex items-center gap-1">
-              <Hash className="w-4 h-4" />
-              {chamber.topic}
-            </span>
-            <span className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              {chamber.memberCount || 0} members
-            </span>
-          </div>
-
-          {chamber.description && (
-            <p className="text-sm text-muted-foreground mb-3">
-              {chamber.description}
-            </p>
-          )}
-
-          {showAlias && (
-            <Badge className="bg-purple-500/20 text-purple-300">
-              You are: {chamber.userAlias}
+        )}
+        
+        {/* 3-dot menu (only for member chambers) */}
+        {!showJoinButton && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleSettingsClick}>
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+              {chamber.inviteCode && (
+                <DropdownMenuItem onClick={handleCopyLink}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Invite Link
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+      
+      {/* Content */}
+      <div className="pr-20">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <h3 className="text-lg font-semibold">{chamber.name}</h3>
+          {chamber.isPublic ? (
+            <Badge variant="secondary" className="bg-green-500/20 text-green-300">
+              <Globe className="w-3 h-3 mr-1" />
+              Public
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="bg-amber-500/20 text-amber-300">
+              <Lock className="w-3 h-3 mr-1" />
+              Private
             </Badge>
           )}
         </div>
-
-        <div className="flex flex-col gap-2">
-          <Link href={`/chambers/${chamber._id}`}>
-            <Button size="sm" className="w-full">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Open
-            </Button>
-          </Link>
-          {chamber.inviteCode && (
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => onCopyLink(chamber.inviteCode)}
-            >
-              <Copy className="w-4 h-4 mr-2" />
-              Copy Link
-            </Button>
-          )}
+        
+        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+          <span className="flex items-center gap-1">
+            <Hash className="w-4 h-4" />
+            {chamber.topic}
+          </span>
+          <span className="flex items-center gap-1">
+            <Users className="w-4 h-4" />
+            {chamber.memberCount || 0} members
+          </span>
         </div>
+
+        {chamber.description && (
+          <p className="text-sm text-muted-foreground mb-3">
+            {chamber.description}
+          </p>
+        )}
+
+        {/* Last message preview */}
+        {(chamber.lastMessage || chamber.lastMessageHasImage) && (
+          <p className="text-sm text-muted-foreground mb-3 truncate flex items-center gap-1">
+            <span className={`font-medium ${chamber.lastMessageIsOwn ? 'text-primary' : 'text-amber-300'}`}>
+              {chamber.lastMessageSenderAlias}:
+            </span>
+            {chamber.lastMessageHasImage && (
+              <ImageIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            )}
+            {chamber.lastMessage ? (
+              <span className="truncate">{chamber.lastMessage}</span>
+            ) : (
+              <span className="italic">Photo</span>
+            )}
+          </p>
+        )}
+
+        {showAlias && (
+          <Badge className="bg-cyan-500/20 text-cyan-300">
+            You are: {chamber.userAlias}
+          </Badge>
+        )}
       </div>
+
+      {/* Join button for discover section */}
+      {showJoinButton && (
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
+          <Button 
+            size="sm" 
+            onClick={handleJoinClick}
+            disabled={isJoiningCard}
+            className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            {isJoiningCard ? "Joining..." : "Join Chamber"}
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }

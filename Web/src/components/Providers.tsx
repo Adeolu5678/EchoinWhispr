@@ -6,6 +6,7 @@ import convex from '@/lib/convex';
 import { ReactNode, useMemo } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { ClerkErrorBoundary } from '@/components/ClerkErrorBoundary';
+import { ThemeProvider } from 'next-themes';
 
 /**
  * Validates that the Clerk publishable key environment variable is set
@@ -66,19 +67,26 @@ export function Providers({ children }: ProvidersProps) {
   }
 
   return (
-    <ClerkErrorBoundary>
-      <ClerkProvider
-        publishableKey={clerkPublishableKey}
-        signInUrl="/sign-in"
-        signUpUrl="/sign-up"
-        afterSignInUrl="/"
-        afterSignUpUrl="/"
-      >
-        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-          {children}
-          <Toaster />
-        </ConvexProviderWithClerk>
-      </ClerkProvider>
-    </ClerkErrorBoundary>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <ClerkErrorBoundary>
+        <ClerkProvider
+          publishableKey={clerkPublishableKey}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          afterSignInUrl="/"
+          afterSignUpUrl="/"
+        >
+          <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+            {children}
+            <Toaster />
+          </ConvexProviderWithClerk>
+        </ClerkProvider>
+      </ClerkErrorBoundary>
+    </ThemeProvider>
   );
 }

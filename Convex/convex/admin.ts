@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { paginationOptsValidator } from 'convex/server';
 import { Doc, Id } from './_generated/dataModel';
 import { isAdmin, isSuperAdmin, getAdminRole, AdminRole } from './adminAuth';
 
@@ -25,6 +26,18 @@ export const isCurrentUserAdmin = query({
 
     const role = await getAdminRole(ctx, identity.subject);
     return { isAdmin: role !== null, role };
+  },
+});
+
+/**
+ * Check if any admin roles exist in the system.
+ * Used to determine if first super admin needs to be initialized.
+ */
+export const hasAdmins = query({
+  args: {},
+  handler: async (ctx): Promise<boolean> => {
+    const firstAdmin = await ctx.db.query('adminRoles').first();
+    return firstAdmin !== null;
   },
 });
 
@@ -115,6 +128,7 @@ export const requestAdminPromotion = mutation({
       userId: user._id,
       clerkId: identity.subject,
       reason: args.reason.trim(),
+      requestType: 'admin',
       status: 'pending',
       createdAt: Date.now(),
     });
@@ -209,14 +223,32 @@ export const approveAdminRequest = mutation({
       reviewedAt: now,
     });
 
-    // Create admin role
-    await ctx.db.insert('adminRoles', {
-      userId: request.userId,
-      clerkId: request.clerkId,
-      role: 'admin',
-      grantedBy: reviewerUser._id,
-      createdAt: now,
-    });
+    // Determine role based on requestType
+    const roleToGrant = request.requestType === 'super_admin' ? 'super_admin' : 'admin';
+
+    // Check if user already has an admin role (for super_admin promotion requests)
+    const existingRole = await ctx.db
+      .query('adminRoles')
+      .withIndex('by_user_id', (q) => q.eq('userId', request.userId))
+      .first();
+
+    if (existingRole) {
+      // Update existing role if promoting to super_admin
+      if (roleToGrant === 'super_admin' && existingRole.role !== 'super_admin') {
+        await ctx.db.patch(existingRole._id, {
+          role: 'super_admin',
+        });
+      }
+    } else {
+      // Create new admin role
+      await ctx.db.insert('adminRoles', {
+        userId: request.userId,
+        clerkId: request.clerkId,
+        role: roleToGrant,
+        grantedBy: reviewerUser._id,
+        createdAt: now,
+      });
+    }
 
     return { success: true };
   },
@@ -329,9 +361,54 @@ export const grantAdminRole = mutation({
 });
 
 /**
- * Super Admin: Revoke admin privileges from a user.
+ * Super Admin: Revoke admin privileges from a user (including other super admins).
  */
 export const revokeAdminRole = mutation({
+  args: {
+    userId: v.id('users'),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    // Verify super admin
+    const isSuperAdminUser = await isSuperAdmin(ctx, identity.subject);
+    if (!isSuperAdminUser) {
+      throw new Error('Unauthorized: Super admin access required');
+    }
+
+    // Get the current super admin's user record
+    const currentUser = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .first();
+
+    // Prevent self-demotion
+    if (currentUser && currentUser._id === args.userId) {
+      throw new Error('Cannot revoke your own admin privileges');
+    }
+
+    const adminRole = await ctx.db
+      .query('adminRoles')
+      .withIndex('by_user_id', (q) => q.eq('userId', args.userId))
+      .first();
+
+    if (!adminRole) {
+      throw new Error('User is not an admin');
+    }
+
+    await ctx.db.delete(adminRole._id);
+
+    return { success: true };
+  },
+});
+
+/**
+ * Super Admin: Promote an admin to super admin.
+ */
+export const promoteToSuperAdmin = mutation({
   args: {
     userId: v.id('users'),
   },
@@ -356,14 +433,117 @@ export const revokeAdminRole = mutation({
       throw new Error('User is not an admin');
     }
 
-    // Cannot revoke super_admin role
     if (adminRole.role === 'super_admin') {
-      throw new Error('Cannot revoke super admin privileges');
+      throw new Error('User is already a super admin');
     }
 
-    await ctx.db.delete(adminRole._id);
+    await ctx.db.patch(adminRole._id, {
+      role: 'super_admin',
+    });
 
     return { success: true };
+  },
+});
+
+/**
+ * Initialize the first super admin (only works when no admins exist).
+ * This is used for bootstrapping a production instance.
+ */
+export const initializeFirstSuperAdmin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    // Check if any admin roles exist
+    const existingAdmins = await ctx.db.query('adminRoles').first();
+    if (existingAdmins) {
+      throw new Error('Admin system already initialized');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Create the first super admin
+    await ctx.db.insert('adminRoles', {
+      userId: user._id,
+      clerkId: identity.subject,
+      role: 'super_admin',
+      createdAt: Date.now(),
+    });
+
+    return { success: true, message: 'You are now the first super admin!' };
+  },
+});
+
+/**
+ * Admin: Request promotion to super admin.
+ */
+export const requestSuperAdminPromotion = mutation({
+  args: {
+    reason: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    // Validate reason
+    if (args.reason.trim().length < 10) {
+      throw new Error('Please provide a reason with at least 10 characters');
+    }
+
+    // Verify user is an admin but not super admin
+    const isAdminUser = await isAdmin(ctx, identity.subject);
+    if (!isAdminUser) {
+      throw new Error('You must be an admin to request super admin promotion');
+    }
+
+    const isSuperAdminUser = await isSuperAdmin(ctx, identity.subject);
+    if (isSuperAdminUser) {
+      throw new Error('You are already a super admin');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Check for existing pending request
+    const existingRequest = await ctx.db
+      .query('adminRequests')
+      .withIndex('by_user_id', (q) => q.eq('userId', user._id))
+      .filter((q) => q.eq(q.field('status'), 'pending'))
+      .first();
+
+    if (existingRequest) {
+      throw new Error('You already have a pending promotion request');
+    }
+
+    // Create the super admin request (reusing adminRequests table)
+    const requestId = await ctx.db.insert('adminRequests', {
+      userId: user._id,
+      clerkId: identity.subject,
+      reason: args.reason.trim(),
+      requestType: 'super_admin',
+      status: 'pending',
+      createdAt: Date.now(),
+    });
+
+    return { success: true, requestId };
   },
 });
 
@@ -376,10 +556,7 @@ export const revokeAdminRole = mutation({
  */
 export const getAllWhispers = query({
   args: {
-    paginationOpts: v.object({
-      numItems: v.number(),
-      cursor: v.union(v.string(), v.null()),
-    }),
+    paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

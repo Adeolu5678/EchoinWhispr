@@ -109,11 +109,16 @@ export const UserMenu = ({ user, secondaryNavItems = [] }: UserMenuProps) => {
   }, [user]);
 
   /**
-   * Get user display name
+   * Get user display name - prioritize username over full name
    * Uses useCallback for performance optimization
    */
   const getDisplayName = useCallback(() => {
     if (!user) return 'User';
+
+    // Prioritize username when available
+    if (user.username) {
+      return user.username;
+    }
 
     const firstName = user.firstName || '';
     const lastName = user.lastName || '';
@@ -130,7 +135,7 @@ export const UserMenu = ({ user, secondaryNavItems = [] }: UserMenuProps) => {
       return lastName;
     }
 
-    return user.username || user.emailAddresses?.[0]?.emailAddress || 'User';
+    return user.emailAddresses?.[0]?.emailAddress || 'User';
   }, [user]);
 
   if (!user) {
@@ -161,10 +166,10 @@ export const UserMenu = ({ user, secondaryNavItems = [] }: UserMenuProps) => {
 
         <DropdownMenuContent align="end" className="w-56">
           <div className="px-2 py-1.5">
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-foreground">
               {getDisplayName()}
             </p>
-            <p className="text-xs text-gray-500 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {user.emailAddresses?.[0]?.emailAddress}
             </p>
           </div>

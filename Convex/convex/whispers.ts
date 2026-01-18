@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query, internalMutation } from './_generated/server';
+import { internal } from './_generated/api';
 import { Doc, Id } from './_generated/dataModel';
 import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
 
@@ -17,8 +18,9 @@ export const sendWhisper = mutation({
       throw new Error('Whisper content must be 280 characters or less');
     }
 
-    if (args.content.trim().length === 0) {
-      throw new Error('Whisper content cannot be empty');
+    // Allow image-only whispers - only reject if both content and imageUrl are empty
+    if (args.content.trim().length === 0 && !args.imageUrl) {
+      throw new Error('Whisper must have content or an image');
     }
 
     const identity = await ctx.auth.getUserIdentity();
@@ -70,6 +72,20 @@ export const sendWhisper = mutation({
     // Record rate limit action
     await recordRateLimitedAction(ctx, sender._id, 'SEND_WHISPER');
 
+    // Create notification for recipient
+    const messagePreview = args.content.trim().length > 50 
+      ? args.content.trim().slice(0, 50) + '...' 
+      : args.content.trim();
+    
+    await ctx.scheduler.runAfter(0, internal.notifications.createNotificationInternal, {
+      userId: recipient._id,
+      type: 'whisper',
+      title: 'New Whisper',
+      message: args.imageUrl ? `📷 ${messagePreview || '[Image]'}` : messagePreview,
+      actionUrl: '/inbox',
+      metadata: { whisperId, hasImage: !!args.imageUrl },
+    });
+
     return whisperId;
   },
 });
@@ -81,14 +97,19 @@ export const getReceivedWhispers = query({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    if (!identity) {
+      // Return empty page instead of throwing to prevent UI errors during auth loading
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) throw new Error('User not found');
+    if (!user) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const result = await ctx.db
       .query('whispers')
@@ -101,6 +122,39 @@ export const getReceivedWhispers = query({
   },
 });
 
+// Get count of received whispers for current user (lightweight alternative)
+// Returns { count, capped } to indicate if results were truncated
+export const getReceivedWhispersCount = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { count: 0, capped: false };
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return { count: 0, capped: false };
+    }
+
+    // Count whispers not part of a conversation (standalone whispers)
+    const whispers = await ctx.db
+      .query('whispers')
+      .withIndex('by_recipient', q => q.eq('recipientId', user._id))
+      .filter(q => q.eq(q.field('conversationId'), undefined))
+      .take(100); // Cap at 100 for performance
+
+    // Indicate if count was capped at 100
+    return whispers.length === 100 
+      ? { count: 100, capped: true } 
+      : { count: whispers.length, capped: false };
+  },
+});
+
 // Get whispers sent by current user (with pagination)
 export const getSentWhispers = query({
   args: {
@@ -108,14 +162,18 @@ export const getSentWhispers = query({
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    if (!identity) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) throw new Error('User not found');
+    if (!user) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const result = await ctx.db
       .query('whispers')
