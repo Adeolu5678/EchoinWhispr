@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { useSendWhisper } from '../hooks/useWhispers';
 import { useSendMysteryWhisper } from '../hooks/useMysteryWhispers';
 import { useLocation } from '@/hooks/useLocation';
@@ -9,7 +9,7 @@ import { validateFile } from '@/lib/fileValidation';
 import { useToast } from '@/hooks/use-toast';
 import { RecipientSelector } from './RecipientSelector';
 import { UserSearchResult } from '@/features/users/types';
-import { Shield, Image as ImageIcon, Send, Loader2, HelpCircle, MapPin } from 'lucide-react';
+import { Shield, Image as ImageIcon, Send, Loader2, HelpCircle, MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -33,6 +33,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
   const [selectedRecipient, setSelectedRecipient] = useState<UserSearchResult | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isMystery, setIsMystery] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -65,11 +66,34 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
         return;
       }
       setSelectedImage(file);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
     } catch (error) {
       console.error('File validation error:', error);
       toast({ title: 'Error', description: 'Failed to validate file', variant: 'destructive' });
     }
   }, [toast]);
+
+  const handleRemoveImage = useCallback(() => {
+    setSelectedImage(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [imagePreview]);
+
+  // Cleanup blob URL on unmount or when preview changes
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const handleImageButtonClick = useCallback(() => {
     fileInputRef.current?.click();
@@ -80,8 +104,11 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
       e.preventDefault();
       const trimmedContent = content.trim();
       
-      // Validation
-      if (!trimmedContent || trimmedContent.length < WHISPER_LIMITS.MIN_CONTENT_LENGTH) {
+      // Validation - allow image-only messages
+      const hasValidContent = trimmedContent.length >= WHISPER_LIMITS.MIN_CONTENT_LENGTH;
+      const hasImage = !!selectedImage;
+      
+      if (!hasValidContent && !hasImage) {
         return;
       }
       
@@ -115,10 +142,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
 
         setContent('');
         setSelectedRecipient(null);
-        setSelectedImage(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
+        handleRemoveImage();
         onWhisperSent?.();
       } catch (error) {
         console.error('Failed to send whisper:', error);
@@ -129,15 +153,17 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
         });
       }
     },
-    [content, selectedRecipient, selectedImage, isMystery, location, sendWhisper, sendMysteryWhisper, upload, onWhisperSent, toast]
+    [content, selectedRecipient, selectedImage, isMystery, location, sendWhisper, sendMysteryWhisper, upload, onWhisperSent, toast, handleRemoveImage]
   );
 
   const isDisabled = useMemo(() => {
     const hasValidContent = content.trim().length >= WHISPER_LIMITS.MIN_CONTENT_LENGTH;
+    const hasImage = !!selectedImage;
     const hasRecipient = isMystery || !!selectedRecipient;
     const withinLimit = content.length <= maxLength;
-    return !hasValidContent || !hasRecipient || !withinLimit || isLoading || isUploading;
-  }, [content, selectedRecipient, isMystery, maxLength, isLoading, isUploading]);
+    // Allow sending if has valid content OR has image attached
+    return (!hasValidContent && !hasImage) || !hasRecipient || !withinLimit || isLoading || isUploading;
+  }, [content, selectedRecipient, selectedImage, isMystery, maxLength, isLoading, isUploading]);
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -206,7 +232,7 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="hover:bg-primary/10 hover:text-primary transition-colors"
+                className={`hover:bg-primary/10 hover:text-primary transition-colors ${selectedImage ? 'text-primary' : ''}`}
                 onClick={handleImageButtonClick}
               >
                 <ImageIcon className="w-5 h-5" />
@@ -214,6 +240,30 @@ export const WhisperComposer: React.FC<WhisperComposerProps> = ({
             )}
           </div>
         </div>
+
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="relative inline-block animate-in fade-in slide-in-from-bottom-2">
+            <div className="relative rounded-xl overflow-hidden border border-white/10 bg-white/5 max-w-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="max-h-40 w-auto object-contain"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-6 w-6 bg-black/60 hover:bg-red-500/80 rounded-full"
+                onClick={handleRemoveImage}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{selectedImage?.name}</p>
+          </div>
+        )}
 
         {location && !isMystery && (
            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1">

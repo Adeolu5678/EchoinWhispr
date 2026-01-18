@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { internal } from './_generated/api';
 import { Doc, Id } from './_generated/dataModel';
 import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
 
@@ -92,6 +93,16 @@ export const sendFriendRequest = mutation({
 
     // Record rate limit action
     await recordRateLimitedAction(ctx, user._id, 'SEND_FRIEND_REQUEST');
+
+    // Create notification for recipient
+    await ctx.scheduler.runAfter(0, internal.notifications.createNotificationInternal, {
+      userId: args.friendId,
+      type: 'friend_request',
+      title: 'New Friend Request',
+      message: `${user.username} wants to be your friend${args.message ? `: "${args.message}"` : ''}`,
+      actionUrl: '/friends?tab=requests',
+      metadata: { senderId: user._id, senderUsername: user.username },
+    });
   },
 });
 
@@ -140,6 +151,16 @@ export const acceptFriendRequest = mutation({
     await ctx.db.patch(args.requestId, {
       status: 'accepted',
       updatedAt: Date.now(),
+    });
+
+    // Create notification for the requester
+    await ctx.scheduler.runAfter(0, internal.notifications.createNotificationInternal, {
+      userId: request.userId,
+      type: 'friend_accepted',
+      title: 'Friend Request Accepted',
+      message: `${user.username} accepted your friend request!`,
+      actionUrl: '/friends',
+      metadata: { accepterId: user._id, accepterUsername: user.username },
     });
   },
 });

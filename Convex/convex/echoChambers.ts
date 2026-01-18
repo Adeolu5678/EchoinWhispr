@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
 /**
@@ -180,6 +181,80 @@ export const joinChamber = mutation({
   },
 });
 
+// Update alias in a chamber (one-time only)
+export const updateAlias = mutation({
+  args: {
+    chamberId: v.id("echoChambers"),
+    newAlias: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Validate alias
+    const trimmedAlias = args.newAlias.trim();
+    if (trimmedAlias.length < 2 || trimmedAlias.length > 30) {
+      throw new Error("Alias must be between 2 and 30 characters");
+    }
+
+    // Get membership
+    const membership = await ctx.db
+      .query("echoChamberMembers")
+      .withIndex("by_chamber_user", (q) => 
+        q.eq("chamberId", args.chamberId).eq("userId", user._id)
+      )
+      .first();
+
+    if (!membership) {
+      throw new Error("You are not a member of this chamber");
+    }
+
+    // Check if alias was already changed
+    if (membership.hasChangedAlias) {
+      throw new Error("You have already changed your alias in this chamber. Alias can only be changed once.");
+    }
+
+    // Update the membership alias
+    await ctx.db.patch(membership._id, {
+      anonymousAlias: trimmedAlias,
+      hasChangedAlias: true,
+    });
+
+    // Also update all past messages from this user in this chamber
+    const userMessages = await ctx.db
+      .query("echoChamberMessages")
+      .withIndex("by_chamber", (q) => q.eq("chamberId", args.chamberId))
+      .filter((q) => q.eq(q.field("senderId"), user._id))
+      .collect();
+
+    // Update each message with the new alias in parallel
+    await Promise.all(
+      userMessages.map((message) =>
+        ctx.db.patch(message._id, {
+          anonymousAlias: trimmedAlias,
+        })
+      )
+    );
+
+    return { 
+      success: true, 
+      newAlias: trimmedAlias,
+      messagesUpdated: userMessages.length,
+    };
+  },
+});
+
 // Leave a chamber
 export const leaveChamber = mutation({
   args: {
@@ -292,6 +367,36 @@ export const sendMessage = mutation({
     await ctx.db.patch(args.chamberId, {
       updatedAt: Date.now(),
     });
+
+    // Get chamber details for notifications
+    const chamber = await ctx.db.get(args.chamberId);
+    if (chamber) {
+      // Get all members except the sender
+      const members = await ctx.db
+        .query("echoChamberMembers")
+        .withIndex("by_chamber", (q) => q.eq("chamberId", args.chamberId))
+        .collect();
+
+      const messagePreview = args.content.trim().length > 40
+        ? args.content.trim().slice(0, 40) + '...'
+        : args.content.trim();
+
+      // Schedule notifications for all members except sender in parallel
+      await Promise.all(
+        members
+          .filter((member) => member.userId !== user._id)
+          .map((member) =>
+            ctx.scheduler.runAfter(0, internal.notifications.createOrUpdateChamberNotification, {
+              userId: member.userId,
+              chamberId: args.chamberId,
+              chamberName: chamber.name,
+              senderAlias: membership.anonymousAlias,
+              messagePreview: args.imageUrl ? '[Image]' : messagePreview,
+              hasImage: !!args.imageUrl,
+            })
+          )
+      );
+    }
 
     return { messageId };
   },
@@ -466,6 +571,8 @@ export const getChamber = query({
       userAlias: membership?.anonymousAlias,
       userRole: membership?.role,
       userColor: membership?.aliasColor,
+      hasChangedAlias: membership?.hasChangedAlias ?? false,
+      userLastReadAt: membership?.lastReadAt ?? 0,
     };
   },
 });
@@ -497,13 +604,15 @@ export const getChamberByInviteCode = query({
   },
 });
 
-// List public chambers
+// List public chambers with membership status
 export const listPublicChambers = query({
   args: {
     topic: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    
     let query = ctx.db
       .query("echoChambers")
       .withIndex("by_public", (q) => q.eq("isPublic", true));
@@ -519,7 +628,40 @@ export const listPublicChambers = query({
       .order("desc")
       .take(args.limit || 20);
 
-    return chambers;
+    // If not authenticated, just return chambers without membership info
+    if (!identity) {
+      return chambers.map(chamber => ({
+        ...chamber,
+        isMember: false,
+      }));
+    }
+
+    // Get user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      return chambers.map(chamber => ({
+        ...chamber,
+        isMember: false,
+      }));
+    }
+
+    // Get all user's memberships to check against
+    const memberships = await ctx.db
+      .query("echoChamberMembers")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    const memberChamberIds = new Set(memberships.map(m => m.chamberId));
+
+    // Enrich chambers with membership status
+    return chambers.map(chamber => ({
+      ...chamber,
+      isMember: memberChamberIds.has(chamber._id),
+    }));
   },
 });
 
@@ -552,15 +694,67 @@ export const getMyChambers = query({
     const chamberIds = memberships.map(m => m.chamberId);
     const chambers = await Promise.all(chamberIds.map(id => ctx.db.get(id)));
 
+    // Fetch last message for each chamber
+    const lastMessages = await Promise.all(
+      chamberIds.map(chamberId =>
+        ctx.db
+          .query("echoChamberMessages")
+          .withIndex("by_chamber", q => q.eq("chamberId", chamberId))
+          .order("desc")
+          .first()
+      )
+    );
+
+    // Get unread counts for each chamber (messages after user's lastReadAt)
+    const unreadCounts = await Promise.all(
+      memberships.map(async (m) => {
+        const lastReadAt = m.lastReadAt || 0;
+        const unreadMessages = await ctx.db
+          .query("echoChamberMessages")
+          .withIndex("by_chamber", q => q.eq("chamberId", m.chamberId))
+          .filter(q => q.gt(q.field("createdAt"), lastReadAt))
+          .take(100);
+        return unreadMessages.length;
+      })
+    );
+
+    // Get sender aliases for last messages
+    const lastMessageSenderInfos = await Promise.all(
+      lastMessages.map(async (msg) => {
+        if (!msg) return null;
+        
+        // Check if the sender is the current user
+        if (msg.senderId === user._id) {
+          return { alias: "You", isOwnMessage: true };
+        }
+        
+        // Use the alias stored in the message itself (more efficient)
+        return { 
+          alias: msg.anonymousAlias || "Anonymous", 
+          isOwnMessage: false 
+        };
+      })
+    );
+
     // Build response from already-fetched data
     return memberships
       .map((m, index) => {
         const chamber = chambers[index];
+        const lastMessage = lastMessages[index];
+        const senderInfo = lastMessageSenderInfos[index];
+        const unreadCount = unreadCounts[index];
+        
         return chamber ? {
           ...chamber,
           userAlias: m.anonymousAlias,
           userRole: m.role,
           userColor: m.aliasColor,
+          lastMessage: lastMessage?.content || null,
+          lastMessageTime: lastMessage?.createdAt || null,
+          lastMessageSenderAlias: senderInfo?.alias || null,
+          lastMessageIsOwn: senderInfo?.isOwnMessage || false,
+          lastMessageHasImage: !!lastMessage?.imageUrl,
+          unreadCount: unreadCount,
         } : null;
       })
       .filter(Boolean);
@@ -724,6 +918,114 @@ export const deleteChamber = mutation({
 
     // Delete the chamber
     await ctx.db.delete(args.chamberId);
+
+    return { success: true };
+  },
+});
+
+// Update lastReadAt timestamp when user views a chamber
+export const updateLastReadAt = mutation({
+  args: {
+    chamberId: v.id("echoChambers"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const membership = await ctx.db
+      .query("echoChamberMembers")
+      .withIndex("by_chamber_user", (q) => 
+        q.eq("chamberId", args.chamberId).eq("userId", user._id)
+      )
+      .first();
+
+    if (!membership) {
+      throw new Error("Not a member of this chamber");
+    }
+
+    // Update the lastReadAt timestamp
+    await ctx.db.patch(membership._id, {
+      lastReadAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// Update chamber details (creator only)
+export const updateChamber = mutation({
+  args: {
+    chamberId: v.id("echoChambers"),
+    description: v.optional(v.string()),
+    name: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const chamber = await ctx.db.get(args.chamberId);
+    if (!chamber) {
+      throw new Error("Chamber not found");
+    }
+
+    if (chamber.creatorId !== user._id) {
+      throw new Error("Only the creator can edit this chamber");
+    }
+
+    // Validate name if provided
+    if (args.name !== undefined) {
+      const trimmedName = args.name.trim();
+      if (trimmedName.length === 0) {
+        throw new Error("Invalid name: Chamber name cannot be empty");
+      }
+      if (trimmedName.length < 2) {
+        throw new Error("Invalid name: Chamber name must be at least 2 characters");
+      }
+      if (trimmedName.length > 50) {
+        throw new Error("Invalid name: Chamber name must be 50 characters or less");
+      }
+    }
+
+    // Validate description if provided
+    if (args.description !== undefined && args.description.trim().length > 500) {
+      throw new Error("Invalid description: Description must be 500 characters or less");
+    }
+
+    // Build update object
+    const updates: { description?: string; name?: string; updatedAt: number } = {
+      updatedAt: Date.now(),
+    };
+    
+    if (args.description !== undefined) {
+      updates.description = args.description.trim();
+    }
+    if (args.name !== undefined) {
+      updates.name = args.name.trim();
+    }
+
+    await ctx.db.patch(args.chamberId, updates);
 
     return { success: true };
   },

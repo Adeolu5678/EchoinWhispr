@@ -456,22 +456,22 @@ export class AuthErrorBoundary extends Component<
 
       return (
         <main
-          className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50"
+          className="flex min-h-screen flex-col items-center justify-center p-4 bg-background"
           aria-live="assertive"
         >
-          <Card className="w-full max-w-lg" role="alert">
+          <Card className="w-full max-w-lg glass border-white/10" role="alert">
             <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20 border border-red-500/30">
+                <AlertTriangle className="h-8 w-8 text-red-400" />
               </div>
-              <CardTitle className="text-xl font-semibold text-gray-900">
+              <CardTitle className="text-xl font-semibold text-white">
                 {title}
               </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardDescription className="text-muted-foreground">
                 {description}
               </CardDescription>
               {errorId && (
-                <div className="text-xs text-gray-500 mt-2">
+                <div className="text-xs text-muted-foreground/60 mt-2 font-mono">
                   Error ID: {errorId}
                 </div>
               )}
@@ -479,7 +479,10 @@ export class AuthErrorBoundary extends Component<
             <CardContent className="space-y-4">
               <div className="flex flex-col gap-2">
                 {isRecoverable && retryCount < maxRetries && (
-                  <Button onClick={this.handleRetry} className="w-full">
+                  <Button 
+                    onClick={this.handleRetry} 
+                    className="w-full bg-gradient-to-r from-primary to-cyan-600 hover:from-primary/90 hover:to-cyan-700"
+                  >
                     <RefreshCw className="mr-2 h-4 w-4" />
                     {retryCount === 0
                       ? 'Try Again'
@@ -488,7 +491,7 @@ export class AuthErrorBoundary extends Component<
                 )}
 
                 {retryCount >= maxRetries && (
-                  <p className="text-sm text-gray-500 text-center">
+                  <p className="text-sm text-muted-foreground text-center">
                     Maximum retry attempts reached. Please try other options
                     below.
                   </p>
@@ -499,7 +502,7 @@ export class AuthErrorBoundary extends Component<
                     <Button
                       variant="outline"
                       onClick={this.handleGoHome}
-                      className="flex-1"
+                      className="flex-1 border-white/10 hover:bg-white/5"
                     >
                       <Home className="mr-2 h-4 w-4" />
                       Go Home
@@ -510,7 +513,7 @@ export class AuthErrorBoundary extends Component<
                     <Button
                       variant="outline"
                       onClick={this.handleSignOut}
-                      className="flex-1"
+                      className="flex-1 border-white/10 hover:bg-white/5"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       Sign Out
@@ -519,12 +522,12 @@ export class AuthErrorBoundary extends Component<
                 </div>
               </div>
 
-              <div className="border-t pt-4">
+              <div className="border-t border-white/10 pt-4">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={this.toggleTechnicalDetails}
-                  className="w-full justify-between text-gray-600 hover:text-gray-900"
+                  className="w-full justify-between text-muted-foreground hover:text-white hover:bg-white/5"
                   aria-expanded={showTechnicalDetails}
                   aria-controls="auth-error-technical-details"
                 >
@@ -539,35 +542,35 @@ export class AuthErrorBoundary extends Component<
                 {showTechnicalDetails && (
                   <div
                     id="auth-error-technical-details"
-                    className="mt-2 rounded-md bg-gray-100 p-3"
+                    className="mt-2 rounded-lg bg-white/5 border border-white/10 p-3"
                   >
-                    <div className="text-xs text-gray-700 space-y-3">
+                    <div className="text-xs text-muted-foreground space-y-3">
                       <div>
-                        <div className="font-medium mb-1">Error Category:</div>
-                        <div className="font-mono text-blue-600">
+                        <div className="font-medium mb-1 text-white/80">Error Category:</div>
+                        <div className="font-mono text-primary">
                           {category}
                         </div>
                       </div>
 
                       <div>
-                        <div className="font-medium mb-1">Error Message:</div>
-                        <div className="font-mono break-all bg-white p-2 rounded">
+                        <div className="font-medium mb-1 text-white/80">Error Message:</div>
+                        <div className="font-mono break-all bg-black/20 p-2 rounded text-red-300">
                           {error.message || 'Unknown error'}
                         </div>
                       </div>
 
                       {error.stack && (
                         <div>
-                          <div className="font-medium mb-1">Stack Trace:</div>
-                          <pre className="whitespace-pre-wrap text-xs leading-relaxed bg-white p-2 rounded max-h-32 overflow-y-auto">
+                          <div className="font-medium mb-1 text-white/80">Stack Trace:</div>
+                          <pre className="whitespace-pre-wrap text-xs leading-relaxed bg-black/20 p-2 rounded max-h-32 overflow-y-auto text-muted-foreground/80">
                             {error.stack}
                           </pre>
                         </div>
                       )}
 
                       <div>
-                        <div className="font-medium mb-1">Component Stack:</div>
-                        <pre className="whitespace-pre-wrap text-xs leading-relaxed bg-white p-2 rounded max-h-32 overflow-y-auto">
+                        <div className="font-medium mb-1 text-white/80">Component Stack:</div>
+                        <pre className="whitespace-pre-wrap text-xs leading-relaxed bg-black/20 p-2 rounded max-h-32 overflow-y-auto text-muted-foreground/80">
                           {this.state.errorInfo?.componentStack ||
                             'No component stack available'}
                         </pre>

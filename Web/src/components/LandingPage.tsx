@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { motion, Variants } from 'framer-motion';
 import { Shield, ArrowRightLeft, Clock, PenTool, Send, RotateCcw, Sparkles, Zap, Lock, Users, User } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Animation Variants
@@ -33,17 +34,7 @@ const itemVariants: Variants = {
   },
 };
 
-const floatVariants: Variants = {
-  initial: { y: 0 },
-  animate: {
-    y: [-10, 10, -10],
-    transition: {
-      duration: 6,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    },
-  },
-};
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // Feature Data
@@ -54,19 +45,19 @@ const features = [
     icon: Shield,
     title: 'Complete Anonymity',
     description: 'Your identity remains hidden. Express yourself freely without the weight of your persona.',
-    gradient: 'from-purple-500 to-violet-600',
+    gradient: 'from-[#3F3D56] to-[#00C2FF]',
   },
   {
     icon: ArrowRightLeft,
     title: 'Organic Connections',
     description: 'Start with a one-way whisper. If it resonates, it can evolve into a two-way conversation.',
-    gradient: 'from-fuchsia-500 to-pink-600',
+    gradient: 'from-[#00A5D9] to-[#00C2FF]',
   },
   {
     icon: Clock,
     title: 'Ephemeral Nature',
     description: 'Messages that don\'t linger. Experience the freedom of digital impermanence.',
-    gradient: 'from-violet-500 to-purple-600',
+    gradient: 'from-[#3F3D56] to-[#00C2FF]',
   },
 ];
 
@@ -102,34 +93,7 @@ const stats = [
 // Components
 // ═══════════════════════════════════════════════════════════════════════
 
-/**
- * Animated floating orb decoration
- */
-const FloatingOrb = ({ 
-  className, 
-  delay = 0,
-  size = 'md'
-}: { 
-  className?: string; 
-  delay?: number;
-  size?: 'sm' | 'md' | 'lg';
-}) => {
-  const sizes = {
-    sm: 'w-32 h-32',
-    md: 'w-64 h-64',
-    lg: 'w-96 h-96',
-  };
 
-  return (
-    <motion.div
-      variants={floatVariants}
-      initial="initial"
-      animate="animate"
-      style={{ animationDelay: `${delay}s` }}
-      className={`absolute rounded-full blur-3xl pointer-events-none ${sizes[size]} ${className}`}
-    />
-  );
-};
 
 /**
  * Feature card with glass effect and hover glow
@@ -252,7 +216,7 @@ const StatCard = ({
 
 export default function LandingPage(): JSX.Element {
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+    <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden">
       {/* ═══════════════════════════════════════════════════════════════════
           Navigation
           ═══════════════════════════════════════════════════════════════════ */}
@@ -263,12 +227,8 @@ export default function LandingPage(): JSX.Element {
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2 group"
             >
-              <div className="bg-gradient-to-br from-primary to-accent p-2 rounded-lg shadow-glow-sm group-hover:shadow-glow transition-shadow duration-300">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-display font-bold tracking-tight">EchoinWhispr</span>
+              <Logo size="sm" />
             </motion.div>
             
             {/* Auth buttons - responsive */}
@@ -298,16 +258,12 @@ export default function LandingPage(): JSX.Element {
           Hero Section
           ═══════════════════════════════════════════════════════════════════ */}
       <section className="relative pt-24 pb-16 md:pt-32 lg:pt-48 lg:pb-32 overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/15 via-background to-background" />
+        {/* Background effects - full-width gradient from top with new brand colors */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#3F3D56]/30 via-[#3F3D56]/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#00C2FF]/10 via-transparent to-transparent" />
         
-        {/* Floating orbs */}
-        <FloatingOrb className="bg-primary/30 -top-20 left-1/4" size="lg" delay={0} />
-        <FloatingOrb className="bg-accent/20 bottom-0 right-1/4" size="md" delay={2} />
-        <FloatingOrb className="bg-violet-500/20 top-1/2 -left-20" size="md" delay={4} />
-        
-        {/* Grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+        {/* Subtle grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.008)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.008)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
@@ -398,8 +354,8 @@ export default function LandingPage(): JSX.Element {
           Features Section
           ═══════════════════════════════════════════════════════════════════ */}
       <section id="features" className="py-12 md:py-24 relative">
-        {/* Background accent */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
+        {/* Background accent - smoother gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_50%,rgba(168,85,247,0.04),transparent_60%)]" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section header */}
@@ -433,9 +389,8 @@ export default function LandingPage(): JSX.Element {
           How It Works Section
           ═══════════════════════════════════════════════════════════════════ */}
       <section className="py-12 md:py-24 relative overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-accent/10 via-background to-background" />
-        <FloatingOrb className="bg-accent/20 top-1/3 -right-32" size="lg" delay={1} />
+        {/* Background effects - subtle centered glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_50%,rgba(217,70,239,0.04),transparent_60%)]" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section header */}
@@ -473,8 +428,9 @@ export default function LandingPage(): JSX.Element {
             viewport={{ once: true }}
             className="glass-card rounded-3xl p-12 md:p-16 relative overflow-hidden"
           >
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
+            {/* Background glow - refined */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.06),transparent_60%)]" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
             
             <div className="relative z-10">
               <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
@@ -500,18 +456,13 @@ export default function LandingPage(): JSX.Element {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="bg-gradient-to-br from-primary to-accent p-1.5 rounded-lg">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-display font-semibold text-muted-foreground">EchoinWhispr</span>
-            </div>
+            <Logo size="sm" asLink={false} />
             
             {/* Links */}
             <div className="flex gap-8 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors duration-200">Privacy</a>
-              <a href="#" className="hover:text-primary transition-colors duration-200">Terms</a>
-              <a href="#" className="hover:text-primary transition-colors duration-200">Contact</a>
+              <Link href="/legal/privacy" className="hover:text-primary transition-colors duration-200">Privacy</Link>
+              <Link href="/legal/terms" className="hover:text-primary transition-colors duration-200">Terms</Link>
+              <Link href="/contact" className="hover:text-primary transition-colors duration-200">Contact</Link>
             </div>
             
             {/* Copyright */}

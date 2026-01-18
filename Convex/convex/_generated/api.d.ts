@@ -24,6 +24,7 @@ import type * as fileStorage from "../fileStorage.js";
 import type * as friends from "../friends.js";
 import type * as matchmaking from "../matchmaking.js";
 import type * as mysteryWhispers from "../mysteryWhispers.js";
+import type * as notifications from "../notifications.js";
 import type * as profiles from "../profiles.js";
 import type * as rateLimits from "../rateLimits.js";
 import type * as resonance from "../resonance.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   friends: typeof friends;
   matchmaking: typeof matchmaking;
   mysteryWhispers: typeof mysteryWhispers;
+  notifications: typeof notifications;
   profiles: typeof profiles;
   rateLimits: typeof rateLimits;
   resonance: typeof resonance;

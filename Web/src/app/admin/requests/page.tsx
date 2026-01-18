@@ -9,7 +9,7 @@ import { useAdminData, useAdminActions } from '@/features/admin/hooks';
 
 export default function AdminRequestsPage() {
   const { pendingRequests, pendingRequestsLoading, allAdmins, allAdminsLoading, isSuperAdmin } = useAdminData();
-  const { grantAdminRole, revokeAdminRole, isLoading } = useAdminActions();
+  const { grantAdminRole, revokeAdminRole, promoteToSuperAdmin, isLoading } = useAdminActions();
   const [grantUsername, setGrantUsername] = useState('');
 
   const handleGrantRole = async () => {
@@ -113,18 +113,31 @@ export default function AdminRequestsPage() {
                     <span
                       className={`px-2 py-0.5 text-xs rounded-full ${
                         admin.role === 'super_admin'
-                          ? 'bg-red-500/20 text-red-400'
+                          ? 'bg-amber-500/20 text-amber-400'
                           : 'bg-primary/20 text-primary'
                       }`}
                     >
-                      {admin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                      {admin.role === 'super_admin' ? '👑 Super Admin' : 'Admin'}
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     {admin.email} • Granted by {admin.grantedByUsername}
                   </div>
                 </div>
-                {admin.role !== 'super_admin' && (
+                <div className="flex items-center gap-2">
+                  {/* Promote to Super Admin button (only for regular admins) */}
+                  {admin.role !== 'super_admin' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => promoteToSuperAdmin(admin.userId)}
+                      disabled={isLoading}
+                      className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                    >
+                      Promote
+                    </Button>
+                  )}
+                  {/* Revoke button (works for all roles now) */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -134,7 +147,7 @@ export default function AdminRequestsPage() {
                   >
                     Revoke
                   </Button>
-                )}
+                </div>
               </div>
             ))}
           </div>

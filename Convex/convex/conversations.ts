@@ -12,6 +12,7 @@ export const echoWhisper = mutation({
   args: {
     whisperId: v.id('whispers'),
     replyContent: v.string(),
+    imageUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -25,9 +26,16 @@ export const echoWhisper = mutation({
     if (!user) throw new Error('User not found');
     const userId = user._id;
 
-    // Validate reply content length
-    if (args.replyContent.length < 1 || args.replyContent.length > 1000) {
-      throw new Error('Reply content must be between 1 and 1000 characters');
+    // Validate reply content length (allow empty if image attached)
+    const hasImage = !!args.imageUrl;
+    const hasContent = args.replyContent.trim().length > 0;
+    
+    if (!hasImage && !hasContent) {
+      throw new Error('Reply must have content or an image');
+    }
+    
+    if (args.replyContent.length > 1000) {
+      throw new Error('Reply content must be at most 1000 characters');
     }
 
     // Get the whisper
@@ -77,8 +85,9 @@ export const echoWhisper = mutation({
     const messageId = await ctx.db.insert('messages', {
       conversationId,
       senderId: userId,
-      content: args.replyContent.trim(),
+      content: args.replyContent.trim() || '[Image]',
       createdAt: Date.now(),
+      imageUrl: args.imageUrl,
     });
 
     // Update whisper to link to conversation
@@ -423,14 +432,14 @@ export const getActiveConversations = query({
   },
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
+    if (!identity) return [];
 
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
       .first();
 
-    if (!user) throw new Error('User not found');
+    if (!user) return [];
     const userId = user._id;
 
     // NOTE: Proper pagination requires a junction table or by_participant index.

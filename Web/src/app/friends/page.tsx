@@ -222,8 +222,14 @@ function FindFriendsTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const { sendFriendRequest, isLoading: isSending } = useSendFriendRequest();
   
+  const currentUser = useQuery(api.users.getCurrentUser);
   const debouncedQuery = useDebounce(searchQuery, 500);
-  const users = useQuery(api.users.searchUsers, debouncedQuery.length >= 2 ? { query: debouncedQuery } : 'skip');
+  const users = useQuery(
+    api.users.searchUsers, 
+    debouncedQuery.length >= 2 
+      ? { query: debouncedQuery, excludeUserId: currentUser?._id } 
+      : 'skip'
+  );
 
   const handleSendRequest = async (userId: string) => {
     try {
