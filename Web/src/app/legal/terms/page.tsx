@@ -7,7 +7,7 @@ export default function TermsOfServicePage() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-10">
         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-          <FileText className="w-7 h-7 text-white" />
+          <FileText className="w-7 h-7 text-white" aria-hidden="true" />
         </div>
         <div>
           <h1 className="text-3xl md:text-4xl font-display font-bold mb-1">Terms of Service</h1>

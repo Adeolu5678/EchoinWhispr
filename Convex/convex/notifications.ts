@@ -137,10 +137,11 @@ export const markAllAsRead = mutation({
       throw new Error('User not found');
     }
 
+    // Cap at 500 to prevent unbounded operations - user should retry if count equals cap
     const unreadNotifications = await ctx.db
       .query('notifications')
       .withIndex('by_user_read', (q) => q.eq('userId', user._id).eq('read', false))
-      .collect();
+      .take(500);
 
     await Promise.all(
       unreadNotifications.map((notification) =>
@@ -148,7 +149,7 @@ export const markAllAsRead = mutation({
       )
     );
 
-    return { success: true, count: unreadNotifications.length };
+    return { success: true, count: unreadNotifications.length, partial: unreadNotifications.length === 500 };
   },
 });
 
@@ -201,16 +202,17 @@ export const clearAllNotifications = mutation({
       throw new Error('User not found');
     }
 
+    // Cap at 500 to prevent unbounded operations - user should retry if count equals cap
     const notifications = await ctx.db
       .query('notifications')
       .withIndex('by_user', (q) => q.eq('userId', user._id))
-      .collect();
+      .take(500);
 
     await Promise.all(
       notifications.map((notification) => ctx.db.delete(notification._id))
     );
 
-    return { success: true, count: notifications.length };
+    return { success: true, count: notifications.length, partial: notifications.length === 500 };
   },
 });
 
