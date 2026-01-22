@@ -5,15 +5,17 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { usePaginatedQuery } from 'convex/react';
+import { api } from '../../../lib/convex';
 import { whisperService } from '../services/whisperService';
 import {
   WhisperWithSender,
   SendWhisperRequest,
   SendWhisperResponse,
 } from '../types';
-import { ERROR_CODES, AppError } from '../../../lib/errors';
+import { AppError } from '../../../lib/errors';
 import { useToast } from '../../../hooks/use-toast';
 
 /**
@@ -75,68 +77,91 @@ export function useSendWhisper() {
 }
 
 /**
- * Hook for receiving whispers with real-time subscriptions
- * @returns Object with whispers data, loading state, and error handling
+ * Hook for receiving whispers with real-time subscriptions and pagination
+ * Uses Convex's usePaginatedQuery for proper "Load More" functionality
+ * @returns Object with whispers data, loading state, pagination controls, and error handling
  */
 export function useReceivedWhispers() {
-  const [whispers, setWhispers] = useState<WhisperWithSender[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<AppError | null>(null);
-  const { toast } = useToast();
-  const { user } = useUser();
+  const { results, status, loadMore } = usePaginatedQuery(
+    api.whispers.getReceivedWhispers,
+    {},
+    { initialNumItems: 20 }
+  );
 
-  /**
-   * Fetches whispers from the service
-   */
-  const fetchWhispers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const fetchedWhispers = await whisperService.getReceivedWhispers(user?.id || '');
-      setWhispers(fetchedWhispers);
-    } catch (err) {
-      const whisperError = err as AppError;
-      setError(whisperError);
-
-      // Only show toast for non-auth errors
-      if (whisperError.code !== ERROR_CODES.UNAUTHORIZED) {
-        toast({
-          title: 'Failed to load whispers',
-          description: whisperError.message || 'Unable to fetch your messages.',
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast, user?.id]);
-
-  // Fetch whispers on mount
-  useEffect(() => {
-    fetchWhispers();
-  }, [fetchWhispers]);
+  // Transform results to WhisperWithSender format
+  const whispers = useMemo(() => {
+    return (results ?? []).map(whisper => ({
+      ...whisper,
+      isOwnWhisper: false, // Received whispers are not own whispers
+      formattedTime: new Date(whisper._creationTime).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      }),
+      relativeTime: getRelativeTime(new Date(whisper._creationTime)),
+      senderName: 'Anonymous',
+      senderAvatar: undefined,
+    })) as WhisperWithSender[];
+  }, [results]);
 
   // Computed values
   const unreadCount = useMemo(() => {
-    return whispers.filter((whisper: WhisperWithSender) => !whisper.isRead)
-      .length;
+    return whispers.filter((whisper: WhisperWithSender) => !whisper.isRead).length;
   }, [whispers]);
 
   const hasUnread = useMemo(() => {
     return unreadCount > 0;
   }, [unreadCount]);
 
+  // Pagination helpers
+  const hasMore = status === 'CanLoadMore';
+  const isLoadingMore = status === 'LoadingMore';
+  const isLoadingFirst = status === 'LoadingFirstPage';
+
   return {
     whispers,
-    isLoading,
-    error,
+    isLoading: isLoadingFirst,
+    isLoadingMore,
+    error: null, // usePaginatedQuery handles errors internally
     unreadCount,
     hasUnread,
-    refetch: fetchWhispers,
-    clearError: () => setError(null),
+    hasMore,
+    loadMore: () => loadMore(20),
+    refetch: () => {}, // usePaginatedQuery auto-refetches on data changes
+    clearError: () => {},
   };
 }
+
+/**
+ * Calculates relative time string (e.g., "2 hours ago", "yesterday")
+ * @param date - The date to calculate relative time for
+ * @returns Human-readable relative time string
+ */
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  const intervals = [
+    { label: 'year', seconds: 31536000 },
+    { label: 'month', seconds: 2592000 },
+    { label: 'day', seconds: 86400 },
+    { label: 'hour', seconds: 3600 },
+    { label: 'minute', seconds: 60 },
+    { label: 'second', seconds: 1 },
+  ];
+
+  for (const interval of intervals) {
+    const count = Math.floor(diffInSeconds / interval.seconds);
+    if (count >= 1) {
+      return count === 1
+        ? `1 ${interval.label} ago`
+        : `${count} ${interval.label}s ago`;
+    }
+  }
+
+  return 'Just now';
+}
+
 
 /**
  * Hook for marking whispers as read
