@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { usePaginatedQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '../../../lib/convex';
 import { whisperService } from '../services/whisperService';
 import {
@@ -77,16 +77,13 @@ export function useSendWhisper() {
 }
 
 /**
- * Hook for receiving whispers with real-time subscriptions and pagination
- * Uses Convex's usePaginatedQuery for proper "Load More" functionality
- * @returns Object with whispers data, loading state, pagination controls, and error handling
+ * Hook for receiving whispers with real-time subscriptions
+ * Fetches ALL whispers at once (no pagination)
+ * @returns Object with whispers data, loading state, and error handling
  */
 export function useReceivedWhispers() {
-  const { results, status, loadMore } = usePaginatedQuery(
-    api.whispers.getReceivedWhispers,
-    {},
-    { initialNumItems: 20 }
-  );
+  // Fetch ALL whispers using the new non-paginated query
+  const results = useQuery(api.whispers.getAllReceivedWhispers);
 
   // Transform results to WhisperWithSender format
   const whispers = useMemo(() => {
@@ -113,21 +110,18 @@ export function useReceivedWhispers() {
     return unreadCount > 0;
   }, [unreadCount]);
 
-  // Pagination helpers
-  const hasMore = status === 'CanLoadMore';
-  const isLoadingMore = status === 'LoadingMore';
-  const isLoadingFirst = status === 'LoadingFirstPage';
+  const isLoading = results === undefined;
 
   return {
     whispers,
-    isLoading: isLoadingFirst,
-    isLoadingMore,
-    error: null, // usePaginatedQuery handles errors internally
+    isLoading,
+    isLoadingMore: false, // No pagination, so never loading more
+    error: null,
     unreadCount,
     hasUnread,
-    hasMore,
-    loadMore: () => loadMore(20),
-    refetch: () => {}, // usePaginatedQuery auto-refetches on data changes
+    hasMore: false, // No pagination, all whispers are loaded
+    loadMore: () => {}, // No-op since all whispers are loaded
+    refetch: () => {}, // useQuery auto-refetches on data changes
     clearError: () => {},
   };
 }

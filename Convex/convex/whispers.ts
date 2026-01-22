@@ -122,6 +122,37 @@ export const getReceivedWhispers = query({
   },
 });
 
+// Get ALL whispers received by current user (no pagination - fetches everything)
+// Note: This may be slower for users with many whispers. Optimize later if needed.
+export const getAllReceivedWhispers = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    // Fetch ALL whispers for this user (no pagination limit)
+    const whispers = await ctx.db
+      .query('whispers')
+      .withIndex('by_recipient', q => q.eq('recipientId', user._id))
+      .filter(q => q.eq(q.field('conversationId'), undefined))
+      .order('desc')
+      .collect();
+
+    return whispers;
+  },
+});
+
 // Get count of received whispers for current user (lightweight alternative)
 // Returns { count, capped } to indicate if results were truncated
 export const getReceivedWhispersCount = query({
