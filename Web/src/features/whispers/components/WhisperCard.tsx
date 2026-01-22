@@ -10,6 +10,7 @@ import { WhisperWithSender } from '../types';
 import { useMarkAsRead } from '../hooks/useWhispers';
 import { formatDistanceToNow } from 'date-fns';
 import { useFeatureFlag } from '@/hooks/useFeatureFlags';
+import { FEATURE_FLAGS } from '@/config/featureFlags';
 import { 
   CheckCircle2, Clock, User, MapPin, MessageCircle, 
   Link as LinkIcon, ImageOff, Eye
@@ -78,7 +79,6 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
     const { markAsRead, isLoading } = useMarkAsRead();
     const isConversationEvolutionEnabled = useFeatureFlag('CONVERSATION_EVOLUTION');
     const isWhisperChainsEnabled = useFeatureFlag('WHISPER_CHAINS');
-    const isImageUploadsEnabled = useFeatureFlag('IMAGE_UPLOADS');
     const isLocationEnabled = useFeatureFlag('LOCATION_BASED_FEATURES');
 
     const handleMarkAsRead = useCallback(async (e: React.MouseEvent) => {
@@ -174,7 +174,7 @@ export const WhisperCard: React.FC<WhisperCardProps> = React.memo(
               </div>
 
               {/* Image display */}
-              {isImageUploadsEnabled && whisper.imageUrl && (
+              {FEATURE_FLAGS.IMAGE_UPLOADS && whisper.imageUrl && (
                 <ImageWithFallback 
                   src={whisper.imageUrl} 
                   alt="Whisper image attachment" 
