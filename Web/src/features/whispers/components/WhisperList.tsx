@@ -8,7 +8,7 @@ import { useReceivedWhispers } from '../hooks/useWhispers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { WhisperListSkeleton } from '@/components/ui/skeletons';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle, ChevronDown, Loader2 } from 'lucide-react';
 import { WhisperWithSender } from '../types';
 
 interface WhisperListProps {
@@ -63,6 +63,9 @@ export const WhisperList: React.FC<WhisperListProps> = React.memo(
     const isLoading = propIsLoading ?? hookData.isLoading;
     const error = propError ?? hookData.error;
     const refetch = hookData.refetch;
+    const hasMore = hookData.hasMore;
+    const loadMore = hookData.loadMore;
+    const isLoadingMore = hookData.isLoadingMore;
 
     /**
      * Handles manual refresh of the whisper list
@@ -272,6 +275,32 @@ export const WhisperList: React.FC<WhisperListProps> = React.memo(
             ))}
           </motion.div>
         </AnimatePresence>
+
+        {/* Load More Button */}
+        {hasMore && (
+          <div className="flex justify-center pt-4">
+            <Button
+              onClick={loadMore}
+              variant="outline"
+              size="lg"
+              disabled={isLoadingMore}
+              className="gap-2 min-w-[200px]"
+              aria-label={isLoadingMore ? 'Loading more whispers' : 'Load more whispers'}
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  Load More Whispers
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
