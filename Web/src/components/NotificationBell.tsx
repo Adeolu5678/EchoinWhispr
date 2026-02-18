@@ -114,6 +114,10 @@ export function NotificationBell() {
         size="icon"
         className="relative"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={`Notifications${(unreadCount ?? 0) > 0 ? `, ${unreadCount} unread` : ''}`}
+        aria-expanded={isOpen}
+        aria-controls="notification-dropdown"
+        aria-haspopup="dialog"
       >
         <Bell className="w-5 h-5" />
         {(unreadCount ?? 0) > 0 && (
@@ -125,7 +129,7 @@ export function NotificationBell() {
 
       {/* Dropdown */}
       {isOpen && (
-        <Card className="absolute right-0 top-full mt-2 w-80 sm:w-96 glass border-white/10 shadow-2xl z-50 overflow-hidden">
+        <Card id="notification-dropdown" className="absolute right-0 top-full mt-2 w-80 sm:w-96 glass border-white/10 shadow-2xl z-50 overflow-hidden" role="dialog" aria-label="Notifications">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <h3 className="font-semibold text-lg">Notifications</h3>
@@ -208,6 +212,7 @@ export function NotificationBell() {
                                       (err) => console.error('Failed to mark as read:', err)
                                     );
                                   }}
+                                  aria-label="Mark as read"
                                 >
                                   <Check className="w-3 h-3" />
                                 </Button>
@@ -217,6 +222,7 @@ export function NotificationBell() {
                                 size="icon"
                                 className="h-6 w-6 hover:bg-red-500/20 hover:text-red-400"
                                 onClick={(e) => handleDelete(e, notification._id as Id<'notifications'>)}
+                                aria-label="Delete notification"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>

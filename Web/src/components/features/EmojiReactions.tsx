@@ -47,6 +47,8 @@ export function EmojiReactions({ whisperId, reactions = [], currentUserId }: Emo
         <button
           key={emoji}
           onClick={() => handleReact(emoji)}
+          aria-label={`React with ${emoji}${userReacted ? ' (selected)' : ''}`}
+          aria-pressed={userReacted}
           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-colors ${
             userReacted 
               ? 'bg-primary/20 border border-primary/40' 
@@ -65,6 +67,9 @@ export function EmojiReactions({ whisperId, reactions = [], currentUserId }: Emo
           variant="ghost"
           className="h-6 w-6"
           onClick={() => setShowPicker(!showPicker)}
+          aria-label="Add reaction"
+          aria-expanded={showPicker}
+          aria-haspopup="dialog"
         >
           <Smile className="w-3 h-3" />
         </Button>
@@ -81,6 +86,7 @@ export function EmojiReactions({ whisperId, reactions = [], currentUserId }: Emo
                   <button
                     key={emoji}
                     onClick={() => handleReact(emoji)}
+                    aria-label={`React with ${emoji}`}
                     className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded transition-colors text-lg"
                   >
                     {emoji}

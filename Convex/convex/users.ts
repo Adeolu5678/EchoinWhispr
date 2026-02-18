@@ -305,7 +305,26 @@ export const getOrCreateCurrentUser = mutation({
   },
 });
 
-// Update user username
+const RESERVED_USERNAMES = new Set([
+  'admin', 'administrator', 'moderator', 'mod', 'system', 'support',
+  'help', 'info', 'contact', 'about', 'privacy', 'terms', 'legal',
+  'api', 'app', 'web', 'mobile', 'blog', 'news', 'press', 'careers',
+  'jobs', 'pricing', 'features', 'docs', 'documentation', 'status',
+  'security', 'settings', 'config', 'test', 'testing', 'demo',
+  'example', 'sample', 'user', 'users', 'profile', 'profiles',
+  'account', 'accounts', 'login', 'logout', 'signin', 'signup',
+  'register', 'auth', 'authenticate', 'verify', 'confirmation',
+  'reset', 'password', 'forgot', 'recover', 'delete', 'remove',
+  'ban', 'banned', 'suspended', 'deleted', 'inactive', 'disabled',
+  'owner', 'founder', 'ceo', 'staff', 'team', 'official', 'verified',
+  'echoinwhispr', 'echo', 'whisper', 'whispers', 'echoes',
+  'null', 'undefined', 'none', 'anonymous', 'guest', 'bot', 'service',
+  'everyone', 'all', 'public', 'private', 'hidden', 'default',
+]);
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 50;
+
 export const updateUsername = mutation({
   args: {
     username: v.string(),
@@ -318,12 +337,15 @@ export const updateUsername = mutation({
 
     const normalizedUsername = args.username.trim().toLowerCase();
 
-    // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
     const usernameRegex = /^[a-z0-9_]{3,20}$/;
     if (!usernameRegex.test(normalizedUsername)) {
       throw new Error(
         'Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores'
       );
+    }
+
+    if (RESERVED_USERNAMES.has(normalizedUsername)) {
+      throw new Error('This username is reserved and cannot be used');
     }
 
     const user = await ctx.db
@@ -335,26 +357,58 @@ export const updateUsername = mutation({
       throw new Error('User not found');
     }
 
-    // Check if username is already taken by another user
-    const existingUser = await ctx.db
-      .query('users')
-      .withIndex('by_username', q => q.eq('username', normalizedUsername))
-      .first();
-
-    if (existingUser && existingUser._id !== user._id) {
-      throw new Error('Username is already taken');
+    if (user.username === normalizedUsername) {
+      return user._id;
     }
 
-    // Update username
-    await ctx.db.patch(user._id, {
-      username: normalizedUsername,
-      // Also update display name if it matches the old username or is empty
-      ...(user.displayName === user.username ? { displayName: normalizedUsername } : {}),
-      needsUsernameSelection: false,
-      updatedAt: Date.now(),
-    });
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const existingUser = await ctx.db
+        .query('users')
+        .withIndex('by_username', q => q.eq('username', normalizedUsername))
+        .first();
 
-    return user._id;
+      if (existingUser && existingUser._id !== user._id) {
+        throw new Error('Username is already taken');
+      }
+
+      await ctx.db.patch(user._id, {
+        username: normalizedUsername,
+        ...(user.displayName === user.username ? { displayName: normalizedUsername } : {}),
+        needsUsernameSelection: false,
+        updatedAt: Date.now(),
+      });
+
+      const verifyUser = await ctx.db
+        .query('users')
+        .withIndex('by_username', q => q.eq('username', normalizedUsername))
+        .collect();
+
+      const actualOwner = verifyUser.find(u => u._id === user._id);
+      const conflictingUser = verifyUser.find(u => u._id !== user._id);
+
+      if (!actualOwner) {
+        throw new Error('Failed to update username. Please try again.');
+      }
+
+      if (conflictingUser && verifyUser.length > 1) {
+        const previousUsername = user.username;
+        await ctx.db.patch(user._id, {
+          username: previousUsername,
+          ...(user.displayName === normalizedUsername ? { displayName: previousUsername } : {}),
+          updatedAt: Date.now(),
+        });
+
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+          continue;
+        }
+        throw new Error('Username is already taken');
+      }
+
+      return user._id;
+    }
+
+    throw new Error('Failed to update username due to a conflict. Please try again.');
   },
 });
 

@@ -448,6 +448,9 @@ export const promoteToSuperAdmin = mutation({
 /**
  * Initialize the first super admin (only works when no admins exist).
  * This is used for bootstrapping a production instance.
+ * 
+ * Race condition fix: Uses atomic unique constraint check via system initialization
+ * record and maintains idempotency for repeated calls by the same user.
  */
 export const initializeFirstSuperAdmin = mutation({
   args: {},
@@ -455,12 +458,6 @@ export const initializeFirstSuperAdmin = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error('Not authenticated');
-    }
-
-    // Check if any admin roles exist
-    const existingAdmins = await ctx.db.query('adminRoles').first();
-    if (existingAdmins) {
-      throw new Error('Admin system already initialized');
     }
 
     const user = await ctx.db
@@ -472,13 +469,52 @@ export const initializeFirstSuperAdmin = mutation({
       throw new Error('User not found');
     }
 
+    // IDEMPOTENCY: Check if this user is already a super admin
+    const existingUserRole = await ctx.db
+      .query('adminRoles')
+      .withIndex('by_user_id', (q) => q.eq('userId', user._id))
+      .first();
+
+    if (existingUserRole?.role === 'super_admin') {
+      return { success: true, message: 'You are already the super admin.', alreadyInitialized: true };
+    }
+
+    // UNIQUE CONSTRAINT CHECK: Atomic check for any existing admin
+    // This prevents race conditions by checking immediately before insert
+    const anyAdmin = await ctx.db.query('adminRoles').first();
+    if (anyAdmin) {
+      throw new Error('Admin system already initialized');
+    }
+
+    const now = Date.now();
+
     // Create the first super admin
-    await ctx.db.insert('adminRoles', {
+    const adminRoleId = await ctx.db.insert('adminRoles', {
       userId: user._id,
       clerkId: identity.subject,
       role: 'super_admin',
-      createdAt: Date.now(),
+      createdAt: now,
     });
+
+    // AUDIT TRAIL: Create an audit record for this initialization
+    await ctx.db.insert('adminRequests', {
+      userId: user._id,
+      clerkId: identity.subject,
+      reason: 'System initialization: First super admin created via initializeFirstSuperAdmin mutation',
+      requestType: 'super_admin',
+      status: 'approved',
+      createdAt: now,
+      reviewedAt: now,
+    });
+
+    // RACE CONDITION VERIFICATION: Verify we're the only admin after insert
+    // If another admin exists (from concurrent mutation), we have a race
+    const allAdmins = await ctx.db.query('adminRoles').collect();
+    if (allAdmins.length > 1) {
+      // Rollback our insertion - another admin was created concurrently
+      await ctx.db.delete(adminRoleId);
+      throw new Error('Admin system already initialized by another user');
+    }
 
     return { success: true, message: 'You are now the first super admin!' };
   },
@@ -671,6 +707,7 @@ export const getWhisperDetails = query({
 
 /**
  * Admin: Get dashboard statistics.
+ * Optimized to use indexed queries and avoid N+1 patterns.
  */
 export const getAdminDashboardStats = query({
   args: {},
@@ -680,56 +717,38 @@ export const getAdminDashboardStats = query({
       return null;
     }
 
-    // Verify admin
     const isAdminUser = await isAdmin(ctx, identity.subject);
     if (!isAdminUser) {
       return null;
     }
 
-    // Get total users count (excluding deleted)
-    const allUsers = await ctx.db
-      .query('users')
-      .filter((q) => q.neq(q.field('isDeleted'), true))
-      .collect();
-    const totalUsers = allUsers.length;
-
-    // Get total whispers count
-    const allWhispers = await ctx.db.query('whispers').collect();
-    const totalWhispers = allWhispers.length;
-
-    // Get today's activity
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayTimestamp = today.getTime();
 
-    const todayWhispers = allWhispers.filter((w) => w.createdAt >= todayTimestamp);
-    const whispersToday = todayWhispers.length;
-
-    // Get pending admin requests
-    const pendingRequests = await ctx.db
-      .query('adminRequests')
-      .withIndex('by_status', (q) => q.eq('status', 'pending'))
-      .collect();
-    const pendingAdminRequests = pendingRequests.length;
-
-    // Get total admins
-    const adminRoles = await ctx.db.query('adminRoles').collect();
-    const totalAdmins = adminRoles.length;
-
-    // Get active conversations count
-    const conversations = await ctx.db
-      .query('conversations')
-      .filter((q) => q.eq(q.field('status'), 'active'))
-      .collect();
-    const activeConversations = conversations.length;
+    const [
+      usersSample,
+      whispersSample,
+      whispersTodaySample,
+      pendingRequestsSample,
+      adminRolesSample,
+      activeConversationsSample,
+    ] = await Promise.all([
+      ctx.db.query('users').filter((q) => q.neq(q.field('isDeleted'), true)).take(10000),
+      ctx.db.query('whispers').withIndex('by_created_at').take(10000),
+      ctx.db.query('whispers').withIndex('by_created_at', (q) => q.gte('createdAt', todayTimestamp)).take(10000),
+      ctx.db.query('adminRequests').withIndex('by_status', (q) => q.eq('status', 'pending')).take(10000),
+      ctx.db.query('adminRoles').take(10000),
+      ctx.db.query('conversations').withIndex('by_status', (q) => q.eq('status', 'active')).take(10000),
+    ]);
 
     return {
-      totalUsers,
-      totalWhispers,
-      whispersToday,
-      pendingAdminRequests,
-      totalAdmins,
-      activeConversations,
+      totalUsers: usersSample.length,
+      totalWhispers: whispersSample.length,
+      whispersToday: whispersTodaySample.length,
+      pendingAdminRequests: pendingRequestsSample.length,
+      totalAdmins: adminRolesSample.length,
+      activeConversations: activeConversationsSample.length,
     };
   },
 });

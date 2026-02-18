@@ -28,9 +28,9 @@
     --muted: 240 4% 16%;
     --muted-foreground: 240 5% 58%;
 
-    /* Accent - Echo Cyan (#00C2FF) */
-    --accent: 194 100% 50%;
-    --accent-foreground: 0 0% 0%;
+    /* Accent - Purple theme to match primary */
+    --accent: 271 91% 65%;
+    --accent-foreground: 0 0% 100%;
 
     /* States */
     --destructive: 0 72% 51%;
@@ -39,21 +39,21 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
-    --info: 194 100% 50%;
-    --info-foreground: 0 0% 0%;
+    --info: 271 91% 65%;
+    --info-foreground: 0 0% 100%;
 
     /* Borders & Inputs */
     --border: 240 4% 16%;
     --input: 240 4% 14%;
-    --ring: 194 100% 50%;
+    --ring: 271 91% 65%;
     --radius: 0.75rem;
 
     /* Glow Effects - Updated for new colors */
     --glow-primary: 0 0 30px rgba(63, 61, 86, 0.5);
     --glow-primary-intense: 0 0 50px rgba(63, 61, 86, 0.7);
-    --glow-accent: 0 0 30px rgba(0, 194, 255, 0.4);
-    --glow-text: 0 0 60px rgba(0, 194, 255, 0.35);
-    --glow-text-accent: 0 0 60px rgba(0, 194, 255, 0.35);
+    --glow-accent: 0 0 30px rgba(168, 85, 247, 0.4);
+    --glow-text: 0 0 60px rgba(168, 85, 247, 0.35);
+    --glow-text-accent: 0 0 60px rgba(168, 85, 247, 0.35);
   }
 }
 
@@ -179,8 +179,8 @@
     background-image: linear-gradient(
       135deg,
       #3f3d56 0%,
-      #00a5d9 50%,
-      #00c2ff 100%
+      #7c3aed 50%,
+      #a855f7 100%
     );
   }
 
@@ -198,9 +198,9 @@
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(
       135deg,
-      #66d9ff 0%,
-      #00c2ff 50%,
-      #00a5d9 100%
+      #c084fc 0%,
+      #a855f7 50%,
+      #9333ea 100%
     );
   }
 
@@ -220,20 +220,19 @@
     background: linear-gradient(
       135deg,
       hsl(243 18% 35%) 0%,
-      hsl(210 60% 40%) 35%,
-      hsl(194 100% 45%) 65%,
-      hsl(194 100% 50%) 100%
+      hsl(271 60% 40%) 35%,
+      hsl(271 91% 55%) 65%,
+      hsl(271 91% 65%) 100%
     );
-    /* No animation - stable premium gradient */
   }
 
   .gradient-animated:hover {
     background: linear-gradient(
       135deg,
       hsl(243 18% 40%) 0%,
-      hsl(210 60% 45%) 35%,
-      hsl(194 100% 50%) 65%,
-      hsl(194 100% 55%) 100%
+      hsl(271 60% 45%) 35%,
+      hsl(271 91% 60%) 65%,
+      hsl(271 91% 70%) 100%
     );
   }
 
@@ -241,11 +240,10 @@
     background: linear-gradient(
       135deg,
       hsl(243 18% 35%) 0%,
-      hsl(210 60% 40%) 35%,
-      hsl(194 100% 45%) 65%,
-      hsl(194 100% 50%) 100%
+      hsl(271 60% 40%) 35%,
+      hsl(271 91% 55%) 65%,
+      hsl(271 91% 65%) 100%
     );
-    /* No animation - stable premium gradient */
   }
 
   /* ═══════════════════════════════════════════════════════════════════════

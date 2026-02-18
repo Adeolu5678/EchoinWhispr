@@ -143,8 +143,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             )}
             {currentProfile?.interests && currentProfile.interests.length > 0 && (
               <div className="flex flex-wrap justify-center gap-2 mt-2">
-                {currentProfile.interests.map((interest, index) => (
-                  <span key={index} className="text-xs bg-secondary px-2 py-1 rounded-full">
+                {currentProfile.interests.map((interest) => (
+                  <span key={interest} className="text-xs bg-secondary px-2 py-1 rounded-full">
                     {interest}
                   </span>
                 ))}

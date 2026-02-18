@@ -5,12 +5,11 @@ import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import convex from '@/lib/convex';
 import { ReactNode, useMemo } from 'react';
 import { Toaster } from '@/components/ui/toaster';
-import { ClerkErrorBoundary } from '@/components/ClerkErrorBoundary';
+import { AuthErrorBoundary } from '@/features/authentication/components/AuthErrorBoundary';
 import { ThemeProvider } from 'next-themes';
+import { useSessionExpiry } from '@/lib/auth';
+import { ToastStateProvider } from '@/hooks/use-toast';
 
-/**
- * Validates that the Clerk publishable key environment variable is set
- */
 function validateClerkPublishableKey(): string {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -29,16 +28,17 @@ function validateClerkPublishableKey(): string {
   return publishableKey;
 }
 
-/**
- * Providers component
- *
- * Wraps the application with Clerk and Convex providers for authentication and data management.
- * This component must be a client component since ClerkProvider requires client-side rendering.
- *
- * @param children - The child components to render within the providers
- */
 interface ProvidersProps {
   children: ReactNode;
+}
+
+function SessionManager() {
+  useSessionExpiry({
+    warningThresholdMs: 5 * 60 * 1000,
+    checkIntervalMs: 60 * 1000,
+  });
+
+  return null;
 }
 
 export function Providers({ children }: ProvidersProps) {
@@ -73,20 +73,23 @@ export function Providers({ children }: ProvidersProps) {
       enableSystem
       disableTransitionOnChange
     >
-      <ClerkErrorBoundary>
-        <ClerkProvider
-          publishableKey={clerkPublishableKey}
-          signInUrl="/sign-in"
-          signUpUrl="/sign-up"
-          afterSignInUrl="/"
-          afterSignUpUrl="/"
-        >
-          <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-            {children}
-            <Toaster />
-          </ConvexProviderWithClerk>
-        </ClerkProvider>
-      </ClerkErrorBoundary>
+      <ToastStateProvider>
+        <AuthErrorBoundary>
+          <ClerkProvider
+            publishableKey={clerkPublishableKey}
+            signInUrl="/sign-in"
+            signUpUrl="/sign-up"
+            afterSignInUrl="/"
+            afterSignUpUrl="/"
+          >
+            <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+              <SessionManager />
+              {children}
+              <Toaster />
+            </ConvexProviderWithClerk>
+          </ClerkProvider>
+        </AuthErrorBoundary>
+      </ToastStateProvider>
     </ThemeProvider>
   );
 }

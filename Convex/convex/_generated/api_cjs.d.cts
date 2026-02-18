@@ -17,6 +17,7 @@ import type * as admin from "../admin.js";
 import type * as adminAuth from "../adminAuth.js";
 import type * as analytics from "../analytics.js";
 import type * as conversations from "../conversations.js";
+import type * as cron from "../cron.js";
 import type * as dailyPrompts from "../dailyPrompts.js";
 import type * as echoChambers from "../echoChambers.js";
 import type * as featureFlags from "../featureFlags.js";
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   adminAuth: typeof adminAuth;
   analytics: typeof analytics;
   conversations: typeof conversations;
+  cron: typeof cron;
   dailyPrompts: typeof dailyPrompts;
   echoChambers: typeof echoChambers;
   featureFlags: typeof featureFlags;

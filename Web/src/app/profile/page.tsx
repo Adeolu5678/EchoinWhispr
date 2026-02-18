@@ -229,8 +229,8 @@ export default function ProfilePage() {
                 {/* Interests */}
                 {currentUser.interests && currentUser.interests.length > 0 && (
                   <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-4">
-                    {currentUser.interests.map((interest, index) => (
-                      <Badge key={index} variant="secondary" className="bg-white/10 text-white/80">
+                    {currentUser.interests.map((interest) => (
+                      <Badge key={interest} variant="secondary" className="bg-white/10 text-white/80">
                         {interest}
                       </Badge>
                     ))}

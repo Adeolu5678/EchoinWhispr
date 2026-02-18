@@ -1,6 +1,15 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
+export const VALIDATION = {
+  CHAMBER_MIN_MEMBERS: 2,
+  CHAMBER_MAX_MEMBERS: 100,
+  WHISPER_MAX_SCHEDULE_DAYS: 30,
+  USERNAME_MIN_LENGTH: 3,
+  USERNAME_MAX_LENGTH: 20,
+  BIO_MAX_LENGTH: 500,
+} as const;
+
 export default defineSchema({
   // Rate Limits table - track rate-limited actions
   rateLimits: defineTable({

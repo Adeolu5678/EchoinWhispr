@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import { enforceRateLimit, recordRateLimitedAction } from "./rateLimits";
+import { VALIDATION } from "./schema";
 
 /**
  * Echo Chambers Module
@@ -42,6 +44,20 @@ export const createChamber = mutation({
       throw new Error("Not authenticated");
     }
 
+    const trimmedName = args.name.trim();
+    if (trimmedName.length < 2 || trimmedName.length > 50) {
+      throw new Error("Chamber name must be between 2 and 50 characters");
+    }
+
+    if (args.description !== undefined && args.description.trim().length > VALIDATION.BIO_MAX_LENGTH) {
+      throw new Error("Description must be 500 characters or less");
+    }
+
+    const maxMembers = args.maxMembers || 50;
+    if (maxMembers < VALIDATION.CHAMBER_MIN_MEMBERS || maxMembers > VALIDATION.CHAMBER_MAX_MEMBERS) {
+      throw new Error(`Max members must be between ${VALIDATION.CHAMBER_MIN_MEMBERS} and ${VALIDATION.CHAMBER_MAX_MEMBERS}`);
+    }
+
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
@@ -50,6 +66,8 @@ export const createChamber = mutation({
     if (!user) {
       throw new Error("User not found");
     }
+
+    await enforceRateLimit(ctx, user._id, "CREATE_ECHO_CHAMBER");
 
     // Generate unique invite code
     let inviteCode = generateInviteCode();
@@ -71,12 +89,12 @@ export const createChamber = mutation({
 
     // Create the chamber
     const chamberId = await ctx.db.insert("echoChambers", {
-      name: args.name,
-      description: args.description,
+      name: trimmedName,
+      description: args.description?.trim(),
       topic: args.topic,
       creatorId: user._id,
       inviteCode,
-      maxMembers: args.maxMembers || 50,
+      maxMembers,
       isPublic: args.isPublic ?? false,
       memberCount: 1,
       createdAt: now,
@@ -92,6 +110,8 @@ export const createChamber = mutation({
       role: "creator",
       joinedAt: now,
     });
+
+    await recordRateLimitedAction(ctx, user._id, "CREATE_ECHO_CHAMBER");
 
     return {
       chamberId,
@@ -121,7 +141,6 @@ export const joinChamber = mutation({
       throw new Error("User not found");
     }
 
-    // Find the chamber
     const chamber = await ctx.db
       .query("echoChambers")
       .withIndex("by_invite_code", (q) => q.eq("inviteCode", args.inviteCode.toUpperCase()))
@@ -131,7 +150,6 @@ export const joinChamber = mutation({
       throw new Error("Echo Chamber not found. Check your invite code.");
     }
 
-    // Check if already a member
     const existingMembership = await ctx.db
       .query("echoChamberMembers")
       .withIndex("by_chamber_user", (q) => 
@@ -147,36 +165,52 @@ export const joinChamber = mutation({
       };
     }
 
-    // Check member limit
-    const memberCount = chamber.memberCount || 0;
-    if (memberCount >= chamber.maxMembers) {
+    const existingMembers = await ctx.db
+      .query("echoChamberMembers")
+      .withIndex("by_chamber", (q) => q.eq("chamberId", chamber._id))
+      .collect();
+
+    const actualMemberCount = existingMembers.length;
+
+    if (actualMemberCount >= chamber.maxMembers) {
       throw new Error("This Echo Chamber is full.");
     }
 
-    // Get next member number (OPTIMIZATION: use memberCount field instead of fetching all)
-    const memberNumber = (chamber.memberCount || 0) + 1;
+    const existingAliases = new Set(
+      existingMembers.map((m) => m.anonymousAlias)
+    );
+
+    let memberNumber = actualMemberCount + 1;
+    let anonymousAlias: string;
+    
+    while (true) {
+      anonymousAlias = `Whisper #${memberNumber}`;
+      if (!existingAliases.has(anonymousAlias)) {
+        break;
+      }
+      memberNumber++;
+    }
+
     const colorIndex = memberNumber % ALIAS_COLORS.length;
 
-    // Add as member
     await ctx.db.insert("echoChamberMembers", {
       chamberId: chamber._id,
       userId: user._id,
-      anonymousAlias: `Whisper #${memberNumber}`,
+      anonymousAlias,
       aliasColor: ALIAS_COLORS[colorIndex],
       role: "member",
       joinedAt: Date.now(),
     });
 
-    // Update member count
     await ctx.db.patch(chamber._id, {
-      memberCount: memberCount + 1,
+      memberCount: actualMemberCount + 1,
       updatedAt: Date.now(),
     });
 
     return {
       chamberId: chamber._id,
       alreadyMember: false,
-      anonymousAlias: `Whisper #${memberNumber}`,
+      anonymousAlias,
     };
   },
 });

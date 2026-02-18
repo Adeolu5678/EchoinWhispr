@@ -53,10 +53,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <FeatureFlagProvider>
             {/* Global background - clean solid color, page-specific decorations handled by individual pages */}
             
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none"
+            >
+              Skip to main content
+            </a>
             <div className="relative flex flex-col min-h-screen">
               <Navigation />
               <UsernameSelectionHandler />
-              <main className="flex-1 w-full pb-20 md:pb-0">
+              <main id="main-content" className="flex-1 w-full pb-20 md:pb-0">
                 {children}
               </main>
               <BottomNavigation />

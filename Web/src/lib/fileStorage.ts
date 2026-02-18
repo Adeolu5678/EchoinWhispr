@@ -11,28 +11,29 @@ import convex, { api } from '@/lib/convex';
  * @returns Promise<string> - The storage ID of the uploaded file
  * @throws Error if upload fails
  */
-export async function uploadFile(file: File): Promise<string> {
+export async function uploadFile(file: File, signal?: AbortSignal): Promise<string> {
   try {
-    // Generate upload URL from Convex
     const uploadUrl = await convex.action(api.fileStorage.generateUploadUrl);
 
-    // Upload file to the generated URL
     const response = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
         'Content-Type': file.type,
       },
       body: file,
+      signal,
     });
 
     if (!response.ok) {
       throw new Error(`File upload failed: ${response.statusText}`);
     }
 
-    // Parse the response to get the storage ID
     const result = await response.json();
     return result.storageId;
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error;
+    }
     console.error('Error uploading file:', error);
     throw new Error('Failed to upload file. Please try again.');
   }
@@ -44,7 +45,7 @@ export async function uploadFile(file: File): Promise<string> {
  * @returns Promise<string> - The public URL string
  * @throws Error if URL retrieval fails
  */
-export async function getFileUrl(storageId: string): Promise<string> {
+export async function getFileUrl(storageId: string, signal?: AbortSignal): Promise<string> {
   try {
     const url = await convex.action(api.fileStorage.getUrl, { storageId });
     if (!url) {
@@ -52,6 +53,9 @@ export async function getFileUrl(storageId: string): Promise<string> {
     }
     return url;
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error;
+    }
     console.error('Error getting file URL:', error);
     throw new Error('Failed to get file URL.');
   }

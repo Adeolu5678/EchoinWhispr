@@ -86,6 +86,7 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
         variant="secondary"
         className="h-10 w-10 rounded-full"
         onClick={togglePlayback}
+        aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
       >
         {isPlaying ? (
           <Pause className="w-4 h-4" />

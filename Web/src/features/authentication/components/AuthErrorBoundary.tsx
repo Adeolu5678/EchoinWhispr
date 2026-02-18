@@ -144,23 +144,27 @@ export class AuthErrorBoundary extends Component<
       retryCount: this.state.retryCount,
     };
 
-    console.group('🔐 Authentication Error Boundary');
-    console.error('Error ID:', this.state.errorId);
-    console.error('Error:', error);
-    console.error('Error Info:', errorInfo);
-    console.error('Context:', errorContext);
-    console.error('Component Stack:', errorInfo.componentStack);
-    console.groupEnd();
+    if (process.env.NODE_ENV === 'development') {
+      console.group('🔐 Authentication Error Boundary');
+      console.error('Error ID:', this.state.errorId);
+      console.error('Error:', error);
+      console.error('Error Info:', errorInfo);
+      console.error('Context:', errorContext);
+      console.error('Component Stack:', errorInfo.componentStack);
+      console.groupEnd();
+    }
 
     // Categorize error for better handling
     const errorCategory = this.categorizeError(error);
     const isRecoverable = this.isRecoverableError(error);
 
-    console.group('🔍 Error Analysis');
-    console.log('Category:', errorCategory);
-    console.log('Recoverable:', isRecoverable);
-    console.log('Retry Count:', this.state.retryCount);
-    console.groupEnd();
+    if (process.env.NODE_ENV === 'development') {
+      console.group('🔍 Error Analysis');
+      console.log('Category:', errorCategory);
+      console.log('Recoverable:', isRecoverable);
+      console.log('Retry Count:', this.state.retryCount);
+      console.groupEnd();
+    }
 
     // Log to external service in production (placeholder for future integration)
     if (process.env.NODE_ENV === 'production') {
@@ -252,9 +256,6 @@ export class AuthErrorBoundary extends Component<
       timestamp: new Date().toISOString(),
     };
 
-    // Placeholder for external error reporting service
-    console.log('📊 Error Report (Production):', errorReport);
-
     // TODO: Integrate with error logging service (e.g., Sentry, LogRocket)
     // Example: Sentry.captureException(error, { extra: errorReport })
   };
@@ -283,9 +284,11 @@ export class AuthErrorBoundary extends Component<
     const jitter = Math.random() * 1000; // Add up to 1 second of jitter
     const delay = Math.min(exponentialDelay + jitter, 10000); // Cap at 10 seconds
 
-    console.log(
-      `🔄 Retrying authentication (attempt ${retryCount + 1}/${maxRetries}) in ${Math.round(delay)}ms...`
-    );
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        `🔄 Retrying authentication (attempt ${retryCount + 1}/${maxRetries}) in ${Math.round(delay)}ms...`
+      );
+    }
 
     const timeoutId = window.setTimeout(() => {
       this.retryTimeouts.delete(timeoutId);
@@ -351,14 +354,14 @@ export class AuthErrorBoundary extends Component<
         null;
 
       if (clerk) {
-        await clerk.signOut({ redirectUrl: '/' });
+        await clerk.signOut({ redirectUrl: '/sign-in?reason=error' });
+        return;
       }
 
-      window.location.href = '/';
+      window.location.href = '/sign-in?reason=error';
     } catch (error) {
       console.error('Error signing out:', error);
-      // Fallback to redirect without sign out
-      window.location.href = '/';
+      window.location.href = '/sign-in?reason=error';
     }
   };
 
