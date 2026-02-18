@@ -32,14 +32,37 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://echoinwhispr.com'),
   title: 'EchoinWhispr',
   description: 'Anonymous messaging platform - Share your thoughts, secrets, and dreams without judgment.',
   keywords: ['anonymous', 'messaging', 'whisper', 'social', 'privacy'],
   authors: [{ name: 'EchoinWhispr' }],
+  icons: {
+    icon: [
+      { url: '/logo-icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/logo-icon.svg', type: 'image/svg+xml' },
+    ],
+  },
   openGraph: {
     title: 'EchoinWhispr',
     description: 'Whisper into the void. Hear an echo back.',
     type: 'website',
+    images: [
+      {
+        url: '/logo-icon.svg',
+        width: 64,
+        height: 64,
+        alt: 'EchoinWhispr Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'EchoinWhispr',
+    description: 'Whisper into the void. Hear an echo back.',
+    images: ['/logo-icon.svg'],
   },
 };
 

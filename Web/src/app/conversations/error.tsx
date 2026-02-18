@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw, ArrowLeft, MessageSquare } from 'lucide-react';
+import { RefreshCw, ArrowLeft, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function ConversationsError({

@@ -1,40 +1,39 @@
 /**
  * EchoinWhispr Design System - Color Tokens
  *
- * Premium neon-glass aesthetic with enhanced purple palette,
- * fuchsia accents, and refined dark mode backgrounds.
+ * Tech Blue & Creative Magenta palette.
  * All colors designed for WCAG 2.1 AA contrast compliance.
  */
 
 export const colors = {
-  // Primary Brand Colors (Enhanced Purple/Violet)
+  // Primary Brand Colors - Tech Blue
   primary: {
-    50: '#faf5ff',
-    100: '#f3e8ff',
-    200: '#e9d5ff',
-    300: '#d8b4fe',
-    400: '#c084fc',
-    500: '#a855f7', // Main primary color
-    600: '#9333ea',
-    700: '#7c3aed',
-    800: '#6b21a8',
-    900: '#581c87',
-    950: '#3b0764',
+    50: '#e6f7ff',
+    100: '#b3e7ff',
+    200: '#80d7ff',
+    300: '#4dc7ff',
+    400: '#66C7FF', // Light - for glows, focus rings, secondary links
+    500: '#00A3FF', // Base - The "Tech" blue
+    600: '#008EE6', // Hover - darker shade for primary hover
+    700: '#007acc',
+    800: '#0066b3',
+    900: '#004d99',
+    950: '#003366',
   },
 
-  // Accent Colors (Fuchsia/Magenta for highlights)
+  // Accent Colors - Creative Magenta
   accent: {
-    50: '#fdf4ff',
-    100: '#fae8ff',
-    200: '#f5d0fe',
-    300: '#f0abfc',
-    400: '#e879f9',
-    500: '#d946ef', // Main accent color
-    600: '#c026d3',
-    700: '#a21caf',
-    800: '#86198f',
-    900: '#701a75',
-    950: '#4a044e',
+    50: '#fce6ff',
+    100: '#f7b3ff',
+    200: '#f280ff',
+    300: '#ed4dff',
+    400: '#e81aff',
+    500: '#E000FF', // Base - The "Creative" magenta
+    600: '#C700E6', // Hover - darker shade for accent hover
+    700: '#ae00cc',
+    800: '#9500b3',
+    900: '#7c0099',
+    950: '#630080',
   },
 
   // Neutral Colors (Enhanced for dark mode)
@@ -52,49 +51,49 @@ export const colors = {
     950: '#0a0a0a',
   },
 
-  // Semantic Colors - Success (Enhanced green-emerald)
+  // Semantic Colors - Success
   success: {
-    50: '#ecfdf5',
-    100: '#d1fae5',
-    200: '#a7f3d0',
-    300: '#6ee7b7',
-    400: '#34d399',
-    500: '#10b981', // Main success color
-    600: '#059669',
-    700: '#047857',
-    800: '#065f46',
-    900: '#064e3b',
-    950: '#022c22',
+    50: '#e6fff0',
+    100: '#b3ffd6',
+    200: '#80ffbc',
+    300: '#4dffa2',
+    400: '#1aff88',
+    500: '#06C270', // Main success color
+    600: '#05a35f',
+    700: '#048a4f',
+    800: '#03713f',
+    900: '#02582f',
+    950: '#013f1f',
   },
 
-  // Semantic Colors - Error (Enhanced red)
+  // Semantic Colors - Error
   error: {
-    50: '#fef2f2',
-    100: '#fee2e2',
-    200: '#fecaca',
-    300: '#fca5a5',
-    400: '#f87171',
-    500: '#ef4444', // Main error color
-    600: '#dc2626',
-    700: '#b91c1c',
-    800: '#991b1b',
-    900: '#7f1d1d',
-    950: '#450a0a',
+    50: '#ffeded',
+    100: '#ffd0d0',
+    200: '#ffb3b3',
+    300: '#ff9696',
+    400: '#ff7979',
+    500: '#FF3B30', // Main error color
+    600: '#e6352b',
+    700: '#cc2f26',
+    800: '#b32921',
+    900: '#99231c',
+    950: '#801d17',
   },
 
-  // Semantic Colors - Warning (Enhanced amber)
+  // Semantic Colors - Warning
   warning: {
-    50: '#fffbeb',
-    100: '#fef3c7',
-    200: '#fde68a',
-    300: '#fcd34d',
-    400: '#fbbf24',
-    500: '#f59e0b', // Main warning color
-    600: '#d97706',
-    700: '#b45309',
-    800: '#92400e',
-    900: '#78350f',
-    950: '#451a03',
+    50: '#fffbe6',
+    100: '#fff5b3',
+    200: '#ffef80',
+    300: '#ffe94d',
+    400: '#ffe31a',
+    500: '#FFC700', // Main warning color
+    600: '#e6b300',
+    700: '#cc9f00',
+    800: '#b38b00',
+    900: '#997700',
+    950: '#806300',
   },
 
   // Semantic Colors - Info (Cyan/Teal)
@@ -139,19 +138,19 @@ export const colors = {
     light: 'rgba(255, 255, 255, 0.08)',
     medium: 'rgba(255, 255, 255, 0.12)',
     strong: 'rgba(255, 255, 255, 0.18)',
-    focus: '#a855f7',
-    accent: '#d946ef',
+    focus: '#00A3FF',
+    accent: '#E000FF',
   },
 
   // Glow Colors - Neon effects
   glow: {
-    primary: 'rgba(168, 85, 247, 0.5)',
-    primarySubtle: 'rgba(168, 85, 247, 0.25)',
-    primaryIntense: 'rgba(168, 85, 247, 0.7)',
-    accent: 'rgba(217, 70, 239, 0.5)',
-    accentSubtle: 'rgba(217, 70, 239, 0.25)',
-    success: 'rgba(16, 185, 129, 0.4)',
-    error: 'rgba(239, 68, 68, 0.4)',
+    primary: 'rgba(0, 163, 255, 0.5)',
+    primarySubtle: 'rgba(0, 163, 255, 0.25)',
+    primaryIntense: 'rgba(0, 163, 255, 0.7)',
+    accent: 'rgba(224, 0, 255, 0.5)',
+    accentSubtle: 'rgba(224, 0, 255, 0.25)',
+    success: 'rgba(6, 194, 112, 0.4)',
+    error: 'rgba(255, 59, 48, 0.4)',
   },
 
   // Shadow Colors - Premium depth
@@ -161,27 +160,30 @@ export const colors = {
     md: 'rgba(0, 0, 0, 0.4)',
     lg: 'rgba(0, 0, 0, 0.5)',
     xl: 'rgba(0, 0, 0, 0.6)',
-    colored: 'rgba(168, 85, 247, 0.2)',
-    coloredIntense: 'rgba(168, 85, 247, 0.35)',
-    accent: 'rgba(217, 70, 239, 0.2)',
+    light: 'rgba(0, 0, 0, 0.1)',
+    medium: 'rgba(0, 0, 0, 0.2)',
+    dark: 'rgba(0, 0, 0, 0.3)',
+    colored: 'rgba(0, 163, 255, 0.2)',
+    coloredIntense: 'rgba(0, 163, 255, 0.35)',
+    accent: 'rgba(224, 0, 255, 0.2)',
   },
 
-  // Gradient Stops - For premium gradients
+  // Gradient Stops - Tech Blue to Creative Magenta
   gradient: {
     primary: {
-      from: '#a855f7',
-      via: '#9333ea',
-      to: '#7c3aed',
+      from: '#66C7FF',
+      via: '#00A3FF',
+      to: '#008EE6',
     },
     accent: {
-      from: '#d946ef',
-      via: '#c026d3',
-      to: '#a21caf',
+      from: '#E000FF',
+      via: '#C700E6',
+      to: '#ae00cc',
     },
     mixed: {
-      from: '#a855f7',
-      via: '#d946ef',
-      to: '#ec4899',
+      from: '#00A3FF',
+      via: '#008EE6',
+      to: '#E000FF',
     },
     dark: {
       from: '#18181b',
@@ -195,8 +197,8 @@ export const colors = {
     light: 'rgba(255, 255, 255, 0.05)',
     medium: 'rgba(255, 255, 255, 0.08)',
     strong: 'rgba(255, 255, 255, 0.12)',
-    primary: 'rgba(168, 85, 247, 0.08)',
-    accent: 'rgba(217, 70, 239, 0.06)',
+    primary: 'rgba(0, 163, 255, 0.08)',
+    accent: 'rgba(224, 0, 255, 0.06)',
   },
 } as const;
 
@@ -224,26 +226,8 @@ export const getCSSVar = (token: string) => `var(--color-${token})`;
 
 // Preset gradient classes
 export const gradients = {
-  primary: 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700',
+  primary: 'bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600',
   accent: 'bg-gradient-to-r from-accent-500 via-accent-600 to-accent-700',
-  mixed: 'bg-gradient-to-r from-primary-500 via-accent-500 to-pink-500',
+  mixed: 'bg-gradient-to-r from-primary-500 via-primary-600 to-accent-500',
   radialGlow: 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-500/20 via-transparent to-transparent',
 } as const;
-
-// Type definitions for better TypeScript support
-export type ColorToken = keyof typeof colors;
-export type PrimaryColorScale = keyof typeof colors.primary;
-export type NeutralColorScale = keyof typeof colors.neutral;
-export type SemanticColorScale = keyof typeof colors.success;
-
-// Helper function to get color values
-export const getColor = (token: ColorToken, scale?: string) => {
-  const colorGroup = colors[token];
-  if (typeof colorGroup === 'string') {
-    return colorGroup;
-  }
-  if (scale && typeof colorGroup === 'object') {
-    return colorGroup[scale as keyof typeof colorGroup] || (colorGroup as Record<string, string>)['500'];
-  }
-  return (colorGroup as Record<string, string>)['500'];
-};

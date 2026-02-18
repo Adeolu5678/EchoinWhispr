@@ -162,7 +162,7 @@ export interface UseSignOutReturn {
 export function useSignOut(options: UseSignOutOptions = {}): UseSignOutReturn {
   const { redirectUrl = '/', onSuccess, onError } = options;
   const { signOut: clerkSignOut } = useAuth();
-  const { isAuthenticated: isConvexAuthenticated } = useConvexAuth();
+  useConvexAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSigningOut, setIsSigningOut] = useState(false);

@@ -207,7 +207,7 @@ function useToast() {
   };
 }
 
-function toast({ ...props }: Toast) {
+function toast({ ..._props }: Toast) {
   const id = genId();
 
   console.warn('toast() called outside of ToastStateProvider context. Use useToast().toast() instead.');

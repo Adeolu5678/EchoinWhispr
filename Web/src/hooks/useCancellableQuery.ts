@@ -154,6 +154,7 @@ export function useCancellableFetch<T>(
 
       return response.json();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [url, JSON.stringify(fetchOptions)]
   );
 

@@ -45,7 +45,7 @@ export async function uploadFile(file: File, signal?: AbortSignal): Promise<stri
  * @returns Promise<string> - The public URL string
  * @throws Error if URL retrieval fails
  */
-export async function getFileUrl(storageId: string, signal?: AbortSignal): Promise<string> {
+export async function getFileUrl(storageId: string, _signal?: AbortSignal): Promise<string> {
   try {
     const url = await convex.action(api.fileStorage.getUrl, { storageId });
     if (!url) {

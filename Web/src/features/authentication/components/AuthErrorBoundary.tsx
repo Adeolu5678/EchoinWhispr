@@ -246,6 +246,8 @@ export class AuthErrorBoundary extends Component<
     context: Record<string, unknown>,
     category: string
   ) => {
+    // Prepare error report for future integration with error logging service
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const errorReport = {
       errorId: this.state.errorId,
       message: error.message,
