@@ -16,7 +16,8 @@ import {
   Sparkles,
   Info,
   CheckCheck,
-  Image as ImageIcon
+  Image as ImageIcon,
+  X
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -165,10 +166,19 @@ export function NotificationBell() {
 
       {/* Dropdown */}
       {isOpen && (
-        <Card id="notification-dropdown" className="absolute right-0 top-full mt-2 w-80 sm:w-96 glass border-white/10 shadow-2xl z-50 overflow-hidden" role="dialog" aria-label="Notifications" aria-modal="true">
+        <Card id="notification-dropdown" className="fixed left-4 right-4 top-20 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 max-h-[70vh] sm:max-h-96 glass border-white/10 shadow-2xl z-[100] overflow-hidden rounded-2xl" role="dialog" aria-label="Notifications" aria-modal="true">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <h3 className="font-semibold text-lg">Notifications</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:hidden"
+                onClick={() => setIsOpen(false)}
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </Button>
             {notifications.length > 0 && (
               <Button
                 variant="ghost"
@@ -183,7 +193,7 @@ export function NotificationBell() {
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="overflow-y-auto max-h-[calc(70vh-140px)] sm:max-h-80">
             {notifications.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
                 <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
