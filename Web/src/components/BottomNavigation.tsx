@@ -79,7 +79,7 @@ export const BottomNavigation = () => {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-bottom"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-bottom overflow-x-hidden"
       role="navigation"
       aria-label="Mobile navigation"
     >
@@ -87,8 +87,8 @@ export const BottomNavigation = () => {
       <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       
-      <div className="absolute left-4 bottom-full w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-30 motion-safe:animate-float-slow pointer-events-none" />
-      <div className="absolute right-4 bottom-full w-24 h-24 bg-accent/10 rounded-full blur-3xl opacity-20 motion-safe:animate-float-slow animation-delay-1000 pointer-events-none" />
+      <div className="absolute left-4 bottom-full w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-30 motion-safe:animate-float-slow pointer-events-none max-md:hidden" />
+      <div className="absolute right-4 bottom-full w-24 h-24 bg-accent/10 rounded-full blur-3xl opacity-20 motion-safe:animate-float-slow animation-delay-1000 pointer-events-none max-md:hidden" />
       
       <div className="relative flex items-center justify-around h-16 px-2">
         {navigationItems.map((item, index) => {
@@ -104,8 +104,8 @@ export const BottomNavigation = () => {
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-accent blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-300 scale-110" />
+                <div className="relative overflow-hidden">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-accent blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-300" />
                   <div 
                     className={cn(
                       "relative flex items-center justify-center w-14 h-14 rounded-full",
