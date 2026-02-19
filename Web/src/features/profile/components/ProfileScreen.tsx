@@ -51,7 +51,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     : user?.firstName || user?.lastName || initialDisplayName || '';
   const currentUsername = user?.username || initialUsername || '';
   const isLoading = profileLoading || initialIsLoading;
-  const error = profileError || initialError;
+  const errorMessage = profileError?.message || initialError;
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
@@ -99,13 +99,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     );
   }
 
-  if (error) {
+  if (errorMessage) {
     return (
       <div className={`max-w-2xl mx-auto p-6 ${className}`}>
         <Card>
           <CardContent className="p-6">
             <div className="text-center text-destructive">
-              <p>Failed to load profile: {error}</p>
+              <p>Failed to load profile: {errorMessage}</p>
             </div>
           </CardContent>
         </Card>

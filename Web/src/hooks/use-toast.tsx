@@ -97,14 +97,6 @@ export const reducer = (state: State, action: Action): State => {
     case 'DISMISS_TOAST': {
       const { toastId } = action;
 
-      if (toastId) {
-        addToRemoveQueue(toastId, () => {});
-      } else {
-        state.toasts.forEach(toast => {
-          addToRemoveQueue(toast.id, () => {});
-        });
-      }
-
       return {
         ...state,
         toasts: state.toasts.map(t =>
@@ -144,7 +136,10 @@ export function ToastStateProvider({ children }: { children: React.ReactNode }) 
         type: 'UPDATE_TOAST',
         toast: { ...props, id },
       });
-    const dismiss = () => dispatch({ type: 'DISMISS_TOAST', toastId: id });
+    const dismiss = () => {
+      addToRemoveQueue(id, dispatch);
+      dispatch({ type: 'DISMISS_TOAST', toastId: id });
+    };
 
     dispatch({
       type: 'ADD_TOAST',

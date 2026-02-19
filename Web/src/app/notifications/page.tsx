@@ -28,7 +28,7 @@ const notificationIcons = {
 };
 
 const notificationColors = {
-  whisper: 'from-purple-500/20 to-indigo-500/20 border-purple-500/30',
+  whisper: 'from-primary/20 to-primary/20 border-primary/30',
   friend_request: 'from-emerald-500/20 to-cyan-500/20 border-emerald-500/30',
   chamber: 'from-amber-500/20 to-orange-500/20 border-amber-500/30',
   resonance: 'from-pink-500/20 to-rose-500/20 border-pink-500/30',

@@ -54,10 +54,10 @@ const DEFAULT_PROMPTS = [
 export const seedDefaultPrompts = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const existingPrompts = await ctx.db.query("dailyPrompts").collect();
+    const existingPrompt = await ctx.db.query("dailyPrompts").first();
     
-    if (existingPrompts.length > 0) {
-      return { message: "Prompts already seeded", count: existingPrompts.length };
+    if (existingPrompt) {
+      return { message: "Prompts already seeded" };
     }
 
     const now = Date.now();
@@ -98,7 +98,7 @@ export const getTodaysPrompt = query({
     const startOfYear = Date.UTC(now.getUTCFullYear(), 0, 0);
     const dayOfYear = Math.floor((now.getTime() - startOfYear) / MS_PER_DAY);
 
-    const allPrompts = await ctx.db.query("dailyPrompts").collect();
+    const allPrompts = await ctx.db.query("dailyPrompts").take(200);
     
     if (allPrompts.length === 0) {
       return null;
@@ -195,7 +195,7 @@ export const hasRespondedToday = query({
       .first();
 
     if (!todaysPrompt) {
-      const allPrompts = await ctx.db.query("dailyPrompts").collect();
+      const allPrompts = await ctx.db.query("dailyPrompts").take(200);
       if (allPrompts.length > 0) {
         const index = dayOfYear % allPrompts.length;
         todaysPrompt = allPrompts[index];
@@ -234,7 +234,7 @@ export const getPromptsByCategory = query({
 export const getCategories = query({
   args: {},
   handler: async (ctx) => {
-    const prompts = await ctx.db.query("dailyPrompts").collect();
+    const prompts = await ctx.db.query("dailyPrompts").take(100);
     const categories = [...new Set(prompts.map(p => p.category))];
     return categories;
   },
@@ -343,7 +343,7 @@ export const getRandomPrompt = query({
     excludeIds: v.optional(v.array(v.id("dailyPrompts"))),
   },
   handler: async (ctx, args) => {
-    const allPrompts = await ctx.db.query("dailyPrompts").collect();
+    const allPrompts = await ctx.db.query("dailyPrompts").take(100);
     
     const excludeSet = new Set(args.excludeIds || []);
     const eligiblePrompts = allPrompts.filter(p => !excludeSet.has(p._id));

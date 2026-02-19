@@ -10,9 +10,6 @@ import {
 import { cn } from '@/lib/utils';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
 
-/**
- * Navigation item configuration for bottom navigation
- */
 interface NavItem {
   href: string;
   label: string;
@@ -20,24 +17,10 @@ interface NavItem {
   isPrimary?: boolean;
 }
 
-/**
- * BottomNavigation component for mobile devices.
- * 
- * Provides thumb-friendly navigation fixed at the bottom of the screen.
- * Features:
- * - Fixed position at bottom with safe-area support for iOS notch
- * - 5 primary navigation items
- * - Centered "Compose" action button with elevated styling
- * - Active state highlighting with gradient background
- * - Only visible on mobile (hidden on md+ screens)
- */
 export const BottomNavigation = () => {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
 
-  /**
-   * Check if current path matches navigation item
-   */
   const isActiveRoute = useCallback(
     (href: string) => {
       if (href === '/') {
@@ -48,9 +31,6 @@ export const BottomNavigation = () => {
     [pathname]
   );
 
-  /**
-   * Navigation items for bottom nav
-   */
   const navigationItems: NavItem[] = useMemo(() => {
     const items: NavItem[] = [
       {
@@ -76,7 +56,6 @@ export const BottomNavigation = () => {
       },
     ];
 
-    // Add profile link
     if (FEATURE_FLAGS.USER_PROFILE_EDITING) {
       items.push({
         href: '/profile',
@@ -84,7 +63,6 @@ export const BottomNavigation = () => {
         icon: User,
       });
     } else {
-      // Fallback to a different fifth item
       items.push({
         href: '/discover',
         label: 'Discover',
@@ -95,45 +73,54 @@ export const BottomNavigation = () => {
     return items;
   }, []);
 
-  // Don't render for unauthenticated users or during loading
   if (!isLoaded || !user) {
     return null;
   }
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass border-t border-white/10 safe-bottom"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-bottom"
       role="navigation"
       aria-label="Mobile navigation"
     >
-      <div className="flex items-center justify-around h-16 px-2">
-        {navigationItems.map((item) => {
+      <div className="absolute inset-0 glass" />
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      
+      <div className="absolute left-4 bottom-full w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-30 motion-safe:animate-float-slow pointer-events-none" />
+      <div className="absolute right-4 bottom-full w-24 h-24 bg-accent/10 rounded-full blur-3xl opacity-20 motion-safe:animate-float-slow animation-delay-1000 pointer-events-none" />
+      
+      <div className="relative flex items-center justify-around h-16 px-2">
+        {navigationItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = isActiveRoute(item.href);
 
-          // Primary action (Compose) gets special styling
           if (item.isPrimary) {
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center justify-center -mt-6"
+                className="flex flex-col items-center justify-center -mt-6 group"
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <div 
-                  className={cn(
-                    "flex items-center justify-center w-14 h-14 rounded-full",
-                    "bg-gradient-to-br from-primary to-accent",
-                    "shadow-lg shadow-primary/30",
-                    "transition-all duration-300",
-                    "hover:scale-105 hover:shadow-xl hover:shadow-primary/40",
-                    "active:scale-95"
-                  )}
-                >
-                  <Icon className="w-6 h-6 text-white" />
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary to-accent blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-300 scale-110" />
+                  <div 
+                    className={cn(
+                      "relative flex items-center justify-center w-14 h-14 rounded-full",
+                      "bg-gradient-to-br from-primary via-primary to-accent",
+                      "shadow-lg shadow-primary/40",
+                      "transition-all duration-300",
+                      "group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-primary/50",
+                      "group-active:scale-95",
+                      "motion-safe:pulse-glow"
+                    )}
+                  >
+                    <Icon className="w-6 h-6 text-white drop-shadow-lg" />
+                  </div>
                 </div>
-                <span className="text-[10px] font-medium mt-1 text-muted-foreground">
+                <span className="text-[10px] font-medium mt-1.5 text-muted-foreground group-hover:text-white transition-colors">
                   {item.label}
                 </span>
               </Link>
@@ -146,30 +133,51 @@ export const BottomNavigation = () => {
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center",
-                "touch-target py-2 px-3 rounded-lg",
-                "transition-all duration-200",
+                "touch-target py-2 px-3 rounded-xl",
+                "transition-all duration-300 ease-out",
+                "group relative",
                 isActive 
                   ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-white"
               )}
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
+              style={{
+                animationDelay: `${index * 50}ms`,
+              }}
             >
+              {isActive && (
+                <>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/20" />
+                  <div className="absolute -inset-1 rounded-xl bg-primary/10 blur-md opacity-50 motion-reduce:hidden" />
+                </>
+              )}
+              
               <div 
                 className={cn(
-                  "flex items-center justify-center w-8 h-8 rounded-lg",
-                  "transition-all duration-200",
-                  isActive && "bg-primary/20"
+                  "relative flex items-center justify-center w-10 h-10 rounded-xl",
+                  "transition-all duration-300",
+                  "group-hover:scale-110",
+                  isActive && "bg-gradient-to-br from-primary/25 to-accent/15 shadow-md shadow-primary/20"
                 )}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className={cn(
+                  "w-5 h-5 transition-all duration-300",
+                  isActive && "text-primary drop-shadow-[0_0_6px_rgba(0,163,255,0.5)]",
+                  !isActive && "group-hover:text-primary group-hover:drop-shadow-[0_0_4px_rgba(0,163,255,0.3)]"
+                )} />
               </div>
+              
               <span className={cn(
-                "text-[10px] font-medium mt-0.5",
+                "relative z-10 text-[10px] font-medium mt-0.5 transition-all duration-300",
                 isActive && "text-primary"
               )}>
                 {item.label}
               </span>
+              
+              {isActive && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-gradient-to-r from-primary to-accent shadow-[0_0_8px_rgba(0,163,255,0.6)]" />
+              )}
             </Link>
           );
         })}

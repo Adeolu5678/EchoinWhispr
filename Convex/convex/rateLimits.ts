@@ -15,6 +15,8 @@ export const RATE_LIMITS = {
   SEND_MESSAGE: { limit: 100, windowMs: 60 * 60 * 1000 }, // 100 per hour
   CREATE_ECHO_CHAMBER: { limit: 10, windowMs: 60 * 60 * 1000 }, // 10 per hour
   SCHEDULE_WHISPER: { limit: 5, windowMs: 60 * 60 * 1000 }, // 5 per hour
+  REQUEST_ADMIN_PROMOTION: { limit: 3, windowMs: 24 * 60 * 60 * 1000 }, // 3 per day
+  REQUEST_SUPER_ADMIN_PROMOTION: { limit: 3, windowMs: 24 * 60 * 60 * 1000 }, // 3 per day
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;

@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, internalQuery } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
 import { isAdmin, isSuperAdmin } from './adminAuth';
 
@@ -77,25 +77,72 @@ export const createOrUpdateUser = mutation({
   },
 });
 
-// Get user by username
+type PublicUserProfile = {
+  _id: Id<'users'>;
+  username: string | undefined;
+  displayName: string | undefined;
+  firstName: string | undefined;
+  lastName: string | undefined;
+  career: string | undefined;
+  interests: string[] | undefined;
+  mood: string | undefined;
+  isDeleted: boolean | undefined;
+};
+
+const toPublicUserProfile = (user: Doc<'users'>): PublicUserProfile => ({
+  _id: user._id,
+  username: user.username,
+  displayName: user.displayName,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  career: user.career,
+  interests: user.interests,
+  mood: user.mood,
+  isDeleted: user.isDeleted,
+});
+
 export const getUserByUsername = query({
   args: { username: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args): Promise<PublicUserProfile | null> => {
+    const user = await ctx.db
       .query('users')
       .withIndex('by_username', q => q.eq('username', args.username))
       .first();
+
+    if (!user) return null;
+
+    return toPublicUserProfile(user);
   },
 });
 
-// Get user by Clerk ID
 export const getUserByClerkId = query({
   args: { clerkId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args): Promise<PublicUserProfile | null> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
       .first();
+
+    if (!user) return null;
+
+    return toPublicUserProfile(user);
+  },
+});
+
+export const getByClerkId = internalQuery({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .first();
+
+    return user;
   },
 });
 
@@ -322,8 +369,8 @@ const RESERVED_USERNAMES = new Set([
   'everyone', 'all', 'public', 'private', 'hidden', 'default',
 ]);
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 50;
+const MAX_RETRIES = 5;
+const RETRY_DELAY_MS = 20;
 
 export const updateUsername = mutation({
   args: {
@@ -361,13 +408,18 @@ export const updateUsername = mutation({
       return user._id;
     }
 
+    const previousUsername = user.username;
+    const previousDisplayName = user.displayName;
+
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const existingUser = await ctx.db
+      const allUsersWithUsername = await ctx.db
         .query('users')
         .withIndex('by_username', q => q.eq('username', normalizedUsername))
-        .first();
+        .collect();
 
-      if (existingUser && existingUser._id !== user._id) {
+      const conflictingUser = allUsersWithUsername.find(u => u._id !== user._id);
+
+      if (conflictingUser) {
         throw new Error('Username is already taken');
       }
 
@@ -378,28 +430,27 @@ export const updateUsername = mutation({
         updatedAt: Date.now(),
       });
 
-      const verifyUser = await ctx.db
+      const verifyUsers = await ctx.db
         .query('users')
         .withIndex('by_username', q => q.eq('username', normalizedUsername))
         .collect();
 
-      const actualOwner = verifyUser.find(u => u._id === user._id);
-      const conflictingUser = verifyUser.find(u => u._id !== user._id);
+      const thisUser = verifyUsers.find(u => u._id === user._id);
+      const otherUsers = verifyUsers.filter(u => u._id !== user._id);
 
-      if (!actualOwner) {
+      if (!thisUser) {
         throw new Error('Failed to update username. Please try again.');
       }
 
-      if (conflictingUser && verifyUser.length > 1) {
-        const previousUsername = user.username;
+      if (otherUsers.length > 0) {
         await ctx.db.patch(user._id, {
           username: previousUsername,
-          ...(user.displayName === normalizedUsername ? { displayName: previousUsername } : {}),
+          ...(user.displayName === normalizedUsername ? { displayName: previousDisplayName } : {}),
           updatedAt: Date.now(),
         });
 
         if (attempt < MAX_RETRIES - 1) {
-          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
           continue;
         }
         throw new Error('Username is already taken');

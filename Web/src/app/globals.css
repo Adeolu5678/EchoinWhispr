@@ -715,3 +715,42 @@
 .legal-table td {
   @apply px-4 py-3 text-muted-foreground;
 }
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-3000 {
+  animation-delay: 3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-pulse,
+  .animate-bounce,
+  .animate-spin,
+  .animate-float,
+  .animate-float-slow,
+  .animate-gradient-x,
+  .animate-shimmer,
+  .pulse-glow,
+  .shimmer::before {
+    animation: none !important;
+  }
+
+  .shimmer::before {
+    display: none;
+  }
+}

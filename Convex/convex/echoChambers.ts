@@ -202,8 +202,27 @@ export const joinChamber = mutation({
       joinedAt: Date.now(),
     });
 
+    const finalMemberCount = await ctx.db
+      .query("echoChamberMembers")
+      .withIndex("by_chamber", (q) => q.eq("chamberId", chamber._id))
+      .collect();
+
+    if (finalMemberCount.length > chamber.maxMembers) {
+      const newMember = await ctx.db
+        .query("echoChamberMembers")
+        .withIndex("by_chamber_user", (q) => 
+          q.eq("chamberId", chamber._id).eq("userId", user._id)
+        )
+        .first();
+      
+      if (newMember) {
+        await ctx.db.delete(newMember._id);
+      }
+      throw new Error("This Echo Chamber is full.");
+    }
+
     await ctx.db.patch(chamber._id, {
-      memberCount: actualMemberCount + 1,
+      memberCount: finalMemberCount.length,
       updatedAt: Date.now(),
     });
 
@@ -324,17 +343,17 @@ export const leaveChamber = mutation({
       throw new Error("Creators cannot leave their chamber. Delete it instead.");
     }
 
-    // Remove membership
     await ctx.db.delete(membership._id);
 
-    // Update member count
-    const chamber = await ctx.db.get(args.chamberId);
-    if (chamber) {
-      await ctx.db.patch(args.chamberId, {
-        memberCount: Math.max(0, (chamber.memberCount || 1) - 1),
-        updatedAt: Date.now(),
-      });
-    }
+    const actualMemberCount = await ctx.db
+      .query("echoChamberMembers")
+      .withIndex("by_chamber", (q) => q.eq("chamberId", args.chamberId))
+      .collect();
+
+    await ctx.db.patch(args.chamberId, {
+      memberCount: actualMemberCount.length,
+      updatedAt: Date.now(),
+    });
 
     return { success: true };
   },

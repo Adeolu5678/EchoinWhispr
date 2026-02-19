@@ -26,7 +26,7 @@ export function AdminStats({ stats, isLoading }: AdminStatsProps) {
       label: 'Total Whispers',
       value: stats?.totalWhispers ?? 0,
       icon: MessageSquare,
-      color: 'from-purple-500 to-purple-600',
+      color: 'from-primary to-primary',
     },
     {
       label: 'Whispers Today',

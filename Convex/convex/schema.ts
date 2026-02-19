@@ -453,6 +453,18 @@ export default defineSchema({
     .index('by_chamber', ['chamberId'])
     .index('by_chamber_user', ['chamberId', 'userId']), // OPTIMIZATION: For efficient typing indicator lookup
 
+  // === File Metadata - Track file ownership for authorization ===
+  fileMetadata: defineTable({
+    storageId: v.id('_storage'),
+    ownerId: v.id('users'),
+    fileName: v.optional(v.string()),
+    mimeType: v.optional(v.string()),
+    size: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index('by_storage_id', ['storageId'])
+    .index('by_owner', ['ownerId']),
+
   // === In-App Notifications ===
   notifications: defineTable({
     userId: v.id('users'),

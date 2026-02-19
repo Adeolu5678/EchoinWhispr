@@ -3,58 +3,24 @@
 import { forwardRef, useCallback } from 'react';
 import Link from 'next/link';
 import { LucideIcon } from 'lucide-react';
-import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-/**
- * Props for the NavigationLink component
- */
 interface NavigationLinkProps {
-  /** The URL to navigate to */
   href: string;
-  /** The icon component to display */
   icon: LucideIcon;
-  /** The text label for the navigation item */
   label: string;
-  /** Whether this navigation item is currently active */
   isActive: boolean;
-  /** Optional click handler for additional functionality */
   onClick?: () => void;
+  index?: number;
 }
 
-/**
- * Individual navigation link component for the main navigation.
- *
- * This component provides consistent styling and behavior for navigation links
- * throughout the application. It supports active state highlighting and
- * optional click handlers for mobile menu interactions.
- *
- * Features:
- * - Active route highlighting with visual feedback
- * - Consistent hover and focus states
- * - Accessible design with proper ARIA attributes
- * - Performance optimized with forwardRef
- * - Mobile-friendly touch targets
- *
- * @param props - The component props
- * @returns {JSX.Element} The rendered navigation link
- */
 export const NavigationLink = forwardRef<
   HTMLAnchorElement,
   NavigationLinkProps
->(({ href, icon: Icon, label, isActive, onClick }, ref) => {
-  /**
-   * Handle click events with optional callback
-   * Uses useCallback for performance optimization
-   */
+>(({ href, icon: Icon, label, isActive, onClick, index = 0 }, ref) => {
   const handleClick = useCallback(() => {
     onClick?.();
   }, [onClick]);
-
-  const linkClassName = cn(
-    buttonVariants({ variant: isActive ? 'secondary' : 'ghost', size: 'sm' }),
-    isActive ? 'bg-primary-700 text-primary-foreground' : 'text-primary-foreground hover:bg-primary-700'
-  );
 
   return (
     <Link
@@ -62,15 +28,44 @@ export const NavigationLink = forwardRef<
       onClick={handleClick}
       ref={ref}
       aria-current={isActive ? 'page' : undefined}
-      className={linkClassName}
+      aria-label={label}
+      className={cn(
+        "relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium",
+        "transition-all duration-300 ease-out",
+        "hover:scale-105",
+        isActive && [
+          "bg-gradient-to-r from-primary/20 via-primary/15 to-accent/10",
+          "text-white",
+          "shadow-lg shadow-primary/20",
+        ],
+        !isActive && [
+          "text-muted-foreground hover:text-white",
+          "hover:bg-white/5",
+        ]
+      )}
+      style={{
+        animationDelay: `${index * 50}ms`,
+      }}
     >
-      <span className="flex items-center space-x-2">
-        <Icon className="h-4 w-4" />
-        <span className="hidden sm:inline">{label}</span>
-      </span>
+      {isActive && (
+        <>
+          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary to-accent opacity-20 blur-sm" />
+          <div className="absolute inset-0 rounded-lg border border-primary/30" />
+          <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-primary/20 to-accent/20 blur-md opacity-50" />
+        </>
+      )}
+      
+      <Icon className={cn(
+        "relative z-10 h-4 w-4 transition-all duration-300",
+        isActive && "text-primary drop-shadow-[0_0_8px_rgba(0,163,255,0.5)]"
+      )} />
+      <span className="relative z-10 hidden sm:inline">{label}</span>
+      
+      {isActive && (
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-[0_0_8px_rgba(0,163,255,0.8)]" />
+      )}
     </Link>
   );
 });
 
-// Set display name for better debugging
 NavigationLink.displayName = 'NavigationLink';

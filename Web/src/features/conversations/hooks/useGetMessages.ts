@@ -8,13 +8,21 @@ export interface PaginatedMessagesResponse {
   hasMore: boolean;
 }
 
-export const useGetMessages = (conversationId: string): {
+export const useGetMessages = (
+  conversationId: string,
+  cursor?: number | null
+): {
   messages: Doc<'messages'>[];
   nextCursor: number | null;
   hasMore: boolean;
   isLoading: boolean;
 } => {
-  const result = useQuery(api.conversations.getMessages, { conversationId: conversationId as Id<'conversations'> }) as PaginatedMessagesResponse | undefined;
+  const result = useQuery(
+    api.conversations.getMessages,
+    cursor !== undefined
+      ? { conversationId: conversationId as Id<'conversations'>, cursor }
+      : { conversationId: conversationId as Id<'conversations'> }
+  ) as PaginatedMessagesResponse | undefined;
 
   return {
     messages: result?.messages || [],

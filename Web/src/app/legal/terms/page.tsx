@@ -1,5 +1,16 @@
 import { FileText } from 'lucide-react';
 import { LEGAL_LAST_UPDATED } from '../constants';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service | EchoinWhispr',
+  description: 'Read the Terms of Service for EchoinWhispr. Learn about your rights and responsibilities when using our anonymous messaging platform.',
+  openGraph: {
+    title: 'Terms of Service | EchoinWhispr',
+    description: 'Read the Terms of Service for EchoinWhispr. Learn about your rights and responsibilities when using our anonymous messaging platform.',
+    type: 'website',
+  },
+};
 
 export default function TermsOfServicePage() {
   return (

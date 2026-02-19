@@ -4,6 +4,7 @@ import { Providers } from '@/components/Providers';
 import { Navigation } from '@/components/Navigation';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { UsernameSelectionHandler } from '@/features/authentication/components/UsernameSelectionHandler';
+import { DeletedUserCheck } from '@/features/authentication/components/DeletedUserCheck';
 import { ReactNode } from 'react';
 import './globals.css';
 import { FeatureFlagProvider } from '@/components/FeatureFlagProvider';
@@ -51,18 +52,18 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/logo-icon.svg',
-        width: 64,
-        height: 64,
-        alt: 'EchoinWhispr Logo',
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'EchoinWhispr - Anonymous Messaging Platform',
       },
     ],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'EchoinWhispr',
     description: 'Whisper into the void. Hear an echo back.',
-    images: ['/logo-icon.svg'],
+    images: ['/og-image.png'],
   },
 };
 
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div className="relative flex flex-col min-h-screen">
               <Navigation />
               <UsernameSelectionHandler />
+              <DeletedUserCheck />
               <main id="main-content" className="flex-1 w-full pb-20 md:pb-0">
                 {children}
               </main>

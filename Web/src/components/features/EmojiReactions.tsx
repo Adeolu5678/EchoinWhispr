@@ -46,6 +46,7 @@ export function EmojiReactions({ whisperId, reactions = [], currentUserId }: Emo
       {Object.entries(grouped).map(([emoji, { count, userReacted }]) => (
         <button
           key={emoji}
+          type="button"
           onClick={() => handleReact(emoji)}
           aria-label={`React with ${emoji}${userReacted ? ' (selected)' : ''}`}
           aria-pressed={userReacted}
@@ -80,14 +81,23 @@ export function EmojiReactions({ whisperId, reactions = [], currentUserId }: Emo
               className="fixed inset-0 z-40" 
               onClick={() => setShowPicker(false)}
             />
-            <div className="absolute bottom-full left-0 mb-1 z-50 bg-card border border-white/10 rounded-lg p-2 shadow-xl">
-              <div className="flex gap-1">
-                {EMOJI_OPTIONS.map(emoji => (
+            <div 
+              className="absolute bottom-full left-0 mb-1 z-50 bg-card border border-white/10 rounded-lg p-2 shadow-xl"
+              role="dialog"
+              aria-label="Emoji picker"
+              aria-modal="true"
+            >
+              <div className="flex gap-1" role="listbox" aria-label="Available emojis">
+                {EMOJI_OPTIONS.map((emoji, index) => (
                   <button
                     key={emoji}
+                    type="button"
                     onClick={() => handleReact(emoji)}
                     aria-label={`React with ${emoji}`}
                     className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded transition-colors text-lg"
+                    role="option"
+                    aria-selected={grouped[emoji]?.userReacted ?? false}
+                    tabIndex={index === 0 ? 0 : -1}
                   >
                     {emoji}
                   </button>

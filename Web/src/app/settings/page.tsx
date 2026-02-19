@@ -131,7 +131,7 @@ export default function SettingsPage() {
           <TabsContent value="general" className="space-y-4">
             <Card className="glass border-white/10 p-6">
               <h2 className="font-semibold mb-4 flex items-center gap-2">
-                <Palette className="w-5 h-5 text-purple-400" />
+                <Palette className="w-5 h-5 text-primary" />
                 Appearance
               </h2>
               <div>
@@ -186,7 +186,7 @@ export default function SettingsPage() {
           <TabsContent value="resonance" className="space-y-4">
             <Card className="glass border-white/10 p-6">
               <h2 className="font-semibold mb-4 flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-indigo-400" />
+                <Briefcase className="w-5 h-5 text-primary" />
                 Life Phase
               </h2>
               <p className="text-sm text-muted-foreground mb-4">
@@ -330,13 +330,13 @@ export default function SettingsPage() {
                   <p className="text-sm text-muted-foreground">
                     You have admin privileges. Access the admin dashboard to monitor whispers.
                   </p>
-                  <Link href="/admin">
-                    <Button className="gap-2">
+                  <Button asChild className="gap-2">
+                    <Link href="/admin">
                       <Shield className="w-4 h-4" />
                       Open Admin Dashboard
                       <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               ) : myRequestStatus?.status === 'pending' ? (
                 <div className="space-y-3">

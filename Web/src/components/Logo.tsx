@@ -44,7 +44,7 @@ export function Logo({
       </div>
       {!iconOnly && (
         <span className={cn(
-          'font-display font-bold tracking-tight bg-gradient-to-r from-violet-500 to-indigo-500 bg-clip-text text-transparent',
+          'font-display font-bold tracking-tight bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent',
           size === 'sm' && 'text-lg',
           size === 'md' && 'text-xl',
           size === 'lg' && 'text-2xl'

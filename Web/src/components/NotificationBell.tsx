@@ -5,6 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api, Id } from '@/lib/convex';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Bell, 
   Check, 
@@ -19,6 +20,8 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { cn } from '@/lib/utils';
 
 const notificationIcons = {
   whisper: MessageSquare,
@@ -29,7 +32,7 @@ const notificationIcons = {
 };
 
 const notificationColors = {
-  whisper: 'from-purple-500/20 to-indigo-500/20 border-purple-500/30',
+  whisper: 'from-primary/20 to-accent/20 border-primary/30',
   friend_request: 'from-emerald-500/20 to-cyan-500/20 border-emerald-500/30',
   chamber: 'from-amber-500/20 to-orange-500/20 border-amber-500/30',
   resonance: 'from-pink-500/20 to-rose-500/20 border-pink-500/30',
@@ -40,6 +43,8 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const prefersReducedMotion = useReducedMotion();
+  const { toast } = useToast();
 
   const notificationsData = useQuery(api.notifications.getNotifications, { limit: 10 });
   const unreadCount = useQuery(api.notifications.getUnreadCount);
@@ -47,7 +52,6 @@ export function NotificationBell() {
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
   const deleteNotification = useMutation(api.notifications.deleteNotification);
 
-  // Close dropdown when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -84,6 +88,11 @@ export function NotificationBell() {
       }
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
+      toast({
+        title: "Failed to mark as read",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -92,6 +101,11 @@ export function NotificationBell() {
       await markAllAsRead();
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
+      toast({
+        title: "Failed to mark all as read",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -101,6 +115,25 @@ export function NotificationBell() {
       await deleteNotification({ notificationId });
     } catch (error) {
       console.error('Failed to delete notification:', error);
+      toast({
+        title: "Failed to delete notification",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMarkAsRead = async (e: React.MouseEvent, notificationId: Id<'notifications'>) => {
+    e.stopPropagation();
+    try {
+      await markAsRead({ notificationId });
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+      toast({
+        title: "Failed to mark as read",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -121,7 +154,10 @@ export function NotificationBell() {
       >
         <Bell className="w-5 h-5" />
         {(unreadCount ?? 0) > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-primary to-cyan-500 rounded-full flex items-center justify-center text-xs font-bold animate-pulse">
+          <span className={cn(
+            "absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-primary to-cyan-500 rounded-full flex items-center justify-center text-xs font-bold",
+            !prefersReducedMotion && "animate-pulse"
+          )}>
             {unreadCount && unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -129,7 +165,7 @@ export function NotificationBell() {
 
       {/* Dropdown */}
       {isOpen && (
-        <Card id="notification-dropdown" className="absolute right-0 top-full mt-2 w-80 sm:w-96 glass border-white/10 shadow-2xl z-50 overflow-hidden" role="dialog" aria-label="Notifications">
+        <Card id="notification-dropdown" className="absolute right-0 top-full mt-2 w-80 sm:w-96 glass border-white/10 shadow-2xl z-50 overflow-hidden" role="dialog" aria-label="Notifications" aria-modal="true">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <h3 className="font-semibold text-lg">Notifications</h3>
@@ -163,7 +199,10 @@ export function NotificationBell() {
                   return (
                     <div
                       key={notification._id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handleNotificationClick(notification)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleNotificationClick(notification)}
                       className={`p-3 hover:bg-white/5 cursor-pointer transition-colors ${
                         !notification.read ? 'bg-white/[0.02]' : ''
                       }`}
@@ -200,18 +239,13 @@ export function NotificationBell() {
                             <span className="text-xs text-muted-foreground/60">
                               {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
                             </span>
-                            <div className="flex gap-1">
+                          <div className="flex gap-1">
                               {!notification.read && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   className="h-6 w-6 hover:bg-white/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    markAsRead({ notificationId: notification._id as Id<'notifications'> }).catch(
-                                      (err) => console.error('Failed to mark as read:', err)
-                                    );
-                                  }}
+                                  onClick={(e) => handleMarkAsRead(e, notification._id as Id<'notifications'>)}
                                   aria-label="Mark as read"
                                 >
                                   <Check className="w-3 h-3" />

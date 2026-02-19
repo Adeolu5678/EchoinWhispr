@@ -22,12 +22,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       
       {/* Navigation */}
       <div className="absolute top-8 left-8 z-20">
-        <Link href="/">
-          <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
+        <Button asChild variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
+          <Link href="/">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       {/* Content Container */}

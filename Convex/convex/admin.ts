@@ -3,6 +3,7 @@ import { mutation, query } from './_generated/server';
 import { paginationOptsValidator } from 'convex/server';
 import { Doc, Id } from './_generated/dataModel';
 import { isAdmin, isSuperAdmin, getAdminRole, AdminRole } from './adminAuth';
+import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
 
 /**
  * Admin module for EchoinWhispr.
@@ -102,6 +103,8 @@ export const requestAdminPromotion = mutation({
       throw new Error('User not found');
     }
 
+    await enforceRateLimit(ctx, user._id, 'REQUEST_ADMIN_PROMOTION');
+
     // Check if user is already an admin
     const existingRole = await ctx.db
       .query('adminRoles')
@@ -132,6 +135,8 @@ export const requestAdminPromotion = mutation({
       status: 'pending',
       createdAt: Date.now(),
     });
+
+    await recordRateLimitedAction(ctx, user._id, 'REQUEST_ADMIN_PROMOTION');
 
     return { success: true, requestId };
   },
@@ -509,7 +514,7 @@ export const initializeFirstSuperAdmin = mutation({
 
     // RACE CONDITION VERIFICATION: Verify we're the only admin after insert
     // If another admin exists (from concurrent mutation), we have a race
-    const allAdmins = await ctx.db.query('adminRoles').collect();
+    const allAdmins = await ctx.db.query('adminRoles').take(10);
     if (allAdmins.length > 1) {
       // Rollback our insertion - another admin was created concurrently
       await ctx.db.delete(adminRoleId);
@@ -558,6 +563,8 @@ export const requestSuperAdminPromotion = mutation({
       throw new Error('User not found');
     }
 
+    await enforceRateLimit(ctx, user._id, 'REQUEST_SUPER_ADMIN_PROMOTION');
+
     // Check for existing pending request
     const existingRequest = await ctx.db
       .query('adminRequests')
@@ -578,6 +585,8 @@ export const requestSuperAdminPromotion = mutation({
       status: 'pending',
       createdAt: Date.now(),
     });
+
+    await recordRateLimitedAction(ctx, user._id, 'REQUEST_SUPER_ADMIN_PROMOTION');
 
     return { success: true, requestId };
   },
@@ -770,7 +779,7 @@ export const getAllAdmins = query({
       return [];
     }
 
-    const adminRoles = await ctx.db.query('adminRoles').collect();
+    const adminRoles = await ctx.db.query('adminRoles').take(100);
 
     const adminsWithDetails = await Promise.all(
       adminRoles.map(async (adminRole) => {

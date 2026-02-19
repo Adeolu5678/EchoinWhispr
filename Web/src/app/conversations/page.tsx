@@ -2,18 +2,18 @@
 
 import { ConversationList } from '@/features/conversations/components/ConversationList';
 import { FEATURE_FLAGS } from '@/config/featureFlags';
-import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useGetConversations } from '@/features/conversations/hooks/useGetConversations';
-import type { Id } from '@/lib/convex';
+import { useQuery } from 'convex/react';
+import { api } from '@/lib/convex';
 import { ArrowLeft, Sparkles, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ConversationsPage() {
-  const { user } = useUser();
   const router = useRouter();
+  const currentUser = useQuery(api.users.getCurrentUser);
   const { conversations, isLoading, error } = useGetConversations();
-  const currentUserId = user?.id as Id<'users'>;
+  const currentUserId = currentUser?._id;
 
   if (!FEATURE_FLAGS.CONVERSATION_EVOLUTION) {
     return (

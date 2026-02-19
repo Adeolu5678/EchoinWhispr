@@ -37,8 +37,8 @@ export default function InsightsPage() {
         {/* Header */}
         <header className="glass p-6 rounded-2xl border border-white/10">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-indigo-500/20 to-violet-500/20 p-3 rounded-xl">
-              <BarChart3 className="w-8 h-8 text-indigo-400" />
+<div className="bg-gradient-to-br from-primary/20 to-accent/20 p-3 rounded-xl">
+              <BarChart3 className="w-8 h-8 text-primary" />
             </div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-gradient">
@@ -54,7 +54,7 @@ export default function InsightsPage() {
         {/* Weekly Overview */}
         <Card className="glass border-white/10 p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-indigo-400" />
+            <Activity className="w-5 h-5 text-primary" />
             This Week
           </h2>
 
@@ -101,7 +101,7 @@ export default function InsightsPage() {
                     return (
                       <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1">
                         <div 
-                          className="w-full bg-gradient-to-t from-indigo-600/40 to-violet-600/40 rounded-t"
+                          className="w-full bg-gradient-to-t from-primary/40 to-accent/40 rounded-t"
                           style={{ height: `${Math.max(height, 4)}%` }}
                         />
                         <span className="text-xs text-muted-foreground">
@@ -114,7 +114,7 @@ export default function InsightsPage() {
               </div>
 
               <div className="mt-4 text-center">
-                <Badge className="bg-indigo-500/20 text-indigo-300">
+                <Badge className="bg-primary/20 text-primary">
                   ~{weeklyData.avgMessagesPerDay} messages/day
                 </Badge>
               </div>
@@ -129,7 +129,7 @@ export default function InsightsPage() {
         {/* Monthly Overview */}
         <Card className="glass border-white/10 p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-violet-400" />
+            <Calendar className="w-5 h-5 text-accent" />
             This Month
           </h2>
 
@@ -137,19 +137,19 @@ export default function InsightsPage() {
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white/5 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-indigo-400">
+<div className="text-2xl font-bold text-primary">
                     {monthlyData.totals.messagesSent + monthlyData.totals.messagesReceived}
                   </div>
                   <div className="text-xs text-muted-foreground">Total Messages</div>
                 </div>
                 <div className="bg-white/5 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-violet-400">
+<div className="text-2xl font-bold text-accent">
                     {monthlyData.daysActive}
                   </div>
                   <div className="text-xs text-muted-foreground">Days Active</div>
                 </div>
                 <div className="bg-white/5 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-pink-400">
+<div className="text-2xl font-bold text-accent">
                     {monthlyData.totals.newConnections}
                   </div>
                   <div className="text-xs text-muted-foreground">New Connections</div>
@@ -170,9 +170,9 @@ export default function InsightsPage() {
                   <p className="text-sm text-muted-foreground mb-2">Top Topics</p>
                   <div className="flex flex-wrap gap-2">
                     {monthlyData.topInterests.map((interest, i) => (
-                      <Badge 
+<Badge 
                         key={i}
-                        className="bg-violet-500/20 text-violet-300"
+                        className="bg-accent/20 text-accent"
                       >
                         {interest}
                       </Badge>
@@ -191,7 +191,7 @@ export default function InsightsPage() {
         {/* Year in Review */}
         {yearData && (
           <Card className="glass border-white/10 p-6 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-violet-500/5" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
             
             <div className="relative z-10">
               <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -241,7 +241,7 @@ export default function InsightsPage() {
                       return (
                         <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1">
                           <div 
-                            className="w-full bg-gradient-to-t from-indigo-600/50 to-violet-600/50 rounded-t"
+                            className="w-full bg-gradient-to-t from-primary/50 to-accent/50 rounded-t"
                             style={{ height: `${Math.max(height, 4)}%` }}
                           />
                           <span className="text-[10px] text-muted-foreground">
@@ -256,7 +256,7 @@ export default function InsightsPage() {
 
               <div className="mt-4 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Peak Month: <strong className="text-violet-400">
+                  Peak Month: <strong className="text-accent">
                     {yearData.peakMonth ? new Date(yearData.peakMonth + '-01').toLocaleDateString('en-US', { 
                       month: 'long' 
                     }) : '-'}

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { motion, Variants } from 'framer-motion';
 import { Shield, ArrowRightLeft, Clock, PenTool, Send, RotateCcw, Sparkles, Zap, Lock, Users, User } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Animation Variants
@@ -34,6 +35,16 @@ const itemVariants: Variants = {
   },
 };
 
+const reducedMotionVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.3,
+    },
+  },
+};
+
 
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -45,19 +56,19 @@ const features = [
     icon: Shield,
     title: 'Complete Anonymity',
     description: 'Your identity remains hidden. Express yourself freely without the weight of your persona.',
-    gradient: 'from-[#3F3D56] to-[#00C2FF]',
+    gradient: 'from-primary to-accent',
   },
   {
     icon: ArrowRightLeft,
     title: 'Organic Connections',
     description: 'Start with a one-way whisper. If it resonates, it can evolve into a two-way conversation.',
-    gradient: 'from-[#00A5D9] to-[#00C2FF]',
+    gradient: 'from-cyan-500 to-accent',
   },
   {
     icon: Clock,
     title: 'Ephemeral Nature',
     description: 'Messages that don\'t linger. Experience the freedom of digital impermanence.',
-    gradient: 'from-[#3F3D56] to-[#00C2FF]',
+    gradient: 'from-primary to-accent',
   },
 ];
 
@@ -104,13 +115,16 @@ const FeatureCard = ({
 }: { 
   feature: typeof features[0]; 
   index: number;
-}) => (
+}) => {
+  const prefersReducedMotion = useReducedMotion();
+  
+  return (
   <motion.div
-    initial={{ opacity: 0, y: 30 }}
+    initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 30 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
-    transition={{ delay: index * 0.15, duration: 0.5 }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+    transition={{ delay: prefersReducedMotion ? 0 : index * 0.15, duration: 0.5 }}
+    whileHover={prefersReducedMotion ? {} : { y: -5, transition: { duration: 0.2 } }}
     className="group relative"
   >
     {/* Glow effect on hover */}
@@ -130,7 +144,8 @@ const FeatureCard = ({
       </p>
     </div>
   </motion.div>
-);
+  );
+};
 
 /**
  * How it works step card
@@ -141,12 +156,15 @@ const StepCard = ({
 }: { 
   item: typeof howItWorks[0]; 
   index: number;
-}) => (
+}) => {
+  const prefersReducedMotion = useReducedMotion();
+  
+  return (
   <motion.div
-    initial={{ opacity: 0, y: 30 }}
+    initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 30 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
-    transition={{ delay: index * 0.2, duration: 0.5 }}
+    transition={{ delay: prefersReducedMotion ? 0 : index * 0.2, duration: 0.5 }}
     className="relative group"
   >
     {/* Connecting line (hidden on last item) */}
@@ -161,7 +179,7 @@ const StepCard = ({
     
     <div className="relative glass-card p-8 rounded-xl h-full transition-all duration-300 group-hover:border-primary/30">
       {/* Step number */}
-      <span className="absolute top-4 right-4 text-6xl font-display font-black text-white/5 select-none group-hover:text-primary/10 transition-colors duration-300">
+      <span className="absolute top-4 right-4 text-6xl font-display font-black text-foreground/5 select-none group-hover:text-primary/10 transition-colors duration-300">
         {item.step}
       </span>
       
@@ -179,7 +197,8 @@ const StepCard = ({
       </div>
     </div>
   </motion.div>
-);
+  );
+};
 
 /**
  * Stat card component
@@ -190,12 +209,15 @@ const StatCard = ({
 }: { 
   stat: typeof stats[0]; 
   index: number;
-}) => (
+}) => {
+  const prefersReducedMotion = useReducedMotion();
+  
+  return (
   <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
+    initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.9 }}
     whileInView={{ opacity: 1, scale: 1 }}
     viewport={{ once: true }}
-    transition={{ delay: index * 0.1, duration: 0.4 }}
+    transition={{ delay: prefersReducedMotion ? 0 : index * 0.1, duration: 0.4 }}
     className="text-center group"
   >
     <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors duration-300">
@@ -208,13 +230,20 @@ const StatCard = ({
       {stat.label}
     </div>
   </motion.div>
-);
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════════════
 // Main Component
 // ═══════════════════════════════════════════════════════════════════════
 
 export default function LandingPage(): JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const activeItemVariants = prefersReducedMotion ? reducedMotionVariants : itemVariants;
+  const activeContainerVariants = prefersReducedMotion 
+    ? { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0, delayChildren: 0 } } }
+    : containerVariants;
+
   return (
     <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden">
       {/* ═══════════════════════════════════════════════════════════════════
@@ -259,28 +288,28 @@ export default function LandingPage(): JSX.Element {
           ═══════════════════════════════════════════════════════════════════ */}
       <section className="relative pt-24 pb-16 md:pt-32 lg:pt-48 lg:pb-32 overflow-hidden">
         {/* Background effects - full-width gradient from top with new brand colors */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#3F3D56]/30 via-[#3F3D56]/10 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#00C2FF]/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/30 via-primary/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-accent/10 via-transparent to-transparent" />
         
         {/* Subtle grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.008)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.008)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.08)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.08)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
-            variants={containerVariants}
+            variants={activeContainerVariants}
             initial="hidden"
             animate="visible"
             className="text-center max-w-4xl mx-auto"
           >
             {/* Badge */}
-            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-8 text-sm">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <motion.div variants={activeItemVariants} className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-8 text-sm">
+              <span className="w-2 h-2 rounded-full bg-green-500 motion-safe:animate-pulse" />
               <span className="text-muted-foreground">Now in Public Beta</span>
             </motion.div>
             
             {/* Headline */}
             <motion.h1 
-              variants={itemVariants} 
+              variants={activeItemVariants} 
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight mb-8"
             >
               Whisper into the{' '}
@@ -292,7 +321,7 @@ export default function LandingPage(): JSX.Element {
             
             {/* Subheadline */}
             <motion.p 
-              variants={itemVariants} 
+              variants={activeItemVariants} 
               className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto"
             >
               Experience true anonymity. Share your thoughts, secrets, and dreams without judgment. 
@@ -301,7 +330,7 @@ export default function LandingPage(): JSX.Element {
             
             {/* CTA Buttons */}
             <motion.div 
-              variants={itemVariants} 
+              variants={activeItemVariants} 
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Link href="/sign-up">
@@ -467,7 +496,7 @@ export default function LandingPage(): JSX.Element {
             
             {/* Copyright */}
             <p className="text-sm text-muted-foreground/60">
-              © {new Date().getFullYear()} EchoinWhispr. All rights reserved.
+              © 2025 EchoinWhispr. All rights reserved.
             </p>
           </div>
         </div>

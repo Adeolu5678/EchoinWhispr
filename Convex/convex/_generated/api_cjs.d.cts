@@ -21,6 +21,7 @@ import type * as cron from "../cron.js";
 import type * as dailyPrompts from "../dailyPrompts.js";
 import type * as echoChambers from "../echoChambers.js";
 import type * as featureFlags from "../featureFlags.js";
+import type * as fileMetadata from "../fileMetadata.js";
 import type * as fileStorage from "../fileStorage.js";
 import type * as friends from "../friends.js";
 import type * as matchmaking from "../matchmaking.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   dailyPrompts: typeof dailyPrompts;
   echoChambers: typeof echoChambers;
   featureFlags: typeof featureFlags;
+  fileMetadata: typeof fileMetadata;
   fileStorage: typeof fileStorage;
   friends: typeof friends;
   matchmaking: typeof matchmaking;

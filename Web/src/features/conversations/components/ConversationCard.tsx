@@ -19,6 +19,10 @@ export const ConversationCard: React.FC<ConversationCardProps> = ({
   conversation,
   currentUserId,
 }) => {
+  if (!currentUserId) {
+    return null;
+  }
+
   const otherParticipantId = conversation.participantIds.find(
     (id) => id !== currentUserId
   );

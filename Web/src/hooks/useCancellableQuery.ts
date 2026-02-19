@@ -39,11 +39,15 @@ export function useCancellableQuery<T>(
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryAttemptRef = useRef(0);
   const mountedRef = useRef(false);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -85,7 +89,7 @@ export function useCancellableQuery<T>(
       
       if (retryAttemptRef.current < retryCount) {
         retryAttemptRef.current++;
-        setTimeout(() => {
+        retryTimeoutRef.current = setTimeout(() => {
           if (mountedRef.current) {
             executeQuery();
           }
@@ -113,6 +117,9 @@ export function useCancellableQuery<T>(
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
       }
     };
   }, [enabled, executeQuery]);
