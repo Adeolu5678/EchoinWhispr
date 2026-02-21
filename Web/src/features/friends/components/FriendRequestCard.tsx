@@ -25,12 +25,6 @@ export const FriendRequestCard = ({
   isAccepting,
   isRejecting
 }: FriendRequestCardProps) => {
-  // Debug logging to validate sender existence and properties
-  console.log('FriendRequestCard - request.sender:', request.sender);
-  if (request.sender) {
-    console.log('FriendRequestCard - sender properties:', Object.keys(request.sender));
-  }
-
   const displayName = request.sender?.firstName && request.sender?.lastName
     ? `${request.sender.firstName} ${request.sender.lastName}`
     : request.sender?.username || 'Unknown User';

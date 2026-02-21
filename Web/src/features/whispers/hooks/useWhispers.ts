@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { useQuery } from 'convex/react';
+import { useQuery, useConvex } from 'convex/react';
 import { api } from '../../../lib/convex';
 import { whisperService } from '../services/whisperService';
 import {
@@ -82,14 +82,15 @@ export function useSendWhisper() {
  * @returns Object with whispers data, loading state, and error handling
  */
 export function useReceivedWhispers() {
-  // Fetch ALL whispers using the new non-paginated query
+  const convex = useConvex();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const results = useQuery(api.whispers.getAllReceivedWhispers);
 
-  // Transform results to WhisperWithSender format
   const whispers = useMemo(() => {
     return (results ?? []).map(whisper => ({
       ...whisper,
-      isOwnWhisper: false, // Received whispers are not own whispers
+      isOwnWhisper: false,
       formattedTime: new Date(whisper._creationTime).toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
@@ -101,7 +102,6 @@ export function useReceivedWhispers() {
     })) as WhisperWithSender[];
   }, [results]);
 
-  // Computed values
   const unreadCount = useMemo(() => {
     return whispers.filter((whisper: WhisperWithSender) => !whisper.isRead).length;
   }, [whispers]);
@@ -112,16 +112,26 @@ export function useReceivedWhispers() {
 
   const isLoading = results === undefined;
 
+  const refetch = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await convex.query(api.whispers.getAllReceivedWhispers, {});
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [convex]);
+
   return {
     whispers,
     isLoading,
-    isLoadingMore: false, // No pagination, so never loading more
+    isLoadingMore: false,
+    isRefreshing,
     error: null,
     unreadCount,
     hasUnread,
-    hasMore: false, // No pagination, all whispers are loaded
-    loadMore: () => {}, // No-op since all whispers are loaded
-    refetch: () => {}, // useQuery auto-refetches on data changes
+    hasMore: false,
+    loadMore: () => {},
+    refetch,
     clearError: () => {},
   };
 }

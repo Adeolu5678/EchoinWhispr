@@ -228,34 +228,40 @@ export const requestSkillExchange = mutation({
       throw new Error("You can't request to learn from yourself");
     }
 
-    // Check for existing pending request
-    const existing = await ctx.db
-      .query("skillMatches")
-      .withIndex("by_learner", (q) => q.eq("learnerId", learner._id))
-      .filter((q) => 
-        q.and(
-          q.eq(q.field("teacherId"), args.teacherId),
-          q.eq(q.field("skillName"), args.skillName.toLowerCase()),
-          q.eq(q.field("status"), "pending")
-        )
-      )
-      .first();
-
-    if (existing) {
-      throw new Error("You already have a pending request for this skill");
-    }
-
+    const skillNameLower = args.skillName.toLowerCase();
     const now = Date.now();
 
     const matchId = await ctx.db.insert("skillMatches", {
       teacherId: args.teacherId,
       learnerId: learner._id,
-      skillName: args.skillName.toLowerCase(),
+      skillName: skillNameLower,
       status: "pending",
       requestMessage: args.message,
       createdAt: now,
       updatedAt: now,
     });
+
+    const allPendingRequests = await ctx.db
+      .query("skillMatches")
+      .withIndex("by_learner", (q) => q.eq("learnerId", learner._id))
+      .filter((q) => 
+        q.and(
+          q.eq(q.field("teacherId"), args.teacherId),
+          q.eq(q.field("skillName"), skillNameLower),
+          q.eq(q.field("status"), "pending")
+        )
+      )
+      .collect();
+
+    if (allPendingRequests.length > 1) {
+      const oldestRequest = allPendingRequests.sort((a, b) => a.createdAt - b.createdAt)[0];
+      if (oldestRequest._id !== matchId) {
+        await ctx.db.delete(matchId);
+        throw new Error("You already have a pending request for this skill");
+      }
+      const newerRequests = allPendingRequests.filter(r => r._id !== oldestRequest._id);
+      await Promise.all(newerRequests.map(r => ctx.db.delete(r._id)));
+    }
 
     return { matchId };
   },

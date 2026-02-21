@@ -1,27 +1,19 @@
 import { useMutation } from 'convex/react';
+import { useState } from 'react';
 import { api, Id } from '@/lib/convex';
 import { useToast } from '@/hooks/use-toast';
 
-/**
- * Hook for sending messages in conversations.
- *
- * @returns Object containing sendMessage function and loading state
- */
 export const useSendMessage = () => {
   const sendMessageMutation = useMutation(api.conversations.sendMessage);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  /**
-   * Send a message in a conversation.
-   *
-   * @param conversationId - The ID of the conversation
-   * @param content - The message content to send
-   * @param imageUrl - Optional image URL for attachment
-   * @returns Promise resolving to the message ID
-   */
   const sendMessage = async (conversationId: Id<'conversations'>, content: string, imageUrl?: string) => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      // Client-side validation
       if (!content.trim()) {
         throw new Error('Message content cannot be empty');
       }
@@ -37,23 +29,28 @@ export const useSendMessage = () => {
       });
 
       return messageId;
-    } catch (error) {
-      console.error('Failed to send message:', error);
+    } catch (err) {
+      console.error('Failed to send message:', err);
 
-      // Show user-friendly error message
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+      const errorObj = err instanceof Error ? err : new Error(errorMessage);
+      setError(errorObj);
+      
       toast({
         title: 'Error',
         description: errorMessage,
         variant: 'destructive',
       });
 
-      throw error;
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
     sendMessage,
-    isLoading: false, // Convex mutations don't expose loading state directly
+    isLoading,
+    error,
   };
 };

@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/lib/convex';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Sparkles, Eye, EyeOff, Heart, Clock, Check, X, AlertTriangle } from 'lucide-react';
-import { useEffect } from 'react';
 import type { Id } from '@/lib/convex';
 import { useToast } from '@/hooks/use-toast';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { cn } from '@/lib/utils';
 
 interface UnmaskingCeremonyProps {
   conversationId: Id<'conversations'>;
@@ -25,12 +26,24 @@ export function UnmaskingCeremony({
   onClose 
 }: UnmaskingCeremonyProps) {
   const { toast } = useToast();
+  const prefersReducedMotion = useReducedMotion();
   const [isLoading, setIsLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiParticles, setConfettiParticles] = useState<Array<{left: string, top: string, delay: string, char: string}>>([]);
+  const isMountedRef = useRef(true);
+  const confettiTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (showConfetti) {
+    return () => {
+      isMountedRef.current = false;
+      if (confettiTimeoutRef.current) {
+        clearTimeout(confettiTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showConfetti && isMountedRef.current) {
       setConfettiParticles([...Array(20)].map(() => ({
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`,
@@ -50,19 +63,25 @@ export function UnmaskingCeremony({
     setIsLoading(true);
     try {
       await requestUnmasking({ conversationId });
-      toast({
-        title: "Request sent! 💫",
-        description: "They'll be notified of your desire to reveal identities.",
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: "Request sent! 💫",
+          description: "They'll be notified of your desire to reveal identities.",
+        });
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      toast({
-        title: "Failed to request",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: "Failed to request",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -74,19 +93,25 @@ export function UnmaskingCeremony({
         requestId: status.requestId as Id<'unmaskingRequests'>, 
         accept 
       });
-      toast({
-        title: accept ? "You accepted! 🎉" : "Request declined",
-        description: accept ? "The ceremony can now begin!" : "",
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: accept ? "You accepted! 🎉" : "Request declined",
+          description: accept ? "The ceremony can now begin!" : "",
+        });
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      toast({
-        title: "Failed to respond",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: "Failed to respond",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -94,21 +119,31 @@ export function UnmaskingCeremony({
     setIsLoading(true);
     try {
       await completeUnmasking({ conversationId });
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
-      toast({
-        title: "🎭 Identities Revealed! 🎭",
-        description: "You can now see each other's true identities!",
-      });
+      if (isMountedRef.current) {
+        setShowConfetti(true);
+        confettiTimeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current) {
+            setShowConfetti(false);
+          }
+        }, 3000);
+        toast({
+          title: "🎭 Identities Revealed! 🎭",
+          description: "You can now see each other's true identities!",
+        });
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      toast({
-        title: "Failed to complete ceremony",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: "Failed to complete ceremony",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -116,16 +151,22 @@ export function UnmaskingCeremony({
     setIsLoading(true);
     try {
       await cancelRequest({ conversationId });
-      toast({ title: "Request cancelled" });
+      if (isMountedRef.current) {
+        toast({ title: "Request cancelled" });
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      toast({
-        title: "Failed to cancel",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: "Failed to cancel",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -154,8 +195,11 @@ export function UnmaskingCeremony({
       case 'mutual_pending':
         return (
           <div className="text-center py-8">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center animate-pulse">
-              <Heart className="w-10 h-10 text-pink-400" />
+            <div className={cn(
+              "w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center",
+              !prefersReducedMotion && "animate-pulse"
+            )}>
+              <Heart className="w-10 h-10 text-accent" />
             </div>
             <h3 className="text-xl font-bold mb-2">Mutual Interest! 💕</h3>
             <p className="text-muted-foreground mb-4">
@@ -164,7 +208,7 @@ export function UnmaskingCeremony({
             <Button 
               onClick={handleComplete}
               disabled={isLoading}
-              className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
+              className="bg-gradient-to-r from-accent to-primary hover:from-fuchsia-600 hover:to-primary"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Complete Ceremony
@@ -197,8 +241,11 @@ export function UnmaskingCeremony({
         if (currentStatus?.isRequestor) {
           return (
             <div className="text-center py-8">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-                <Clock className="w-10 h-10 text-blue-400 animate-pulse" />
+              <div className={cn(
+                "w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center",
+                !prefersReducedMotion && "animate-pulse"
+              )}>
+                <Clock className="w-10 h-10 text-blue-400" />
               </div>
               <h3 className="text-xl font-bold mb-2">Waiting for Response</h3>
               <p className="text-muted-foreground mb-4">
@@ -217,8 +264,8 @@ export function UnmaskingCeremony({
         } else {
           return (
             <div className="text-center py-8">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                <EyeOff className="w-10 h-10 text-purple-400" />
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                <EyeOff className="w-10 h-10 text-primary" />
               </div>
               <h3 className="text-xl font-bold mb-2">Unmasking Request</h3>
               <p className="text-muted-foreground mb-4">
@@ -236,7 +283,7 @@ export function UnmaskingCeremony({
                 <Button 
                   onClick={() => handleRespond(true)}
                   disabled={isLoading}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600"
+                  className="bg-gradient-to-r from-primary to-accent"
                 >
                   <Check className="w-4 h-4 mr-2" />
                   Accept
@@ -268,8 +315,8 @@ export function UnmaskingCeremony({
       default: // 'none'
         return (
           <div className="text-center py-8">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center">
-              <EyeOff className="w-10 h-10 text-violet-400" />
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-accent/20 to-primary/20 flex items-center justify-center">
+              <EyeOff className="w-10 h-10 text-accent" />
             </div>
             <h3 className="text-xl font-bold mb-2">The Unmasking Ceremony</h3>
             <p className="text-muted-foreground mb-4">
@@ -284,7 +331,7 @@ export function UnmaskingCeremony({
             <Button 
               onClick={handleRequest}
               disabled={isLoading}
-              className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700"
+              className="bg-gradient-to-r from-accent to-primary hover:from-fuchsia-600 hover:to-primary"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Request Unmasking
@@ -299,7 +346,7 @@ export function UnmaskingCeremony({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 justify-center">
-            <Sparkles className="w-5 h-5 text-purple-400" />
+            <Sparkles className="w-5 h-5 text-primary" />
             Unmasking Ceremony
           </DialogTitle>
           <DialogDescription className="text-center">
@@ -307,12 +354,12 @@ export function UnmaskingCeremony({
           </DialogDescription>
         </DialogHeader>
 
-        {showConfetti && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {showConfetti && !prefersReducedMotion && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
             {confettiParticles.map((p, i) => (
               <div
                 key={i}
-                className="absolute text-2xl animate-bounce"
+                className="absolute text-2xl motion-safe:animate-bounce"
                 style={{
                   left: p.left,
                   top: p.top,

@@ -49,7 +49,7 @@ export const sendMysteryWhisper = mutation({
     // For MVP/Foundation, fetching a batch and filtering is acceptable.
     
     // Get users who have opted out
-    const optOuts = await ctx.db.query('mysterySettings').collect();
+    const optOuts = await ctx.db.query('mysterySettings').take(500);
     const optedOutUserIds = new Set(optOuts.filter(s => s.optOut).map(s => s.userId));
 
     // Get blocked users (from friends table)

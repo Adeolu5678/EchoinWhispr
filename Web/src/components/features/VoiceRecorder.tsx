@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Mic, Square, Send, Play, Pause, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { cn } from '@/lib/utils';
 
 interface VoiceRecorderProps {
   recipientUsername: string;
@@ -15,6 +17,7 @@ interface VoiceRecorderProps {
 
 export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps) {
   const { toast } = useToast();
+  const prefersReducedMotion = useReducedMotion();
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -26,6 +29,8 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
 
   const generateUploadUrl = useMutation(api.whispers.generateVoiceUploadUrl);
   const sendVoiceWhisper = useMutation(api.whispers.sendVoiceWhisper);
@@ -45,9 +50,15 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        setAudioBlob(blob);
-        setAudioUrl(URL.createObjectURL(blob));
+        const url = URL.createObjectURL(blob);
+        audioUrlRef.current = url;
         stream.getTracks().forEach(track => track.stop());
+        if (!isMountedRef.current) {
+          URL.revokeObjectURL(url);
+          return;
+        }
+        setAudioBlob(blob);
+        setAudioUrl(url);
       };
 
       mediaRecorder.start();
@@ -71,15 +82,24 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
 
   // Cleanup on unmount
   useEffect(() => {
+    isMountedRef.current = true;
+    const audio = audioRef.current;
     return () => {
+      isMountedRef.current = false;
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
       }
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      // Stop all tracks
-      mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current?.stream?.getTracks().forEach(track => track.stop());
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
+      }
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+      }
     };
   }, []);
 
@@ -105,10 +125,10 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
   };
 
   const discardRecording = () => {
-    // Revoke Object URL to prevent memory leak
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
     }
+    audioUrlRef.current = null;
     setAudioBlob(null);
     setAudioUrl(null);
     setDuration(0);
@@ -188,7 +208,8 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
             size="icon"
             variant={isRecording ? "destructive" : "secondary"}
             onClick={isRecording ? stopRecording : startRecording}
-            className={isRecording ? "animate-pulse" : ""}
+            className={cn(isRecording && !prefersReducedMotion && "animate-pulse")}
+            aria-label={isRecording ? "Stop recording" : "Start recording"}
           >
             {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </Button>
@@ -211,6 +232,7 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
             size="icon"
             variant="secondary"
             onClick={togglePlayback}
+            aria-label={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </Button>
@@ -225,6 +247,7 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
             size="icon"
             variant="ghost"
             onClick={discardRecording}
+            aria-label="Discard recording"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -233,7 +256,8 @@ export function VoiceRecorder({ recipientUsername, onSent }: VoiceRecorderProps)
             size="icon"
             onClick={sendRecording}
             disabled={isSending}
-            className="bg-gradient-to-r from-purple-600 to-pink-600"
+            className="bg-gradient-to-r from-primary to-accent"
+            aria-label="Send voice message"
           >
             {isSending ? (
               <Loader2 className="w-4 h-4 animate-spin" />

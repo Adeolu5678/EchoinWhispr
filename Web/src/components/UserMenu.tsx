@@ -2,11 +2,12 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useClerk } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { User, Settings, LogOut, ChevronDown, Sparkles, LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSubscription } from '@/features/subscription/hooks/useSubscription';
 import { SubscriptionModal } from '@/features/subscription/components/SubscriptionModal';
+import { useSignOut } from '@/lib/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,24 +53,14 @@ interface UserMenuProps {
 export const UserMenu = ({ user, secondaryNavItems = [] }: UserMenuProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const router = useRouter();
-  const { signOut } = useClerk();
+  const { signOut } = useSignOut({ redirectUrl: '/sign-in' });
 
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const { isFeatureEnabled, isPremium } = useSubscription();
 
-  /**
-   * Handle user sign out
-   * Uses useCallback for performance optimization
-   */
   const handleSignOut = useCallback(async () => {
-    try {
-      await signOut();
-      router.push('/sign-in');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      // Error handling could be enhanced with toast notifications
-    }
-  }, [signOut, router]);
+    await signOut();
+  }, [signOut]);
 
   /**
    * Handle menu open/close state

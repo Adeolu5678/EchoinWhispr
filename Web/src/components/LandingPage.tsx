@@ -1,63 +1,41 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { motion, Variants } from 'framer-motion';
-import { Shield, ArrowRightLeft, Clock, PenTool, Send, RotateCcw, Sparkles, Zap, Lock, Users, User } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Sparkles, User, Shield, Zap, Lock, EyeOff, PenTool, ArrowRightLeft, Clock, Send, RotateCcw, ServerOff, Database, Key, HelpCircle, MessageSquare, Heart } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 // ═══════════════════════════════════════════════════════════════════════
-// Animation Variants
+// Data & Content
 // ═══════════════════════════════════════════════════════════════════════
 
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { y: 30, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 100,
-      damping: 12,
-    },
-  },
-};
-
-
-
-// ═══════════════════════════════════════════════════════════════════════
-// Feature Data
-// ═══════════════════════════════════════════════════════════════════════
+const marqueeItems = [
+  { text: 'ZERO-KNOWLEDGE PROOFS', icon: Shield },
+  { text: 'DECENTRALIZED IDENTITY', icon: Lock },
+  { text: 'EPHEMERAL MESSAGING', icon: Zap },
+  { text: 'COMPLETE ANONYMITY', icon: EyeOff },
+  { text: 'FULLY ENCRYPTED', icon: Shield },
+  { text: 'NO METADATA RETENTION', icon: Lock },
+];
 
 const features = [
   {
     icon: Shield,
     title: 'Complete Anonymity',
     description: 'Your identity remains hidden. Express yourself freely without the weight of your persona.',
-    gradient: 'from-[#3F3D56] to-[#00C2FF]',
   },
   {
     icon: ArrowRightLeft,
     title: 'Organic Connections',
     description: 'Start with a one-way whisper. If it resonates, it can evolve into a two-way conversation.',
-    gradient: 'from-[#00A5D9] to-[#00C2FF]',
   },
   {
     icon: Clock,
     title: 'Ephemeral Nature',
     description: 'Messages that don\'t linger. Experience the freedom of digital impermanence.',
-    gradient: 'from-[#3F3D56] to-[#00C2FF]',
   },
 ];
 
@@ -82,396 +60,690 @@ const howItWorks = [
   },
 ];
 
-const stats = [
-  { value: '100K+', label: 'Whispers Sent', icon: Send },
-  { value: '50K+', label: 'Connections Made', icon: Users },
-  { value: '99.9%', label: 'Uptime', icon: Zap },
-  { value: '100%', label: 'Anonymous', icon: Lock },
+const technicalDetails = [
+  {
+    icon: Key,
+    title: 'Zero-Knowledge Proofs',
+    description: 'The network verifies your right to access and participate without ever knowing who you actually are or reading your data payload.',
+  },
+  {
+    icon: ServerOff,
+    title: 'Decentralized Architecture',
+    description: 'There is no central server hoarding your secrets. Data is distributed, shredded, and reconstructed only at the intended destination.',
+  },
+  {
+    icon: Database,
+    title: 'No Permanent Records',
+    description: 'Once a conversation ends or an echo fades, it is purged forever. We do not keep logs, backups, or metadata footprints.',
+  },
+];
+
+const useCases = [
+  {
+    icon: Heart,
+    title: 'Unfiltered Confessions',
+    description: 'Say the things you can\'t tell your friends, family, or colleagues. Release the pressure valve anonymously.',
+  },
+  {
+    icon: MessageSquare,
+    title: 'Unbiased Advice',
+    description: 'Get opinions on your situations from strangers who only know your words, completely free from the bias of knowing your identity.',
+  },
+  {
+    icon: User,
+    title: 'Finding Your Tribe',
+    description: 'Connect over hyper-niche neuroses, shared specific griefs, or bizarre obsessions without attaching them to your public life.',
+  },
+];
+
+const faqs = [
+  {
+    question: "Is it really completely anonymous?",
+    answer: "Yes. By design, our architecture relies on cryptographic protocols that physically separate your identity from your messages. We couldn't read your whispers even if requested by authorities."
+  },
+  {
+    question: "What happens if someone is abusive?",
+    answer: "While we prioritize absolute privacy, the protocol includes a decentralized trust score. Users who consistently receive negative feedback from listeners are naturally isolated from the network without revealing their identity."
+  },
+  {
+    question: "Can I save a conversation if I really want to?",
+    answer: "No. Emphasizing ephemerality means letting things go. Once a connection is severed or a session drops, the cryptographic keys perish, rendering the data eternally inaccessible."
+  }
 ];
 
 // ═══════════════════════════════════════════════════════════════════════
 // Components
 // ═══════════════════════════════════════════════════════════════════════
 
+const seededRandom = (seed: number) => {
+  const x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+};
 
+const generateStars = (count: number, seedOffset: number) => {
+  return Array.from({ length: count }).map((_, i) => {
+    const size = seededRandom(i + seedOffset) * 3 + 1;
+    let topR = seededRandom(i + seedOffset + 100);
+    let leftR = seededRandom(i + seedOffset + 200);
 
-/**
- * Feature card with glass effect and hover glow
- */
-const FeatureCard = ({ 
-  feature, 
-  index 
-}: { 
-  feature: typeof features[0]; 
-  index: number;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ delay: index * 0.15, duration: 0.5 }}
-    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    className="group relative"
-  >
-    {/* Glow effect on hover */}
-    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl opacity-0 group-hover:opacity-20 blur-xl transition-all duration-500" />
+    // Push stars out of the central 30% radius so they don't overlap the mask
+    const dx = leftR - 0.5;
+    const dy = topR - 0.5;
+    const dist = Math.sqrt(dx * dx + dy * dy);
     
-    <div className="relative glass-card p-8 rounded-2xl h-full transition-all duration-300 group-hover:border-primary/30">
-      {/* Icon container with gradient background */}
-      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 shadow-lg group-hover:shadow-glow transition-shadow duration-300`}>
-        <feature.icon className="w-7 h-7 text-white" />
-      </div>
+    if (dist < 0.25) {
+      const pushFactor = 0.25 / dist;
+      leftR = 0.5 + dx * pushFactor;
+      topR = 0.5 + dy * pushFactor;
+    }
+
+    const top = `${topR * 100}%`;
+    const left = `${leftR * 100}%`;
+    const colorType = seededRandom(i + seedOffset + 300);
+    const color = colorType > 0.7 ? 'bg-primary' : colorType > 0.4 ? 'bg-accent' : colorType > 0.2 ? 'bg-cyan-300' : 'bg-white';
+    
+    let shadowColor = 'rgba(255,255,255,0.8)';
+    if (color === 'bg-primary') shadowColor = 'rgba(14,165,233,0.8)';
+    else if (color === 'bg-accent') shadowColor = 'rgba(217,70,239,0.8)';
+    else if (color === 'bg-cyan-300') shadowColor = 'rgba(34,211,238,0.8)';
+
+    return { id: i, top, left, size, color, shadowColor };
+  });
+};
+
+const starsLayer1 = generateStars(120, 0);
+const starsLayer2 = generateStars(160, 1000);
+const starsLayer3 = generateStars(80, 2000);
+
+const OrbitingStars = () => {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden" style={{ perspective: '1200px' }}>
       
-      <h3 className="text-xl font-display font-bold mb-3 group-hover:text-gradient transition-all duration-300">
-        {feature.title}
-      </h3>
-      <p className="text-muted-foreground leading-relaxed">
-        {feature.description}
-      </p>
+      <div className="absolute inset-0 opacity-30">
+        {starsLayer3.map((star) => (
+          <div 
+            key={`bg-${star.id}`}
+            className={`absolute rounded-full ${star.color}`}
+            style={{
+              top: star.top,
+              left: star.left,
+              width: `${star.size * 0.5}px`,
+              height: `${star.size * 0.5}px`,
+            }}
+          />
+        ))}
+      </div>
+
+      <motion.div 
+        animate={{ rotateZ: 360, rotateX: 15 }}
+        transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+        className="absolute w-[200%] h-[200%] sm:w-[150%] sm:h-[150%] max-w-4xl aspect-square opacity-70"
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {starsLayer1.map((star) => (
+          <div 
+            key={`l1-${star.id}`}
+            className={`absolute rounded-full ${star.color}`}
+            style={{
+              top: star.top,
+              left: star.left,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              boxShadow: `0 0 ${star.size * 3}px ${star.size}px ${star.shadowColor}`,
+            }}
+          />
+        ))}
+      </motion.div>
+
+      <motion.div 
+        animate={{ rotateZ: -360, rotateY: 20 }}
+        transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
+        className="absolute w-[250%] h-[250%] sm:w-[200%] sm:h-[200%] max-w-6xl aspect-square pointer-events-none opacity-50"
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {starsLayer2.map((star) => (
+          <div 
+            key={`l2-${star.id}`}
+            className={`absolute rounded-full ${star.color}`}
+            style={{
+              top: star.top,
+              left: star.left,
+              width: `${star.size * 1.2}px`,
+              height: `${star.size * 1.2}px`,
+              boxShadow: `0 0 ${star.size * 4}px ${star.size}px ${star.shadowColor}`,
+            }}
+          />
+        ))}
+      </motion.div>
+
     </div>
-  </motion.div>
-);
+  );
+};
 
-/**
- * How it works step card
- */
-const StepCard = ({ 
-  item, 
-  index 
-}: { 
-  item: typeof howItWorks[0]; 
-  index: number;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ delay: index * 0.2, duration: 0.5 }}
-    className="relative group"
-  >
-    {/* Connecting line (hidden on last item) */}
-    {index < howItWorks.length - 1 && (
-      <div className="hidden md:block absolute top-10 left-[calc(100%+1rem)] w-[calc(100%-2rem)] h-px">
-        <div className="w-full h-full bg-gradient-to-r from-primary/50 via-accent/30 to-transparent" />
-      </div>
-    )}
-    
-    {/* Glow effect on hover */}
-    <div className="absolute -inset-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
-    
-    <div className="relative glass-card p-8 rounded-xl h-full transition-all duration-300 group-hover:border-primary/30">
-      {/* Step number */}
-      <span className="absolute top-4 right-4 text-6xl font-display font-black text-white/5 select-none group-hover:text-primary/10 transition-colors duration-300">
-        {item.step}
-      </span>
-      
-      <div className="relative z-10">
-        <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center mb-6 group-hover:bg-accent/30 transition-colors duration-300">
-          <item.icon className="w-6 h-6 text-accent" />
-        </div>
+// ═══════════════════════════════════════════════════════════════════════
+// Frame Sequencer Canvas
+// ═══════════════════════════════════════════════════════════════════════
+
+const FRAME_COUNT = 240;
+
+const FrameSequencer = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const currentFrameRef = useRef(1);
+
+  // Preload Images
+  useEffect(() => {
+    const loadedImages: HTMLImageElement[] = [];
+    for (let i = 1; i <= FRAME_COUNT; i++) {
+      const img = new window.Image();
+      const paddedIndex = i.toString().padStart(3, '0');
+      img.src = `/frames/ezgif-frame-${paddedIndex}.png`;
+      loadedImages.push(img);
+    }
+    imagesRef.current = loadedImages;
+  }, []);
+
+  // Update logic on scroll using native window events for rock-solid reliability
+  useEffect(() => {
+    let ticking = false;
+
+    const drawFrame = (frameIndex: number) => {
+      const images = imagesRef.current;
+      if (images.length === 0 || !images[frameIndex - 1]) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d', { alpha: true });
+      if (!ctx) return;
+
+      const img = images[frameIndex - 1];
+
+      const drawImg = () => {
+        // PERF OPTIMIZATION: Set canvas size natively ONLY if it changes to prevent layout thrashing
+        if (canvas.width !== img.width || canvas.height !== img.height) {
+          canvas.width = img.width || 800;
+          canvas.height = img.height || 800;
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
         
-        <h3 className="text-2xl font-display font-bold mb-4 group-hover:text-gradient transition-all duration-300">
-          {item.title}
-        </h3>
-        <p className="text-muted-foreground leading-relaxed">
-          {item.description}
-        </p>
-      </div>
-    </div>
-  </motion.div>
-);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Blackout the third-party watermark in the bottom-right corner of the frames
+        const watermarkWidth = canvas.width * 0.22;
+        const watermarkHeight = canvas.height * 0.12;
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(
+          canvas.width - watermarkWidth, 
+          canvas.height - watermarkHeight, 
+          watermarkWidth, 
+          watermarkHeight
+        );
+      };
 
-/**
- * Stat card component
- */
-const StatCard = ({ 
-  stat, 
-  index 
-}: { 
-  stat: typeof stats[0]; 
-  index: number;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    whileInView={{ opacity: 1, scale: 1 }}
-    viewport={{ once: true }}
-    transition={{ delay: index * 0.1, duration: 0.4 }}
-    className="text-center group"
-  >
-    <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors duration-300">
-      <stat.icon className="w-6 h-6 text-primary" />
-    </div>
-    <div className="text-3xl md:text-4xl font-display font-bold text-gradient mb-1">
-      {stat.value}
-    </div>
-    <div className="text-sm text-muted-foreground">
-      {stat.label}
-    </div>
-  </motion.div>
-);
+      if (img.complete && img.naturalHeight !== 0) {
+        drawImg();
+      } else {
+        // Fallback for fast scrolling while preloading
+        img.onload = drawImg;
+      }
+    };
 
-// ═══════════════════════════════════════════════════════════════════════
-// Main Component
-// ═══════════════════════════════════════════════════════════════════════
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          // Use clientHeight for more stable mobile visual heights
+          const docHeight = Math.max(1, document.documentElement.scrollHeight - document.documentElement.clientHeight);
+          const scrollFraction = Math.max(0, Math.min(1, window.scrollY / docHeight));
+          
+          let targetFrame = Math.floor(scrollFraction * (FRAME_COUNT - 1)) + 1;
+          
+          if (targetFrame > FRAME_COUNT) targetFrame = FRAME_COUNT;
+          if (targetFrame < 1) targetFrame = 1;
+          
+          // Only draw if the frame actually changed
+          if (currentFrameRef.current !== targetFrame) {
+            currentFrameRef.current = targetFrame;
+            drawFrame(targetFrame);
+          }
+          
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
+    
+    // Trigger once on mount to ensure first frame renders
+    const initialDraw = setTimeout(() => {
+      handleScroll();
+      drawFrame(1);
+    }, 50);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      clearTimeout(initialDraw);
+    };
+  }, []);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      className="w-full h-full object-contain pointer-events-none mix-blend-screen"
+      style={{ willChange: 'transform' }}
+    />
+  );
+};
 
 export default function LandingPage(): JSX.Element {
+  const prefersReducedMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Track continuous scroll position using the global window scroll
+  const { scrollYProgress } = useScroll();
+
+  // Typography parallax mapped to document scroll percentage
+  const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+
   return (
-    <div className="min-h-screen w-full bg-background text-foreground overflow-x-hidden">
+    <div ref={containerRef} className="min-h-screen w-full bg-black text-foreground overflow-x-hidden font-sans">
+      
       {/* ═══════════════════════════════════════════════════════════════════
           Navigation
           ═══════════════════════════════════════════════════════════════════ */}
-      <nav className="fixed top-0 w-full z-50 glass border-b border-white/5">
+      <nav className="fixed top-0 w-full z-50 glass-subtle border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
             >
               <Logo size="sm" />
             </motion.div>
             
-            {/* Auth buttons - responsive */}
             <motion.div 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2 sm:gap-3"
+              transition={{ duration: 0.5 }}
+              className="flex items-center gap-4"
             >
-              <Link href="/sign-in">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground px-2 sm:px-4">
-                  <span className="hidden sm:inline">Log In</span>
-                  <User className="w-4 h-4 sm:hidden" />
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button variant="gradient" size="sm" className="shadow-lg shadow-primary/20 px-3 sm:px-4">
-                  <span className="hidden sm:inline">Sign Up</span>
-                  <Sparkles className="w-4 h-4 sm:hidden" />
-                </Button>
-              </Link>
+              <Button asChild variant="ghost" className="text-muted-foreground hover:text-foreground px-6 min-h-[44px] min-w-[44px] focus-ring">
+                <Link href="/sign-in">
+                  <span className="font-medium">Log In</span>
+                </Link>
+              </Button>
+              <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow-sm hover:shadow-glow transition-shadow px-6 min-h-[44px] min-w-[44px] focus-ring">
+                <Link href="/sign-up">
+                  <span className="hidden sm:inline font-bold">Launch App</span>
+                  <Sparkles className="w-5 h-5 sm:hidden" />
+                </Link>
+              </Button>
             </motion.div>
           </div>
         </div>
       </nav>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          Hero Section
+          FIXED BACKGROUND LAYER (Stars + Mask)
           ═══════════════════════════════════════════════════════════════════ */}
-      <section className="relative pt-24 pb-16 md:pt-32 lg:pt-48 lg:pb-32 overflow-hidden">
-        {/* Background effects - full-width gradient from top with new brand colors */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#3F3D56]/30 via-[#3F3D56]/10 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#00C2FF]/10 via-transparent to-transparent" />
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {/* Background is pure black to seamlessly hide mask JPEG compression artifacts */}
+        <div className="absolute inset-0 bg-black z-[1]" />
         
-        {/* Subtle grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.008)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.008)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="text-center max-w-4xl mx-auto"
-          >
-            {/* Badge */}
-            <motion.div variants={itemVariants} className="inline-flex items-center gap-2 glass px-4 py-2 rounded-full mb-8 text-sm">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-muted-foreground">Now in Public Beta</span>
-            </motion.div>
-            
-            {/* Headline */}
-            <motion.h1 
-              variants={itemVariants} 
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight mb-8"
-            >
-              Whisper into the{' '}
-              <span className="text-gradient text-glow">Void</span>.
-              <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>
-              Hear an Echo Back.
-            </motion.h1>
-            
-            {/* Subheadline */}
-            <motion.p 
-              variants={itemVariants} 
-              className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto"
-            >
-              Experience true anonymity. Share your thoughts, secrets, and dreams without judgment. 
-              Connect with others on a deeper level, where identity takes a backseat to ideas.
-            </motion.p>
-            
-            {/* CTA Buttons */}
-            <motion.div 
-              variants={itemVariants} 
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <Link href="/sign-up">
-                <Button 
-                  size="xl" 
-                  variant="gradient"
-                  className="w-full sm:w-auto shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 transition-shadow"
-                >
-                  Start Whispering
-                </Button>
-              </Link>
-              <Link href="#features">
-                <Button 
-                  size="xl" 
-                  variant="glass" 
-                  className="w-full sm:w-auto"
-                >
-                  Learn More
-                </Button>
-              </Link>
-            </motion.div>
-          </motion.div>
+        {/* Orbiting Stars System */}
+        <div className="absolute inset-0 z-[10] mix-blend-screen pointer-events-none">
+          <OrbitingStars />
         </div>
-        
-        {/* Bottom gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
-      </section>
+
+        {/* Foreground Hero Asset Component */}
+        <div className="absolute inset-0 flex items-center justify-center z-[5]">
+          <div className="relative w-full h-full sm:w-[80%] sm:h-[120%] md:h-[150%] max-h-[80vh] flex items-center justify-center">
+            
+            {/* Soft glow removed to ensure pure black blending */}
+            {/* <div className="absolute w-[60%] h-[70%] bg-primary/10 rounded-full blur-[60px] z-[0]" /> */}
+            
+            {/* The Frame Sequencer using the 240 user-provided frames */}
+            <div className="absolute inset-0 z-[1] flex items-center justify-center">
+              <FrameSequencer />
+            </div>
+            
+          </div>
+        </div>
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          Stats Section
+          SCROLLING FOREGROUND LAYER
           ═══════════════════════════════════════════════════════════════════ */}
-      <section className="py-10 md:py-16 relative">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10">
+        <section className="relative h-[100svh] w-full flex flex-col items-center justify-center overflow-hidden pt-16">
+          
+          {/* Massive Background Typography */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="glass-card rounded-2xl p-8 md:p-12"
+            style={prefersReducedMotion ? {} : { y: yBg }}
+            className="absolute inset-0 flex items-center justify-center z-[-1] pointer-events-none select-none opacity-40"
           >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                <StatCard key={stat.label} stat={stat} index={index} />
-              ))}
+            <div className="w-full flex flex-col items-center justify-center pt-20 sm:pt-0">
+              {/* Mobile View: Stacked for Maximum Vertical Space */}
+              <div className="flex sm:hidden flex-col items-center text-center leading-[0.85]">
+                <h1 className="text-[20vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-800 drop-shadow-2xl">
+                  WHISPER
+                </h1>
+                <h1 className="text-[20vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-primary to-neutral-700 drop-shadow-2xl -mt-2">
+                  INTO
+                </h1>
+                <h1 className="text-[20vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-primary to-neutral-900 drop-shadow-2xl -mt-2">
+                  THE VOID
+                </h1>
+              </div>
+
+              {/* Desktop View: Horizontal Streamline */}
+              <div className="hidden sm:flex flex-col items-center whitespace-nowrap overflow-hidden">
+                <h1 className="text-[12vw] leading-none font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-800 drop-shadow-2xl">
+                  WHISPER
+                </h1>
+                <h1 className="text-[12vw] leading-none font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-primary to-neutral-800 drop-shadow-2xl -mt-8 md:-mt-12">
+                  INTO THE VOID
+                </h1>
+              </div>
             </div>
           </motion.div>
-        </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          Features Section
-          ═══════════════════════════════════════════════════════════════════ */}
-      <section id="features" className="py-12 md:py-24 relative">
-        {/* Background accent - smoother gradient */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_50%,rgba(168,85,247,0.04),transparent_60%)]" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Section header */}
+          {/* Floating Text Snippets */}
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="absolute inset-0 z-0 pointer-events-none"
           >
-            <span className="inline-block text-sm font-medium text-primary mb-4 tracking-wide uppercase">
-              Why Choose Us
-            </span>
-            <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight mb-4">
-              Why EchoinWhispr?
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
-              Built for privacy, designed for connection. Our platform offers a unique way to communicate.
-            </p>
+            <motion.div 
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 6, ease: "easeInOut", repeat: Infinity }}
+              className="absolute top-[15%] sm:top-1/4 left-1/2 sm:left-1/4 transform -translate-x-1/2 sm:-translate-x-1/2 -translate-y-1/2 w-max"
+            >
+              <span className="font-mono text-xs sm:text-sm text-primary/80 bg-primary/10 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 backdrop-blur-md shadow-glow-sm">
+                {"// SECURE ANONYMOUS"}
+              </span>
+            </motion.div>
+            <motion.div 
+              animate={{ y: [0, 15, 0] }}
+              transition={{ duration: 7, delay: 1, ease: "easeInOut", repeat: Infinity }}
+              className="absolute top-[80%] sm:top-auto sm:bottom-1/3 left-1/2 sm:left-auto sm:right-1/4 transform -translate-x-1/2 sm:translate-x-1/2 translate-y-1/2 w-max"
+            >
+              <span className="font-mono text-xs sm:text-sm text-primary/80 bg-primary/10 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-primary/30 backdrop-blur-md shadow-glow-sm">
+                {"// DECENTRALIZED PROTOCOL"}
+              </span>
+            </motion.div>
+            <motion.div 
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 5, delay: 2, ease: "easeInOut", repeat: Infinity }}
+              className="absolute top-[70%] sm:top-1/3 left-1/2 sm:left-auto sm:right-1/4 transform -translate-x-1/2 sm:translate-x-1/2 -translate-y-1/2 w-max hidden sm:block"
+            >
+              <span className="font-mono text-xs sm:text-sm text-muted-foreground bg-white/5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-white/20 backdrop-blur-md shadow-glow-sm">
+                {"// NO LOGS"}
+              </span>
+            </motion.div>
           </motion.div>
 
-          {/* Feature cards grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <FeatureCard key={feature.title} feature={feature} index={index} />
-            ))}
+          {/* Infinite Marquee Fixed at the Bottom of this specific Hero block */}
+          <div className="absolute bottom-0 w-full bg-black/80 backdrop-blur-xl border-y border-white/5 py-4 z-10 overflow-hidden flex items-center">
+            <motion.div
+              initial={{ x: "0%" }}
+              animate={{ x: "-50%" }}
+              transition={{
+                duration: 30,
+                ease: "linear",
+                repeat: Infinity,
+              }}
+              className="flex whitespace-nowrap w-max"
+            >
+              {[...marqueeItems, ...marqueeItems].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 px-8 text-muted-foreground hover:text-primary transition-colors duration-300">
+                  <item.icon className="w-5 h-5" />
+                  <span className="font-mono text-sm tracking-widest font-bold uppercase">{item.text}</span>
+                  <span className="text-white/10 mx-4">•</span>
+                </div>
+              ))}
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          How It Works Section
-          ═══════════════════════════════════════════════════════════════════ */}
-      <section className="py-12 md:py-24 relative overflow-hidden">
-        {/* Background effects - subtle centered glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_50%,rgba(217,70,239,0.04),transparent_60%)]" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Section header */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block text-sm font-medium text-accent mb-4 tracking-wide uppercase">
-              Getting Started
-            </span>
-            <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight">
-              How It Works
-            </h2>
-          </motion.div>
-          
-          {/* Steps grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            {howItWorks.map((item, index) => (
-              <StepCard key={item.step} item={item} index={index} />
-            ))}
+        {/* ═══════════════════════════════════════════════════════════════════
+            App Information / Features (Scroll Down Zone)
+            ═══════════════════════════════════════════════════════════════════ */}
+        <section className="relative min-h-[100svh] py-16 md:py-32 flex flex-col justify-center border-t border-white/5 bg-black/10 backdrop-blur-sm z-10 shadow-[0_-50px_50px_-20px_rgba(0,0,0,0.5)]">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8 }}
+              className="text-center mb-20"
+            >
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-6 drop-shadow-lg">
+                The Engine of Connection
+              </h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                EchoinWhispr strips away the performative layers of traditional social media. You are entirely known by what you say, not by who you pretend to be.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-20 md:mb-32">
+              {features.map((feature, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, delay: idx * 0.1 }}
+                  className="glass-card p-8 rounded-2xl border border-white/5 hover:border-primary/30 transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                    <feature.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8 }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-3xl font-black tracking-tight drop-shadow-md">How the Protocol Works</h2>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              {howItWorks.map((item, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, delay: idx * 0.1 }}
+                  className="relative p-8 rounded-2xl bg-white/5 group border border-transparent hover:border-primary/30 transition-all backdrop-blur-md"
+                >
+                  <div className="text-4xl font-black text-white/5 absolute top-4 right-6 group-hover:text-white/10 transition-colors">{item.step}</div>
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                    <item.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                  <p className="text-muted-foreground">{item.description}</p>
+                </motion.div>
+              ))}
+            </div>
+
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          CTA Section
-          ═══════════════════════════════════════════════════════════════════ */}
-      <section className="py-12 md:py-24 relative">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        {/* ═══════════════════════════════════════════════════════════════════
+            Technical Architecture (Deep Dive)
+            ═══════════════════════════════════════════════════════════════════ */}
+        <section className="relative min-h-[100svh] py-16 md:py-24 flex flex-col justify-center border-t border-white/5 bg-black/10 backdrop-blur-sm z-10">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row gap-16 items-center">
+              <motion.div 
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.8 }}
+                className="lg:w-1/3"
+              >
+                <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-6">Built on Cryptographic Trust.</h2>
+                <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
+                  We don&apos;t ask you to trust us. We built a system where trust isn&apos;t functionally necessary. The protocol enforces anonymity at the code level.
+                </p>
+                <Button variant="outline" className="border-primary/20 hover:border-primary/50 text-foreground transition-colors px-6 h-12">
+                  Read the Whitepaper
+                </Button>
+              </motion.div>
+              
+              <div className="lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+                {technicalDetails.map((detail, idx) => (
+                  <motion.div 
+                    key={idx}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.6, delay: idx * 0.1 }}
+                    className={`p-6 rounded-2xl border border-white/5 bg-background/30 hover:bg-background/50 transition-colors ${idx === 2 ? 'sm:col-span-2' : ''}`}
+                  >
+                    <detail.icon className="w-6 h-6 text-primary mb-4" />
+                    <h3 className="text-lg font-bold mb-2">{detail.title}</h3>
+                    <p className="text-sm text-muted-foreground">{detail.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            Why the Void? (Use Cases)
+            ═══════════════════════════════════════════════════════════════════ */}
+        <section className="relative min-h-[100svh] py-16 md:py-32 flex flex-col justify-center border-t border-white/5 bg-black/10 backdrop-blur-sm z-10">
+          <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8 }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-3xl font-black tracking-tight mb-4">Why Step into the Void?</h2>
+              <p className="text-muted-foreground">What happens when your name disappears?</p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              {useCases.map((useCase, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, delay: idx * 0.1 }}
+                  className="glass-card p-8 rounded-2xl flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6 shadow-glow-sm">
+                    <useCase.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{useCase.title}</h3>
+                  <p className="text-muted-foreground">{useCase.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            FAQ Section
+            ═══════════════════════════════════════════════════════════════════ */}
+        <section className="relative min-h-[100svh] py-16 md:py-24 flex flex-col justify-center border-t border-white/5 bg-black/10 backdrop-blur-sm z-10">
+          <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8 }}
+              className="text-center mb-16"
+            >
+              <HelpCircle className="w-12 h-12 text-primary/50 mx-auto mb-6" />
+              <h2 className="text-3xl font-black tracking-tight">Answers from the Dark.</h2>
+            </motion.div>
+
+            <div className="space-y-6">
+              {faqs.map((faq, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="p-6 rounded-2xl bg-white/[0.02] border border-white/5"
+                >
+                  <h3 className="text-lg font-bold mb-3 text-white/90">{faq.question}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            Minimalist Call to Action Zone
+            ═══════════════════════════════════════════════════════════════════ */}
+        <section className="relative min-h-[50svh] md:min-h-[80svh] flex flex-col items-center justify-center text-center px-4 py-16 border-t border-white/5 bg-black/10 backdrop-blur-sm z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="glass-card rounded-3xl p-12 md:p-16 relative overflow-hidden"
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="max-w-2xl"
           >
-            {/* Background glow - refined */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.06),transparent_60%)]" />
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-            
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                Ready to Start Whispering?
-              </h2>
-              <p className="text-muted-foreground mb-8 text-lg max-w-xl mx-auto">
-                Join thousands of others who have found a new way to connect, share, and be heard.
-              </p>
+            <div className="w-16 h-1 bg-primary mx-auto mb-8 rounded-full shadow-glow-sm" />
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-6 drop-shadow-lg">
+              Enter the Network.
+            </h2>
+            <p className="text-white text-lg mb-10 mx-auto max-w-xl font-medium">
+              A purely functional protocol for raw, unfiltered connection. No names, no faces, just your signal in the noise.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/sign-up">
-                <Button size="xl" variant="gradient" className="shadow-xl shadow-primary/25">
-                  Get Started for Free
+                <Button size="xl" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-glow hover:shadow-glow-lg transition-all px-12 min-h-[56px] focus-ring">
+                  Initiate Connection
                 </Button>
               </Link>
             </div>
           </motion.div>
-        </div>
-      </section>
+        </section>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          Footer
-          ═══════════════════════════════════════════════════════════════════ */}
-      <footer className="border-t border-white/5 py-12 bg-background/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            {/* Logo */}
-            <Logo size="sm" asLink={false} />
-            
-            {/* Links */}
-            <div className="flex gap-8 text-sm text-muted-foreground">
-              <Link href="/legal/privacy" className="hover:text-primary transition-colors duration-200">Privacy</Link>
-              <Link href="/legal/terms" className="hover:text-primary transition-colors duration-200">Terms</Link>
-              <Link href="/contact" className="hover:text-primary transition-colors duration-200">Contact</Link>
+        {/* ═══════════════════════════════════════════════════════════════════
+            Footer
+            ═══════════════════════════════════════════════════════════════════ */}
+        <footer className="border-t border-white/5 py-8 bg-black z-10 relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <Logo size="sm" asLink={false} />
+              <div className="flex gap-8 text-sm text-muted-foreground">
+                <Link href="/legal/privacy" className="hover:text-primary transition-colors duration-200">Privacy</Link>
+                <Link href="/legal/terms" className="hover:text-primary transition-colors duration-200">Terms</Link>
+              </div>
+              <p className="text-sm text-muted-foreground/40 font-mono">
+                {"// SYS.OP.ECH.2026"}
+              </p>
             </div>
-            
-            {/* Copyright */}
-            <p className="text-sm text-muted-foreground/60">
-              © {new Date().getFullYear()} EchoinWhispr. All rights reserved.
-            </p>
           </div>
-        </div>
-      </footer>
+        </footer>
+        
+      </div>
     </div>
   );
 }

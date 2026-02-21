@@ -199,6 +199,15 @@ async function handleUserDeleted(
 // Generate username from email address
 function generateUsernameFromEmail(email: string): string {
   const [localPart] = email.split('@');
-  // Remove special characters and ensure uniqueness
-  return localPart.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  let username = localPart.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  
+  if (username.length < 3) {
+    username = username.padEnd(3, '0');
+  }
+  
+  if (username.length > 20) {
+    username = username.substring(0, 20);
+  }
+  
+  return username;
 }

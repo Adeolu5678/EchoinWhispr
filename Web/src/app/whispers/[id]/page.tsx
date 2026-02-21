@@ -21,13 +21,11 @@ export default function WhisperDetailPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const whisperId = (params.id as string) as Id<'whispers'>;
+  const idParam = params.id as string;
+  const isValidId = typeof idParam === 'string' && /^[a-zA-Z0-9]{16,32}$/.test(idParam);
+  const whisperId = isValidId ? idParam as Id<'whispers'> : null;
   const whisperCardRef = useRef<HTMLDivElement>(null);
 
-  // Fetch whisper data
-  const whisper = useQuery(api.whispers.getWhisperById, { whisperId });
-
-  // Reply functionality
   const [replyContent, setReplyContent] = useState('');
   const [isReplying, setIsReplying] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -35,12 +33,14 @@ export default function WhisperDetailPage() {
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const whisper = useQuery(
+    api.whispers.getWhisperById,
+    whisperId ? { whisperId } : 'skip'
+  );
+
   const echoWhisper = useMutation(api.conversations.echoWhisper);
   const { upload, isUploading } = useFileUpload();
 
-  /**
-   * Handle file selection for reply image
-   */
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -71,7 +71,6 @@ export default function WhisperDetailPage() {
     }
   }, [imagePreview]);
 
-  // Cleanup blob URL on unmount or when preview changes
   useEffect(() => {
     return () => {
       if (imagePreview) {
@@ -79,6 +78,24 @@ export default function WhisperDetailPage() {
       }
     };
   }, [imagePreview]);
+
+  if (!isValidId) {
+    return (
+      <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
+        <div className="w-full max-w-3xl">
+          <div className="glass p-8 rounded-2xl border border-red-500/20 bg-red-500/5 text-center">
+            <Shield className="w-12 h-12 mx-auto mb-4 text-red-400" />
+            <h1 className="text-2xl font-bold mb-2">Invalid Whisper ID</h1>
+            <p className="text-muted-foreground mb-4">The whisper ID format is not valid.</p>
+            <Button onClick={() => router.push('/whispers')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Whispers
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   /**
    * Handles sending a reply that creates a conversation
@@ -224,7 +241,7 @@ export default function WhisperDetailPage() {
             ref={whisperCardRef}
             className="glass p-8 rounded-2xl border border-white/10 relative overflow-hidden group"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/50 via-purple-500/50 to-pink-500/50" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/50 via-primary/50 to-accent/50" />
             
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between">

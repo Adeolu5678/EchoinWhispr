@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Location {
@@ -12,7 +12,19 @@ export const useLocation = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const requestLocation = () => {
+  const isMountedRef = useRef(true);
+  const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const requestLocation = useCallback(() => {
+    const currentRequestId = ++requestIdRef.current;
+
     setIsLoading(true);
     setError(null);
 
@@ -30,6 +42,9 @@ export const useLocation = () => {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        if (!isMountedRef.current || currentRequestId !== requestIdRef.current) {
+          return;
+        }
         setLocation({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -37,6 +52,9 @@ export const useLocation = () => {
         setIsLoading(false);
       },
       (err) => {
+        if (!isMountedRef.current || currentRequestId !== requestIdRef.current) {
+          return;
+        }
         let msg = 'Unable to retrieve your location';
         if (err.code === err.PERMISSION_DENIED) {
           msg = 'Location permission denied';
@@ -55,7 +73,7 @@ export const useLocation = () => {
         });
       }
     );
-  };
+  }, [toast]);
 
   return {
     location,

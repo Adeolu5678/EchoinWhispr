@@ -1,0 +1,13 @@
+PLACEHOLDER PNG FILE
+==================
+
+This is a placeholder file. Replace with an actual PNG image.
+
+Required: 96x96 pixels round icon for xhdpi density.
+
+To generate proper icons:
+1. Use flutter_launcher_icons package
+2. Or create a 1024x1024 master icon and use Android Studio's Image Asset Studio
+3. Or use online tools like makeappicon.com
+
+The icon should represent EchoinWhispr - a voice messaging/whispering app.

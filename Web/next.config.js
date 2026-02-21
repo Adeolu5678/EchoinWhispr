@@ -38,6 +38,16 @@ const nextConfig = {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   },
+  // Webpack configuration
+  webpack: (config) => {
+    // Suppress the "Serializing big strings" webpack cache warning
+    // This warning occurs when webpack serializes its cache and encounters large strings
+    // (like generated API code from Convex). It's a performance hint, not an error.
+    config.infrastructureLogging = {
+      level: 'error',
+    };
+    return config;
+  },
 };
 
 module.exports = nextConfig;

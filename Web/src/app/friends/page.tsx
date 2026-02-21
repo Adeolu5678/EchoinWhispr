@@ -354,7 +354,7 @@ function MoodMatchTab() {
       </div>
 
       {match ? (
-        <div className="max-w-md mx-auto p-6 rounded-xl bg-gradient-to-br from-primary/10 to-purple-500/10 border border-primary/20">
+        <div className="max-w-md mx-auto p-6 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
           <div className="flex flex-col items-center gap-4">
             <Avatar className="w-20 h-20 border-2 border-primary/20">
               <AvatarFallback className="text-2xl">{match.username.substring(0, 2).toUpperCase()}</AvatarFallback>

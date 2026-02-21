@@ -31,7 +31,7 @@ const badgeVariants = cva(
           'border border-border text-foreground hover:bg-accent/10 hover:border-primary/50',
         // Glass - frosted effect
         glass:
-          'glass border-white/10 text-foreground hover:bg-white/10',
+          'glass border-border/50 text-foreground hover:bg-accent/10',
         // Gradient - premium look
         gradient:
           'gradient-animated text-white border-0 shadow-glow-sm',

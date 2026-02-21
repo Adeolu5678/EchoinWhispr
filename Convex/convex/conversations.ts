@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { paginationOptsValidator } from 'convex/server';
 import { mutation, query } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
+import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
 
 /**
  * Echo a whisper by sending a reply and creating an active conversation.
@@ -189,6 +190,8 @@ export const sendMessage = mutation({
     if (!user) throw new Error('User not found');
     const userId = user._id;
 
+    await enforceRateLimit(ctx, userId, 'SEND_MESSAGE');
+
     // Validate content length
     if (args.content.length < 1 || args.content.length > 1000) {
       throw new Error('Message content must be between 1 and 1000 characters');
@@ -218,6 +221,8 @@ export const sendMessage = mutation({
       updatedAt: Date.now(),
     });
 
+    await recordRateLimitedAction(ctx, userId, 'SEND_MESSAGE');
+
     return messageId;
   },
 });
@@ -225,10 +230,13 @@ export const sendMessage = mutation({
 /**
  * Get messages for a conversation.
  * Only participants can view messages.
+ * Supports pagination with cursor-based loading.
  */
 export const getMessages = query({
   args: {
     conversationId: v.id('conversations'),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -242,21 +250,37 @@ export const getMessages = query({
     if (!user) throw new Error('User not found');
     const userId = user._id;
 
-    // Verify user is participant
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) throw new Error('Conversation not found');
     if (!conversation.participantIds.includes(userId)) {
       throw new Error('Not authorized to view this conversation');
     }
 
-    // Get messages ordered by creation time
-    const messages = await ctx.db
-      .query('messages')
-      .withIndex('by_conversation', (q) => q.eq('conversationId', args.conversationId))
-      .order('asc')
-      .collect();
+    const limit = Math.min(Math.max(args.limit ?? 50, 1), 100);
+    const cursor = args.cursor ?? null;
 
-    return messages;
+    let query = ctx.db
+      .query('messages')
+      .withIndex('by_conversation_created', (q) => {
+        const base = q.eq('conversationId', args.conversationId);
+        if (cursor !== null) {
+          return base.lt('createdAt', cursor);
+        }
+        return base;
+      })
+      .order('desc');
+
+    const messages = await query.take(limit);
+
+    const nextCursor = messages.length === limit 
+      ? messages[messages.length - 1]?.createdAt ?? null 
+      : null;
+
+    return {
+      messages: messages.reverse(),
+      nextCursor,
+      hasMore: nextCursor !== null,
+    };
   },
 });
 

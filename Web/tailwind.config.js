@@ -28,17 +28,17 @@ module.exports = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          50: '#faf5ff',
-          100: '#f3e8ff',
-          200: '#e9d5ff',
-          300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#a855f7',
-          600: '#9333ea',
-          700: '#7c3aed',
-          800: '#6b21a8',
-          900: '#581c87',
-          950: '#3b0764',
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -95,7 +95,7 @@ module.exports = {
         },
         // Glow colors
         glow: {
-          primary: 'rgba(168, 85, 247, 0.5)',
+          primary: 'rgba(14, 165, 233, 0.5)',
           accent: 'rgba(217, 70, 239, 0.5)',
         },
       },
@@ -153,17 +153,17 @@ module.exports = {
       // Shadows - Premium depth with colored options
       // ═══════════════════════════════════════════════════════════════════════
       boxShadow: {
-        "glow-sm": "0 0 15px rgba(168, 85, 247, 0.25)",
-        "glow": "0 0 30px rgba(168, 85, 247, 0.35)",
-        "glow-lg": "0 0 50px rgba(168, 85, 247, 0.45)",
+        "glow-sm": "0 0 15px rgba(14, 165, 233, 0.25)",
+        "glow": "0 0 30px rgba(14, 165, 233, 0.35)",
+        "glow-lg": "0 0 50px rgba(14, 165, 233, 0.45)",
         "glow-accent": "0 0 30px rgba(217, 70, 239, 0.35)",
         "glow-accent-lg": "0 0 50px rgba(217, 70, 239, 0.45)",
-        "inner-glow": "inset 0 0 20px rgba(168, 85, 247, 0.15)",
+        "inner-glow": "inset 0 0 20px rgba(14, 165, 233, 0.15)",
         "card": "0 4px 30px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05)",
-        "card-hover": "0 8px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(168, 85, 247, 0.15)",
+        "card-hover": "0 8px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(14, 165, 233, 0.15)",
         "elevated": "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-        "button": "0 4px 14px rgba(168, 85, 247, 0.25)",
-        "button-hover": "0 6px 20px rgba(168, 85, 247, 0.35)",
+        "button": "0 4px 14px rgba(14, 165, 233, 0.25)",
+        "button-hover": "0 6px 20px rgba(14, 165, 233, 0.35)",
       },
 
       // ═══════════════════════════════════════════════════════════════════════
@@ -247,8 +247,8 @@ module.exports = {
           "50%": { transform: "translateY(-10px)" },
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 20px rgba(168, 85, 247, 0.3)" },
-          "50%": { boxShadow: "0 0 40px rgba(168, 85, 247, 0.5), 0 0 60px rgba(217, 70, 239, 0.25)" },
+          "0%, 100%": { boxShadow: "0 0 20px rgba(14, 165, 233, 0.3)" },
+          "50%": { boxShadow: "0 0 40px rgba(14, 165, 233, 0.5), 0 0 60px rgba(217, 70, 239, 0.25)" },
         },
         "reveal": {
           "0%": { opacity: 0, filter: "blur(10px)" },
@@ -311,11 +311,11 @@ module.exports = {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "gradient-primary": "linear-gradient(135deg, #a855f7 0%, #9333ea 50%, #7c3aed 100%)",
+        "gradient-primary": "linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%)",
         "gradient-accent": "linear-gradient(135deg, #d946ef 0%, #c026d3 50%, #a21caf 100%)",
-        "gradient-mixed": "linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec4899 100%)",
+        "gradient-mixed": "linear-gradient(135deg, #0ea5e9 0%, #d946ef 50%, #ec4899 100%)",
         "gradient-dark": "linear-gradient(180deg, #18181b 0%, #0a0a0b 50%, #000000 100%)",
-        "hero-glow": "radial-gradient(ellipse at top center, rgba(168, 85, 247, 0.15) 0%, transparent 50%)",
+        "hero-glow": "radial-gradient(ellipse at top center, rgba(14, 165, 233, 0.15) 0%, transparent 50%)",
       },
     },
   },

@@ -32,7 +32,7 @@ const contactMethods = [
     title: 'Legal',
     description: 'Legal inquiries and formal requests',
     email: 'legal@echoinwhispr.com',
-    color: 'from-purple-500 to-indigo-500',
+    color: 'from-primary to-primary',
   },
 ];
 
@@ -145,7 +145,7 @@ export default function ContactPage() {
       <footer className="border-t border-white/5 py-8 bg-background/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-sm text-muted-foreground/60">
-            © {new Date().getFullYear()} EchoinWhispr. All rights reserved.
+            © 2025 EchoinWhispr. All rights reserved.
           </p>
         </div>
       </footer>

@@ -26,7 +26,7 @@ export default function AdminDashboard() {
           <div className="glass rounded-xl p-6 border border-white/10 hover:border-primary/30 transition-all duration-300 h-full">
             <div className="flex items-start justify-between">
               <div>
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <MessageSquare className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-2">

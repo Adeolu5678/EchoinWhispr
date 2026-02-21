@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude files that shouldn't be backed up -->
+    <exclude domain="sharedpref" path="FlutterSecureStorage"/>
+    <exclude domain="database" path="*.db"/>
+    <exclude domain="file" path="cache/"/>
+</full-backup-content>

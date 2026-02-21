@@ -60,7 +60,7 @@ export const MobileNavigation = ({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-primary-700">
         <div className="flex items-center space-x-2">
-          <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <div className="h-8 w-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">EW</span>
           </div>
           <span className="text-lg font-bold text-inverse">
@@ -81,6 +81,7 @@ export const MobileNavigation = ({
                 <Link
                   href={item.href}
                   onClick={handleNavClick}
+                  aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors',
                     isActive

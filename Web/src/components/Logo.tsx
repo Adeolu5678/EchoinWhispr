@@ -5,27 +5,20 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 interface LogoProps {
-  /** Size variant */
   size?: 'sm' | 'md' | 'lg';
-  /** Show only icon without text */
   iconOnly?: boolean;
-  /** Additional CSS classes */
   className?: string;
-  /** Whether to wrap in a Link to home */
   asLink?: boolean;
 }
 
 const sizeConfig = {
-  sm: { height: 48, width: 48 },
-  md: { height: 56, width: 56 },
-  lg: { height: 72, width: 72 },
+  sm: { height: 32, width: 32 },
+  md: { height: 40, width: 40 },
+  lg: { height: 48, width: 48 },
 };
 
-/**
- * EchoinWhispr Logo component
- * 
- * Displays the app logo with configurable size and link behavior.
- */
+const blurDataUrl = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjOEI1Q0Y2Ii8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NkYxIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9InVybCgjZykiLz48L3N2Zz4=';
+
 export function Logo({ 
   size = 'md', 
   iconOnly = false, 
@@ -36,19 +29,22 @@ export function Logo({
   
   const logoContent = (
     <div className={cn('flex items-center gap-2', className)}>
-      <div className="relative">
+      <div className="relative shrink-0">
         <Image
-          src="/logo-icon.png"
+          src="/logo-icon.svg"
           alt="EchoinWhispr"
           width={config.width}
           height={config.height}
           className="object-contain"
           priority
+          placeholder="blur"
+          blurDataURL={blurDataUrl}
+          sizes={`${config.width}px`}
         />
       </div>
       {!iconOnly && (
         <span className={cn(
-          'font-display font-bold tracking-tight',
+          'font-display font-bold tracking-tight bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent',
           size === 'sm' && 'text-lg',
           size === 'md' && 'text-xl',
           size === 'lg' && 'text-2xl'

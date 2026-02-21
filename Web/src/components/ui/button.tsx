@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary - Solid purple with glow
+        // Primary - Solid Tech Blue with glow
         default:
           'bg-primary text-primary-foreground shadow-button hover:bg-primary/90 hover:shadow-button-hover active:scale-[0.98]',
         // Gradient - Animated gradient background
@@ -19,7 +19,7 @@ const buttonVariants = cva(
         glow: 'bg-primary text-white shadow-glow pulse-glow hover:shadow-glow-lg',
         // Glass - Frosted glass effect
         glass:
-          'glass text-foreground hover:bg-white/10 hover:border-white/15 active:scale-[0.98]',
+          'glass text-foreground hover:bg-accent/10 hover:border-accent/15 active:scale-[0.98]',
         // Destructive - Red for dangerous actions
         destructive:
           'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm hover:shadow-md active:scale-[0.98]',
@@ -39,7 +39,7 @@ const buttonVariants = cva(
           'bg-success text-success-foreground hover:bg-success/90 shadow-sm hover:shadow-md active:scale-[0.98]',
         // Premium - Special accent styling
         premium:
-          'bg-gradient-to-r from-accent-500 to-primary-500 text-white shadow-glow-accent hover:shadow-glow-accent-lg active:scale-[0.98]',
+          'bg-gradient-to-r from-accent to-primary text-white shadow-glow-accent hover:shadow-glow-accent-lg active:scale-[0.98]',
       },
       size: {
         default: 'h-10 px-4 py-2',
@@ -116,6 +116,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const Comp = asChild ? Slot : 'button';
+    
+    // When using asChild, we need to ensure only one child is passed
+    // Don't add loading spinner when asChild is true
+    const content = asChild ? children : (
+      <>
+        {loading && <LoadingSpinner className="mr-2" />}
+        {children}
+      </>
+    );
+    
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
@@ -123,8 +133,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={loading || props.disabled}
         {...props}
       >
-        {loading && <LoadingSpinner className="mr-2" />}
-        {children}
+        {content}
       </Comp>
     );
   }

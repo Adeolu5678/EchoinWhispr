@@ -1,5 +1,16 @@
 import { Users } from 'lucide-react';
 import { LEGAL_LAST_UPDATED } from '../constants';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Community Guidelines | EchoinWhispr',
+  description: 'Our community guidelines help maintain a safe, respectful space for everyone. Learn about acceptable behavior on EchoinWhispr.',
+  openGraph: {
+    title: 'Community Guidelines | EchoinWhispr',
+    description: 'Our community guidelines help maintain a safe, respectful space for everyone. Learn about acceptable behavior on EchoinWhispr.',
+    type: 'website',
+  },
+};
 
 export default function CommunityGuidelinesPage() {
   return (

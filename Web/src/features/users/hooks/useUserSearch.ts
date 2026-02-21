@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { searchUsers, userSearchService } from '../services/userSearchService';
 import type { UserSearchResult, SearchFilters } from '../types';
@@ -125,9 +125,9 @@ export const useUserSearch = (
   });
 
   // Debounce timer reference
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Request ID to track the latest search request and prevent race conditions
+  const requestIdRef = useRef(0);
 
   /**
    * Updates the search state
@@ -154,6 +154,8 @@ export const useUserSearch = (
         return;
       }
 
+      const currentRequestId = ++requestIdRef.current;
+
       updateSearchState({ isLoading: true, error: null });
 
       try {
@@ -161,6 +163,10 @@ export const useUserSearch = (
           ...filters,
           limit: filters.limit || defaultLimit,
         });
+
+        if (currentRequestId !== requestIdRef.current) {
+          return;
+        }
 
         updateSearchState({
           results: response.results,
@@ -170,6 +176,10 @@ export const useUserSearch = (
           error: null,
         });
       } catch (error) {
+        if (currentRequestId !== requestIdRef.current) {
+          return;
+        }
+
         console.error('Search error:', error);
 
         const errorMessage =
@@ -202,24 +212,16 @@ export const useUserSearch = (
   const debouncedSearch = useCallback(
     (searchQuery: string) => {
       // Clear existing timer
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
 
       // Set new timer
-      const timer = setTimeout(() => {
+      debounceTimerRef.current = setTimeout(() => {
         performSearch(searchQuery);
       }, debounceDelay);
-
-      setDebounceTimer(timer);
-
-      return () => {
-        if (timer) {
-          clearTimeout(timer);
-        }
-      };
     },
-    [debounceTimer, debounceDelay, performSearch]
+    [debounceDelay, performSearch]
   );
 
   /**
@@ -252,16 +254,16 @@ export const useUserSearch = (
   const search = useCallback(
     async (searchQuery: string) => {
       // Clear any pending debounced search
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-        setDebounceTimer(null);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
       }
 
       const normalizedQuery = searchQuery.trim();
       updateSearchState({ query: normalizedQuery });
       await performSearch(normalizedQuery);
     },
-    [debounceTimer, performSearch, updateSearchState]
+    [performSearch, updateSearchState]
   );
 
   /**
@@ -269,9 +271,9 @@ export const useUserSearch = (
    */
   const clearResults = useCallback(() => {
     // Clear any pending debounced search
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-      setDebounceTimer(null);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
     }
 
     updateSearchState({
@@ -282,7 +284,7 @@ export const useUserSearch = (
       hasMore: false,
       totalCount: 0,
     });
-  }, [debounceTimer, updateSearchState]);
+  }, [updateSearchState]);
 
   /**
    * Loads more search results
@@ -332,11 +334,11 @@ export const useUserSearch = (
    */
   useEffect(() => {
     return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [debounceTimer]);
+  }, []);
 
   /**
    * Configure search service based on props

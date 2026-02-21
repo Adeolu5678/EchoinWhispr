@@ -1,0 +1,253 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "workflow.config.schema.json",
+  "title": "Ralph Workflow Configuration",
+  "description": "Configuration schema for the Ralph Workflow System - a configurable agentic workflow engine",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema file"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Configuration version (semver format)"
+    },
+    "project": {
+      "type": "object",
+      "description": "Project identity and context",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable project name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief description of the project"
+        },
+        "technology": {
+          "type": "string",
+          "description": "Primary technology stack (e.g., 'TypeScript/React', 'Python/FastAPI')"
+        },
+        "role": {
+          "type": "string",
+          "description": "The role the agent should assume (e.g., 'Backend Engineer', 'Frontend Developer')"
+        }
+      },
+      "required": ["name"]
+    },
+    "prompts": {
+      "type": "object",
+      "description": "System prompts and persona configuration",
+      "properties": {
+        "system_role": {
+          "type": ["string", "null"],
+          "description": "Direct system role prompt text. If null, uses system_role_file or default."
+        },
+        "system_role_file": {
+          "type": ["string", "null"],
+          "description": "Path to a file containing the system role prompt"
+        },
+        "context_prefix": {
+          "type": "string",
+          "description": "Prefix added to context. Supports {{project.name}} template variable."
+        },
+        "agent_persona": {
+          "type": "string",
+          "description": "How the agent should describe itself"
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "description": "Directory and file paths (relative to project root)",
+      "properties": {
+        "project_root": {
+          "type": "string",
+          "description": "Root directory of the consuming project"
+        },
+        "workflow_root": {
+          "type": "string",
+          "description": "Root directory for workflow files"
+        },
+        "workflows": {
+          "type": "string",
+          "description": "Directory containing workflow definitions"
+        },
+        "docs": {
+          "type": "string",
+          "description": "Directory containing documentation templates"
+        },
+        "contexts": {
+          "type": "string",
+          "description": "Directory for task-specific context files"
+        },
+        "handoffs": {
+          "type": "string",
+          "description": "Directory for handoff reports"
+        },
+        "codebase_map": {
+          "type": "string",
+          "description": "Path to the codebase map file"
+        },
+        "task_registry": {
+          "type": "string",
+          "description": "Path to the task registry file"
+        }
+      }
+    },
+    "structure": {
+      "type": "object",
+      "description": "Project structure conventions",
+      "properties": {
+        "source_directories": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Directories containing source code"
+        },
+        "test_directories": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Directories containing test files"
+        },
+        "config_files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Configuration files to track"
+        },
+        "ignore_patterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Patterns to ignore when scanning"
+        }
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "description": "Task management configuration",
+      "properties": {
+        "id_prefix": {
+          "type": "string",
+          "description": "Prefix for task IDs (e.g., 'TASK', 'ISSUE')"
+        },
+        "id_format": {
+          "type": "string",
+          "description": "Format string for task IDs. Supports {{prefix}} and {{number:N}}"
+        },
+        "next_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Next available task ID number"
+        },
+        "priorities": {
+          "type": "object",
+          "description": "Priority level definitions",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "emoji": { "type": "string" },
+              "description": { "type": "string" }
+            },
+            "required": ["label"]
+          }
+        },
+        "statuses": {
+          "type": "object",
+          "description": "Task status definitions",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "symbol": { "type": "string" },
+              "label": { "type": "string" }
+            },
+            "required": ["symbol", "label"]
+          }
+        }
+      }
+    },
+    "behavior": {
+      "type": "object",
+      "description": "Workflow behavior rules",
+      "properties": {
+        "strict_task_selection": {
+          "type": "boolean",
+          "description": "Enforce priority-based task selection"
+        },
+        "require_handoff_on_pause": {
+          "type": "boolean",
+          "description": "Require handoff report when pausing a task"
+        },
+        "auto_update_codebase_map": {
+          "type": "boolean",
+          "description": "Automatically update codebase map when structure changes"
+        },
+        "memory_threshold_warning": {
+          "type": "boolean",
+          "description": "Warn when context memory is getting heavy"
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Enable/disable workflow features",
+      "properties": {
+        "enable_contexts": {
+          "type": "boolean",
+          "description": "Enable task context files"
+        },
+        "enable_handoffs": {
+          "type": "boolean",
+          "description": "Enable handoff reports"
+        },
+        "enable_codebase_map": {
+          "type": "boolean",
+          "description": "Enable codebase map feature"
+        },
+        "enable_task_dependencies": {
+          "type": "boolean",
+          "description": "Enable task dependency tracking"
+        }
+      }
+    },
+    "tools": {
+      "type": "object",
+      "description": "Tool availability configuration",
+      "properties": {
+        "enabled": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of enabled tool categories"
+        },
+        "disabled": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of disabled tool categories"
+        },
+        "custom": {
+          "type": "object",
+          "description": "Custom tool configurations",
+          "additionalProperties": true
+        }
+      }
+    },
+    "env_overrides": {
+      "type": "object",
+      "description": "Runtime environment settings",
+      "properties": {
+        "log_level": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "description": "Logging verbosity level"
+        },
+        "debug_mode": {
+          "type": "boolean",
+          "description": "Enable debug mode"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "required": ["version", "project"]
+}

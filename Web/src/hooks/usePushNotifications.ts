@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/lib/convex';
 import { useToast } from '@/hooks/use-toast';
@@ -8,11 +8,16 @@ export const usePushNotifications = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const registerPushToken = useMutation(api.users.registerPushToken);
   const { toast } = useToast();
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setPermission(Notification.permission);
     }
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const requestPermission = async () => {
@@ -27,6 +32,7 @@ export const usePushNotifications = () => {
 
     try {
       const result = await Notification.requestPermission();
+      if (!isMountedRef.current) return;
       setPermission(result);
 
       if (result === 'granted') {
@@ -46,12 +52,11 @@ export const usePushNotifications = () => {
   const registerToken = async () => {
     setIsRegistering(true);
     try {
-      // In a real app, we would get the token from FCM or VAPID here.
-      // For this MVP/Demo, we'll generate a mock token if one doesn't exist.
-      // This simulates the process of getting a token from a provider.
       const mockToken = `web-push-token-${Date.now()}-${Math.random().toString(36).substring(7)}`;
       
       await registerPushToken({ token: mockToken });
+      
+      if (!isMountedRef.current) return;
       
       toast({
         title: "Notifications Enabled",
@@ -59,13 +64,16 @@ export const usePushNotifications = () => {
       });
     } catch (error) {
       console.error("Failed to register push token:", error);
+      if (!isMountedRef.current) return;
       toast({
         title: "Registration Failed",
         description: "Failed to register for push notifications.",
         variant: "destructive"
       });
     } finally {
-      setIsRegistering(false);
+      if (isMountedRef.current) {
+        setIsRegistering(false);
+      }
     }
   };
 

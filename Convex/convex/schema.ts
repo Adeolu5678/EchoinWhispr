@@ -1,6 +1,15 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
+export const VALIDATION = {
+  CHAMBER_MIN_MEMBERS: 2,
+  CHAMBER_MAX_MEMBERS: 100,
+  WHISPER_MAX_SCHEDULE_DAYS: 30,
+  USERNAME_MIN_LENGTH: 3,
+  USERNAME_MAX_LENGTH: 20,
+  BIO_MAX_LENGTH: 500,
+} as const;
+
 export default defineSchema({
   // Rate Limits table - track rate-limited actions
   rateLimits: defineTable({
@@ -443,6 +452,18 @@ export default defineSchema({
   })
     .index('by_chamber', ['chamberId'])
     .index('by_chamber_user', ['chamberId', 'userId']), // OPTIMIZATION: For efficient typing indicator lookup
+
+  // === File Metadata - Track file ownership for authorization ===
+  fileMetadata: defineTable({
+    storageId: v.id('_storage'),
+    ownerId: v.id('users'),
+    fileName: v.optional(v.string()),
+    mimeType: v.optional(v.string()),
+    size: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index('by_storage_id', ['storageId'])
+    .index('by_owner', ['ownerId']),
 
   // === In-App Notifications ===
   notifications: defineTable({

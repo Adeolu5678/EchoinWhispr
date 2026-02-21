@@ -63,11 +63,11 @@ export function ResonanceMatchWidget() {
 
   return (
     <Card className="glass border-white/10 p-6 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-purple-500/5" />
+      <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-primary/5" />
       
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-4">
-          <HeartHandshake className="w-5 h-5 text-pink-400" />
+          <HeartHandshake className="w-5 h-5 text-accent" />
           <span className="font-medium">Resonance Match</span>
         </div>
 
@@ -97,7 +97,7 @@ export function ResonanceMatchWidget() {
             <Button 
               onClick={handleFindMatch}
               disabled={isMatching}
-              className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700"
+              className="w-full bg-gradient-to-r from-accent to-primary hover:from-fuchsia-600 hover:to-primary"
             >
               {isMatching ? (
                 <>
@@ -115,7 +115,7 @@ export function ResonanceMatchWidget() {
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2">
-              <Heart className="w-5 h-5 text-pink-400 animate-pulse" />
+              <Heart className="w-5 h-5 text-accent animate-pulse" />
               <span className="text-lg font-semibold">Match Found!</span>
             </div>
 

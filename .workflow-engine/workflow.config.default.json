@@ -1,0 +1,97 @@
+{
+  "$schema": "./workflow.config.schema.json",
+  "version": "1.0.0",
+
+  "project": {
+    "name": "My Project",
+    "description": "A project using the Ralph Workflow System",
+    "technology": "TypeScript",
+    "role": "Software Developer"
+  },
+
+  "prompts": {
+    "system_role": null,
+    "system_role_file": null,
+    "context_prefix": "You are operating under the Ralph Workflow for {{project.name}}.",
+    "agent_persona": "a stateless coding assistant"
+  },
+
+  "paths": {
+    "project_root": "./",
+    "workflow_root": "./.agent",
+    "workflows": "./.agent/workflows",
+    "docs": "./.agent/docs",
+    "contexts": "./.agent/contexts",
+    "handoffs": "./.agent/handoffs",
+    "codebase_map": "./.agent/docs/codebase-map.md",
+    "task_registry": "./.agent/docs/task-registry.md"
+  },
+
+  "structure": {
+    "source_directories": ["src/"],
+    "test_directories": ["tests/", "__tests__/"],
+    "config_files": ["package.json", "tsconfig.json"],
+    "ignore_patterns": ["node_modules/", ".git/", "dist/", "build/"]
+  },
+
+  "tasks": {
+    "id_prefix": "TASK",
+    "id_format": "{{prefix}}-{{number:3}}",
+    "next_id": 1,
+    "priorities": {
+      "P0": {
+        "label": "CRITICAL",
+        "emoji": "🔴",
+        "description": "Blocks everything"
+      },
+      "P1": {
+        "label": "HIGH",
+        "emoji": "🟠",
+        "description": "Important for progress"
+      },
+      "P2": {
+        "label": "MEDIUM",
+        "emoji": "🟡",
+        "description": "Should be done soon"
+      },
+      "P3": { "label": "LOW", "emoji": "🟢", "description": "Nice to have" },
+      "P4": {
+        "label": "BACKLOG",
+        "emoji": "⚪",
+        "description": "Future consideration"
+      }
+    },
+    "statuses": {
+      "PENDING": { "symbol": "⬚", "label": "PENDING" },
+      "IN_PROGRESS": { "symbol": "🔄", "label": "IN PROGRESS" },
+      "PAUSED": { "symbol": "⏸️", "label": "PAUSED" },
+      "COMPLETED": { "symbol": "✅", "label": "COMPLETED" },
+      "BLOCKED": { "symbol": "🚫", "label": "BLOCKED" }
+    }
+  },
+
+  "behavior": {
+    "strict_task_selection": true,
+    "require_handoff_on_pause": true,
+    "auto_update_codebase_map": false,
+    "memory_threshold_warning": true
+  },
+
+  "features": {
+    "enable_contexts": true,
+    "enable_handoffs": true,
+    "enable_codebase_map": true,
+    "enable_task_dependencies": true
+  },
+
+  "tools": {
+    "enabled": ["file_read", "file_write", "search", "terminal"],
+    "disabled": [],
+    "custom": {}
+  },
+
+  "env_overrides": {
+    "log_level": "info",
+    "debug_mode": false
+  }
+}
