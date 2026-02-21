@@ -87,7 +87,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Navigation />
               <UsernameSelectionHandler />
               <DeletedUserCheck />
-              <main id="main-content" className="flex-1 w-full pb-20 md:pb-0">
+              <main id="main-content" className="flex-1 w-full">
                 {children}
               </main>
               <BottomNavigation />

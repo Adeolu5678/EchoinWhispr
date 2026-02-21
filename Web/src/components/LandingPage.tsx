@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { motion, useScroll, useTransform } from 'framer-motion';
@@ -228,8 +228,8 @@ const FRAME_COUNT = 240;
 
 const FrameSequencer = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [images, setImages] = useState<HTMLImageElement[]>([]);
-  const [currentFrame, setCurrentFrame] = useState(1);
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const currentFrameRef = useRef(1);
 
   // Preload Images
   useEffect(() => {
@@ -240,24 +240,73 @@ const FrameSequencer = () => {
       img.src = `/frames/ezgif-frame-${paddedIndex}.png`;
       loadedImages.push(img);
     }
-    setImages(loadedImages);
+    imagesRef.current = loadedImages;
   }, []);
 
   // Update logic on scroll using native window events for rock-solid reliability
   useEffect(() => {
     let ticking = false;
 
+    const drawFrame = (frameIndex: number) => {
+      const images = imagesRef.current;
+      if (images.length === 0 || !images[frameIndex - 1]) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d', { alpha: true });
+      if (!ctx) return;
+
+      const img = images[frameIndex - 1];
+
+      const drawImg = () => {
+        // PERF OPTIMIZATION: Set canvas size natively ONLY if it changes to prevent layout thrashing
+        if (canvas.width !== img.width || canvas.height !== img.height) {
+          canvas.width = img.width || 800;
+          canvas.height = img.height || 800;
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Blackout the third-party watermark in the bottom-right corner of the frames
+        const watermarkWidth = canvas.width * 0.22;
+        const watermarkHeight = canvas.height * 0.12;
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(
+          canvas.width - watermarkWidth, 
+          canvas.height - watermarkHeight, 
+          watermarkWidth, 
+          watermarkHeight
+        );
+      };
+
+      if (img.complete && img.naturalHeight !== 0) {
+        drawImg();
+      } else {
+        // Fallback for fast scrolling while preloading
+        img.onload = drawImg;
+      }
+    };
+
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-          const scrollFraction = window.scrollY / docHeight;
-          let targetFrame = Math.floor(scrollFraction * FRAME_COUNT) + 1;
+          // Use clientHeight for more stable mobile visual heights
+          const docHeight = Math.max(1, document.documentElement.scrollHeight - document.documentElement.clientHeight);
+          const scrollFraction = Math.max(0, Math.min(1, window.scrollY / docHeight));
+          
+          let targetFrame = Math.floor(scrollFraction * (FRAME_COUNT - 1)) + 1;
           
           if (targetFrame > FRAME_COUNT) targetFrame = FRAME_COUNT;
           if (targetFrame < 1) targetFrame = 1;
           
-          setCurrentFrame(targetFrame);
+          // Only draw if the frame actually changed
+          if (currentFrameRef.current !== targetFrame) {
+            currentFrameRef.current = targetFrame;
+            drawFrame(targetFrame);
+          }
+          
           ticking = false;
         });
         ticking = true;
@@ -267,57 +316,24 @@ const FrameSequencer = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll, { passive: true });
     
-    // Trigger once on mount
-    handleScroll();
+    // Trigger once on mount to ensure first frame renders
+    const initialDraw = setTimeout(() => {
+      handleScroll();
+      drawFrame(1);
+    }, 50);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
+      clearTimeout(initialDraw);
     };
   }, []);
-
-  // Draw logic
-  useEffect(() => {
-    if (images.length === 0 || !images[currentFrame - 1]) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const img = images[currentFrame - 1];
-    
-    const drawImg = () => {
-      // Set canvas size natively to the image
-      canvas.width = img.width || 800;
-      canvas.height = img.height || 800;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
-      // Blackout the third-party watermark in the bottom-right corner of the frames
-      // Significantly reduced width/height to only cover the watermark text without clipping the mask
-      const watermarkWidth = canvas.width * 0.22; // 22% of total width
-      const watermarkHeight = canvas.height * 0.12; // 12% of total height
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(
-        canvas.width - watermarkWidth, 
-        canvas.height - watermarkHeight, 
-        watermarkWidth, 
-        watermarkHeight
-      );
-    };
-
-    if (img.complete && img.naturalHeight !== 0) {
-      drawImg();
-    } else {
-      img.onload = drawImg;
-    }
-  }, [currentFrame, images]);
 
   return (
     <canvas 
       ref={canvasRef} 
       className="w-full h-full object-contain pointer-events-none mix-blend-screen"
+      style={{ willChange: 'transform' }}
     />
   );
 };
@@ -498,7 +514,7 @@ export default function LandingPage(): JSX.Element {
         {/* ═══════════════════════════════════════════════════════════════════
             App Information / Features (Scroll Down Zone)
             ═══════════════════════════════════════════════════════════════════ */}
-        <section className="relative min-h-[100svh] py-16 md:py-32 flex flex-col justify-center border-t border-white/5 bg-black/20 backdrop-blur-sm z-10 shadow-[0_-50px_50px_-20px_rgba(0,0,0,0.5)]">
+        <section className="relative min-h-[100svh] py-16 md:py-32 flex flex-col justify-center border-t border-white/5 bg-black/10 backdrop-blur-sm z-10 shadow-[0_-50px_50px_-20px_rgba(0,0,0,0.5)]">
           <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
             
             <motion.div 
@@ -571,7 +587,7 @@ export default function LandingPage(): JSX.Element {
         {/* ═══════════════════════════════════════════════════════════════════
             Technical Architecture (Deep Dive)
             ═══════════════════════════════════════════════════════════════════ */}
-        <section className="relative min-h-[100svh] py-16 md:py-24 flex flex-col justify-center border-t border-white/5 bg-black/20 backdrop-blur-sm z-10">
+        <section className="relative min-h-[100svh] py-16 md:py-24 flex flex-col justify-center border-t border-white/5 bg-black/10 backdrop-blur-sm z-10">
           <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row gap-16 items-center">
               <motion.div 
@@ -613,7 +629,7 @@ export default function LandingPage(): JSX.Element {
         {/* ═══════════════════════════════════════════════════════════════════
             Why the Void? (Use Cases)
             ═══════════════════════════════════════════════════════════════════ */}
-        <section className="relative min-h-[100svh] py-16 md:py-32 flex flex-col justify-center border-t border-white/5 bg-black/20 backdrop-blur-sm z-10">
+        <section className="relative min-h-[100svh] py-16 md:py-32 flex flex-col justify-center border-t border-white/5 bg-black/10 backdrop-blur-sm z-10">
           <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
@@ -650,7 +666,7 @@ export default function LandingPage(): JSX.Element {
         {/* ═══════════════════════════════════════════════════════════════════
             FAQ Section
             ═══════════════════════════════════════════════════════════════════ */}
-        <section className="relative min-h-[100svh] py-16 md:py-24 flex flex-col justify-center border-t border-white/5 bg-black/20 backdrop-blur-sm z-10">
+        <section className="relative min-h-[100svh] py-16 md:py-24 flex flex-col justify-center border-t border-white/5 bg-black/10 backdrop-blur-sm z-10">
           <div className="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
@@ -684,7 +700,7 @@ export default function LandingPage(): JSX.Element {
         {/* ═══════════════════════════════════════════════════════════════════
             Minimalist Call to Action Zone
             ═══════════════════════════════════════════════════════════════════ */}
-        <section className="relative min-h-[50svh] md:min-h-[80svh] flex flex-col items-center justify-center text-center px-4 py-16 border-t border-white/5 bg-black/20 backdrop-blur-sm z-10">
+        <section className="relative min-h-[50svh] md:min-h-[80svh] flex flex-col items-center justify-center text-center px-4 py-16 border-t border-white/5 bg-black/10 backdrop-blur-sm z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

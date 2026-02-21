@@ -131,7 +131,7 @@ export default function ProfilePage() {
 
   if (!isProfileEditingEnabled) {
     return (
-      <div className="min-h-screen pt-20 pb-24 md:pb-10 px-4 md:px-8 lg:px-12 flex justify-center items-center">
+      <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center items-center">
         <div className="relative w-full max-w-md">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent rounded-3xl blur-3xl" />
           <div className="relative glass-card rounded-3xl p-8 text-center">
@@ -159,7 +159,7 @@ export default function ProfilePage() {
 
   if (!isLoaded || !currentUser) {
     return (
-      <div className="min-h-screen pt-20 pb-24 md:pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
+      <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
         <div className="w-full max-w-4xl space-y-6">
           <div className="glass-card rounded-3xl animate-pulse">
             <div className="flex items-center gap-4">
@@ -178,7 +178,7 @@ export default function ProfilePage() {
   const profileCompletion = getProfileCompleteness();
 
   return (
-    <div className="min-h-screen pt-20 pb-24 md:pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
+    <div className="min-h-screen pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
       <div className="w-full max-w-4xl space-y-6">
         
         <div className="relative">

@@ -95,17 +95,24 @@ export const BottomNavigation = () => {
     return items;
   }, []);
 
-  // Don't render for unauthenticated users or during loading
-  if (!isLoaded || !user) {
+  // Check if we're in an active chat view where we need the full screen for keyboard
+  const isChatView = pathname.match(/^\/chambers\/[a-zA-Z0-9_-]+$/) || 
+                     pathname.match(/^\/conversations\/[a-zA-Z0-9_-]+$/);
+
+  // Don't render for unauthenticated users, during loading, or in active chat views
+  if (!isLoaded || !user || isChatView) {
     return null;
   }
 
   return (
-    <nav 
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass border-t border-white/10 safe-bottom"
-      role="navigation"
-      aria-label="Mobile navigation"
-    >
+    <>
+      {/* Spacer to prevent content from hiding behind fixed nav on mobile */}
+      <div className="h-16 w-full md:hidden safe-bottom" aria-hidden="true" />
+      <nav 
+        className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass border-t border-white/10 safe-bottom"
+        role="navigation"
+        aria-label="Mobile navigation"
+      >
       <div className="flex items-center justify-around h-16 px-2">
         {navigationItems.map((item) => {
           const Icon = item.icon;
@@ -175,5 +182,6 @@ export const BottomNavigation = () => {
         })}
       </div>
     </nav>
+    </>
   );
 };
