@@ -3,6 +3,7 @@ import { mutation, query, internalMutation } from './_generated/server';
 import { internal } from './_generated/api';
 import { Doc, Id } from './_generated/dataModel';
 import { enforceRateLimit, recordRateLimitedAction } from './rateLimits';
+import { VALIDATION } from './schema';
 
 // Send a whisper to another user
 export const sendWhisper = mutation({
@@ -616,8 +617,14 @@ export const scheduleWhisper = mutation({
       throw new Error('Whisper content must be 280 characters or less');
     }
 
-    if (args.scheduledFor <= Date.now()) {
+    const now = Date.now();
+    if (args.scheduledFor <= now) {
       throw new Error('Scheduled time must be in the future');
+    }
+
+    const maxScheduleTime = now + (VALIDATION.WHISPER_MAX_SCHEDULE_DAYS * 24 * 60 * 60 * 1000);
+    if (args.scheduledFor > maxScheduleTime) {
+      throw new Error(`Scheduled time cannot be more than ${VALIDATION.WHISPER_MAX_SCHEDULE_DAYS} days in the future`);
     }
 
     const identity = await ctx.auth.getUserIdentity();
@@ -633,6 +640,8 @@ export const scheduleWhisper = mutation({
     if (!sender) {
       throw new Error('Sender not found');
     }
+
+    await enforceRateLimit(ctx, sender._id, 'SCHEDULE_WHISPER');
 
     const recipient = await ctx.db
       .query('users')
@@ -653,10 +662,12 @@ export const scheduleWhisper = mutation({
       content: args.content.trim(),
       imageUrl: args.imageUrl,
       isRead: false,
-      createdAt: Date.now(),
+      createdAt: now,
       scheduledFor: args.scheduledFor,
       isScheduled: true,
     });
+
+    await recordRateLimitedAction(ctx, sender._id, 'SCHEDULE_WHISPER');
 
     return whisperId;
   },

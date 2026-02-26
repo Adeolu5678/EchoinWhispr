@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, internalQuery } from './_generated/server';
 import { Doc, Id } from './_generated/dataModel';
 import { isAdmin, isSuperAdmin } from './adminAuth';
 
@@ -77,25 +77,72 @@ export const createOrUpdateUser = mutation({
   },
 });
 
-// Get user by username
+type PublicUserProfile = {
+  _id: Id<'users'>;
+  username: string | undefined;
+  displayName: string | undefined;
+  firstName: string | undefined;
+  lastName: string | undefined;
+  career: string | undefined;
+  interests: string[] | undefined;
+  mood: string | undefined;
+  isDeleted: boolean | undefined;
+};
+
+const toPublicUserProfile = (user: Doc<'users'>): PublicUserProfile => ({
+  _id: user._id,
+  username: user.username,
+  displayName: user.displayName,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  career: user.career,
+  interests: user.interests,
+  mood: user.mood,
+  isDeleted: user.isDeleted,
+});
+
 export const getUserByUsername = query({
   args: { username: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args): Promise<PublicUserProfile | null> => {
+    const user = await ctx.db
       .query('users')
       .withIndex('by_username', q => q.eq('username', args.username))
       .first();
+
+    if (!user) return null;
+
+    return toPublicUserProfile(user);
   },
 });
 
-// Get user by Clerk ID
 export const getUserByClerkId = query({
   args: { clerkId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args): Promise<PublicUserProfile | null> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error('Not authenticated');
+    }
+
+    const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
       .first();
+
+    if (!user) return null;
+
+    return toPublicUserProfile(user);
+  },
+});
+
+export const getByClerkId = internalQuery({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .first();
+
+    return user;
   },
 });
 
@@ -305,7 +352,26 @@ export const getOrCreateCurrentUser = mutation({
   },
 });
 
-// Update user username
+const RESERVED_USERNAMES = new Set([
+  'admin', 'administrator', 'moderator', 'mod', 'system', 'support',
+  'help', 'info', 'contact', 'about', 'privacy', 'terms', 'legal',
+  'api', 'app', 'web', 'mobile', 'blog', 'news', 'press', 'careers',
+  'jobs', 'pricing', 'features', 'docs', 'documentation', 'status',
+  'security', 'settings', 'config', 'test', 'testing', 'demo',
+  'example', 'sample', 'user', 'users', 'profile', 'profiles',
+  'account', 'accounts', 'login', 'logout', 'signin', 'signup',
+  'register', 'auth', 'authenticate', 'verify', 'confirmation',
+  'reset', 'password', 'forgot', 'recover', 'delete', 'remove',
+  'ban', 'banned', 'suspended', 'deleted', 'inactive', 'disabled',
+  'owner', 'founder', 'ceo', 'staff', 'team', 'official', 'verified',
+  'echoinwhispr', 'echo', 'whisper', 'whispers', 'echoes',
+  'null', 'undefined', 'none', 'anonymous', 'guest', 'bot', 'service',
+  'everyone', 'all', 'public', 'private', 'hidden', 'default',
+]);
+
+const MAX_RETRIES = 5;
+const RETRY_DELAY_MS = 20;
+
 export const updateUsername = mutation({
   args: {
     username: v.string(),
@@ -318,12 +384,15 @@ export const updateUsername = mutation({
 
     const normalizedUsername = args.username.trim().toLowerCase();
 
-    // Validate username format (3-20 chars, lowercase letters, numbers, underscores only)
     const usernameRegex = /^[a-z0-9_]{3,20}$/;
     if (!usernameRegex.test(normalizedUsername)) {
       throw new Error(
         'Username must be 3-20 characters long and contain only lowercase letters, numbers, and underscores'
       );
+    }
+
+    if (RESERVED_USERNAMES.has(normalizedUsername)) {
+      throw new Error('This username is reserved and cannot be used');
     }
 
     const user = await ctx.db
@@ -335,26 +404,62 @@ export const updateUsername = mutation({
       throw new Error('User not found');
     }
 
-    // Check if username is already taken by another user
-    const existingUser = await ctx.db
-      .query('users')
-      .withIndex('by_username', q => q.eq('username', normalizedUsername))
-      .first();
-
-    if (existingUser && existingUser._id !== user._id) {
-      throw new Error('Username is already taken');
+    if (user.username === normalizedUsername) {
+      return user._id;
     }
 
-    // Update username
-    await ctx.db.patch(user._id, {
-      username: normalizedUsername,
-      // Also update display name if it matches the old username or is empty
-      ...(user.displayName === user.username ? { displayName: normalizedUsername } : {}),
-      needsUsernameSelection: false,
-      updatedAt: Date.now(),
-    });
+    const previousUsername = user.username;
+    const previousDisplayName = user.displayName;
 
-    return user._id;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const allUsersWithUsername = await ctx.db
+        .query('users')
+        .withIndex('by_username', q => q.eq('username', normalizedUsername))
+        .collect();
+
+      const conflictingUser = allUsersWithUsername.find(u => u._id !== user._id);
+
+      if (conflictingUser) {
+        throw new Error('Username is already taken');
+      }
+
+      await ctx.db.patch(user._id, {
+        username: normalizedUsername,
+        ...(user.displayName === user.username ? { displayName: normalizedUsername } : {}),
+        needsUsernameSelection: false,
+        updatedAt: Date.now(),
+      });
+
+      const verifyUsers = await ctx.db
+        .query('users')
+        .withIndex('by_username', q => q.eq('username', normalizedUsername))
+        .collect();
+
+      const thisUser = verifyUsers.find(u => u._id === user._id);
+      const otherUsers = verifyUsers.filter(u => u._id !== user._id);
+
+      if (!thisUser) {
+        throw new Error('Failed to update username. Please try again.');
+      }
+
+      if (otherUsers.length > 0) {
+        await ctx.db.patch(user._id, {
+          username: previousUsername,
+          ...(user.displayName === normalizedUsername ? { displayName: previousDisplayName } : {}),
+          updatedAt: Date.now(),
+        });
+
+        if (attempt < MAX_RETRIES - 1) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+          continue;
+        }
+        throw new Error('Username is already taken');
+      }
+
+      return user._id;
+    }
+
+    throw new Error('Failed to update username due to a conflict. Please try again.');
   },
 });
 

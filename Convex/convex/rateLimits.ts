@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { mutation, query, QueryCtx, MutationCtx } from './_generated/server';
+import { mutation, query, internalMutation, QueryCtx, MutationCtx } from './_generated/server';
 import { Id } from './_generated/dataModel';
 
 /**
@@ -13,7 +13,10 @@ export const RATE_LIMITS = {
   SEND_FRIEND_REQUEST: { limit: 30, windowMs: 24 * 60 * 60 * 1000 }, // 30 per day
   SEND_MYSTERY_WHISPER: { limit: 3, windowMs: 24 * 60 * 60 * 1000 }, // 3 per day (existing)
   SEND_MESSAGE: { limit: 100, windowMs: 60 * 60 * 1000 }, // 100 per hour
-  CREATE_ECHO_CHAMBER: { limit: 5, windowMs: 24 * 60 * 60 * 1000 }, // 5 per day
+  CREATE_ECHO_CHAMBER: { limit: 10, windowMs: 60 * 60 * 1000 }, // 10 per hour
+  SCHEDULE_WHISPER: { limit: 5, windowMs: 60 * 60 * 1000 }, // 5 per hour
+  REQUEST_ADMIN_PROMOTION: { limit: 3, windowMs: 24 * 60 * 60 * 1000 }, // 3 per day
+  REQUEST_SUPER_ADMIN_PROMOTION: { limit: 3, windowMs: 24 * 60 * 60 * 1000 }, // 3 per day
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;
@@ -100,7 +103,7 @@ export async function enforceRateLimit(
  * Clean up old rate limit records (call periodically via cron).
  * Removes records older than the longest window.
  */
-export const cleanupOldRateLimits = mutation({
+export const cleanupOldRateLimits = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();

@@ -6,7 +6,7 @@ interface ConversationListProps {
   conversations: Conversation[] | undefined;
   isLoading: boolean;
   error: Error | null;
-  currentUserId: Id<'users'>;
+  currentUserId?: Id<'users'>;
   onRefresh?: () => void;
 }
 
@@ -55,11 +55,13 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   return (
     <div className="space-y-4 p-4">
       {conversations.map((conversation) => (
-        <ConversationCard
-          key={conversation._id}
-          conversation={conversation}
-          currentUserId={currentUserId}
-        />
+        currentUserId && (
+          <ConversationCard
+            key={conversation._id}
+            conversation={conversation}
+            currentUserId={currentUserId}
+          />
+        )
       ))}
     </div>
   );

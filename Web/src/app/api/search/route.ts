@@ -4,6 +4,39 @@ import { api } from '../../../../../Convex/convex/_generated/api';
 
 import { auth } from '@clerk/nextjs/server';
 
+function validateOrigin(request: NextRequest): boolean {
+  const origin = request.headers.get('origin');
+  const host = request.headers.get('host');
+
+  if (!origin) {
+    return true;
+  }
+
+  const allowedOrigins: string[] = [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : null,
+    'http://localhost:3000',
+    'https://localhost:3000',
+  ].filter(Boolean) as string[];
+
+  for (const allowed of allowedOrigins) {
+    if (origin === allowed) {
+      return true;
+    }
+  }
+
+  try {
+    const originUrl = new URL(origin);
+    if (host && originUrl.host === host) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+}
+
 /**
  * POST /api/search
  *
@@ -12,6 +45,13 @@ import { auth } from '@clerk/nextjs/server';
  */
 export async function POST(request: NextRequest) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json(
+        { error: 'Forbidden - Invalid origin' },
+        { status: 403 }
+      );
+    }
+
     // Authenticate the request using Clerk
     const { userId } = await auth();
 

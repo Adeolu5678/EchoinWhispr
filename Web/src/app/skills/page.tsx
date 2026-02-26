@@ -60,6 +60,24 @@ export default function SkillsPage() {
       return;
     }
 
+    if (skillName.trim().length < 2 || skillName.trim().length > 50) {
+      toast({
+        title: "Invalid skill name length",
+        description: "Skill name must be between 2 and 50 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (description.trim().length > 500) {
+      toast({
+        title: "Description too long",
+        description: "Description must be 500 characters or less.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAdding(true);
     try {
       await addSkill({
@@ -243,7 +261,7 @@ export default function SkillsPage() {
         {((incomingRequests?.length ?? 0) > 0 || (outgoingRequests?.filter(r => r.status === 'pending').length ?? 0) > 0) && (
           <Card className="glass border-white/10 p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-purple-400" />
+              <Clock className="w-5 h-5 text-primary" />
               Exchange Requests
             </h2>
 

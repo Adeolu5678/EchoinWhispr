@@ -1,12 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { uploadFile, getFileUrl, deleteFile } from '../lib/fileStorage';
 import { validateFile } from '../lib/fileValidation';
 
-/**
- * File upload state interface
- */
 export interface FileUploadState {
   isUploading: boolean;
   progress: number;
@@ -15,18 +12,11 @@ export interface FileUploadState {
   url: string | null;
 }
 
-/**
- * File upload result interface
- */
 export interface FileUploadResult {
   storageId: string;
   url: string;
 }
 
-/**
- * Custom hook for handling file uploads with Convex file storage.
- * Provides state management, validation, and error handling for file operations.
- */
 export function useFileUpload() {
   const [state, setState] = useState<FileUploadState>({
     isUploading: false,
@@ -36,116 +26,171 @@ export function useFileUpload() {
     url: null,
   });
 
-  /**
-   * Resets the upload state to initial values
-   */
-  const reset = useCallback(() => {
-    setState({
-      isUploading: false,
-      progress: 0,
-      error: null,
-      storageId: null,
-      url: null,
-    });
+  const isMountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const inflightRef = useRef(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      inflightRef.current = false;
+    };
   }, []);
 
-  /**
-   * Uploads a file with validation and progress tracking
-   * @param file - The File object to upload
-   * @returns Promise<FileUploadResult> - The upload result with storage ID and URL
-   */
-  const upload = useCallback(async (file: File): Promise<FileUploadResult> => {
-    try {
-      // Reset state
-      setState(prev => ({
-        ...prev,
-        isUploading: true,
+  const reset = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    inflightRef.current = false;
+    if (isMountedRef.current) {
+      setState({
+        isUploading: false,
         progress: 0,
         error: null,
-      }));
+        storageId: null,
+        url: null,
+      });
+    }
+  }, []);
 
-      // Validate file
+  const cancel = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    inflightRef.current = false;
+    if (isMountedRef.current) {
+      setState(prev => ({
+        ...prev,
+        isUploading: false,
+        progress: 0,
+        error: 'Upload cancelled',
+      }));
+    }
+  }, []);
+
+  const upload = useCallback(async (file: File): Promise<FileUploadResult> => {
+    if (inflightRef.current) {
+      throw new Error('An upload is already in progress');
+    }
+
+    inflightRef.current = true;
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    try {
+      if (isMountedRef.current) {
+        setState(prev => ({
+          ...prev,
+          isUploading: true,
+          progress: 0,
+          error: null,
+        }));
+      }
+
       const validation = await validateFile(file);
+      if (signal.aborted) {
+        throw new Error('Upload cancelled');
+      }
       if (!validation.isValid) {
         throw new Error(validation.error || 'File validation failed');
       }
 
-      // Update progress to indicate validation passed
-      setState(prev => ({ ...prev, progress: 10 }));
+      if (isMountedRef.current) {
+        setState(prev => ({ ...prev, progress: 10 }));
+      }
 
-      // Upload file
-      const storageId = await uploadFile(file);
+      const storageId = await uploadFile(file, signal);
 
-      // Update progress to indicate upload completed
-      setState(prev => ({ ...prev, progress: 80 }));
+      if (signal.aborted) {
+        throw new Error('Upload cancelled');
+      }
 
-      // Get public URL
-      const url = await getFileUrl(storageId);
+      if (isMountedRef.current) {
+        setState(prev => ({ ...prev, progress: 80 }));
+      }
 
-      // Update state with success
-      setState(prev => ({
-        ...prev,
-        isUploading: false,
-        progress: 100,
-        storageId,
-        url,
-      }));
+      const url = await getFileUrl(storageId, signal);
+
+      if (signal.aborted) {
+        throw new Error('Upload cancelled');
+      }
+
+      if (isMountedRef.current) {
+        setState(prev => ({
+          ...prev,
+          isUploading: false,
+          progress: 100,
+          storageId,
+          url,
+        }));
+      }
 
       return { storageId, url };
     } catch (error) {
+      if (!isMountedRef.current || signal.aborted) {
+        throw new Error('Upload cancelled');
+      }
       const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-      setState(prev => ({
-        ...prev,
-        isUploading: false,
-        progress: 0,
-        error: errorMessage,
-      }));
+      if (isMountedRef.current) {
+        setState(prev => ({
+          ...prev,
+          isUploading: false,
+          progress: 0,
+          error: errorMessage,
+        }));
+      }
       throw error;
+    } finally {
+      inflightRef.current = false;
+      abortControllerRef.current = null;
     }
   }, []);
 
-  /**
-   * Deletes an uploaded file
-   * @param storageId - The storage ID of the file to delete
-   */
   const remove = useCallback(async (storageId: string): Promise<void> => {
     try {
       await deleteFile(storageId);
-      // Reset state if the deleted file was the current one
-      setState(prev => {
-        if (prev.storageId === storageId) {
-          return {
-            isUploading: false,
-            progress: 0,
-            error: null,
-            storageId: null,
-            url: null,
-          };
-        }
-        return prev;
-      });
+      if (isMountedRef.current) {
+        setState(prev => {
+          if (prev.storageId === storageId) {
+            return {
+              isUploading: false,
+              progress: 0,
+              error: null,
+              storageId: null,
+              url: null,
+            };
+          }
+          return prev;
+        });
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Delete failed';
-      setState(prev => ({ ...prev, error: errorMessage }));
+      if (isMountedRef.current) {
+        setState(prev => ({ ...prev, error: errorMessage }));
+      }
       throw error;
     }
   }, []);
 
-  /**
-   * Clears any error state
-   */
   const clearError = useCallback(() => {
-    setState(prev => ({ ...prev, error: null }));
+    if (isMountedRef.current) {
+      setState(prev => ({ ...prev, error: null }));
+    }
   }, []);
 
   return {
-    // State
     ...state,
-
-    // Actions
     upload,
     remove,
     reset,
     clearError,
+    cancel,
   };
 }

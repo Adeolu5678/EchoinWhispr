@@ -118,7 +118,7 @@ function WhisperRow({ whisper, isExpanded, onToggle }: WhisperRowProps) {
         </div>
         <div className="col-span-4 flex items-center gap-2">
           {whisper.hasAudio && (
-            <Mic className="w-4 h-4 text-purple-400 shrink-0" />
+            <Mic className="w-4 h-4 text-primary shrink-0" />
           )}
           {whisper.isMystery && (
             <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded">

@@ -1,37 +1,18 @@
 import { useQuery } from 'convex/react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { api } from '@/lib/convex';
 import type { Friend } from '../types';
 
-/**
- * Hook to fetch the current user's friends list.
- *
- * Uses Convex's getFriendsList query to retrieve accepted friendships
- * with user details. Returns an array of Friend objects containing
- * user information and friendship metadata.
- *
- * @returns Object containing friends array and loading state
- *
- * @example
- * ```tsx
- * const { friends, isLoading } = useFriends();
- *
- * if (isLoading) return <div>Loading friends...</div>;
- *
- * return (
- *   <div>
- *     {friends.map(friend => (
- *       <FriendCard key={friend._id} friend={friend} />
- *     ))}
- *   </div>
- * );
- * ```
- */
 export const useFriends = () => {
-  // Fetch friends list from Convex (returns { friends, totalCount, hasMore })
-  const friendsData = useQuery(api.friends.getFriendsList, {});
+  const [error, setError] = useState<Error | null>(null);
+  const { isSignedIn } = useAuth();
+  
+  const friendsData = useQuery(
+    api.friends.getFriendsList,
+    isSignedIn ? {} : 'skip'
+  );
 
-  // Transform the data to match our Friend type
-  // Note: getFriendsList returns an object with a friends array
   const friendsList = friendsData?.friends ?? [];
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,9 +25,18 @@ export const useFriends = () => {
     friendshipId: friendData.friendshipId,
   }));
 
+  useEffect(() => {
+    if (friendsData instanceof Error) {
+      setError(friendsData);
+    } else if (friendsData !== undefined) {
+      setError(null);
+    }
+  }, [friendsData]);
+
   return {
     friends,
     isLoading: friendsData === undefined,
+    error,
     totalCount: friendsData?.totalCount ?? 0,
     hasMore: friendsData?.hasMore ?? false,
   };

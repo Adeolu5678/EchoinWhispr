@@ -1,5 +1,16 @@
 import { Shield } from 'lucide-react';
 import { LEGAL_LAST_UPDATED } from '../constants';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy | EchoinWhispr',
+  description: 'Learn how EchoinWhispr collects, uses, and protects your personal information. Your privacy matters to us.',
+  openGraph: {
+    title: 'Privacy Policy | EchoinWhispr',
+    description: 'Learn how EchoinWhispr collects, uses, and protects your personal information. Your privacy matters to us.',
+    type: 'website',
+  },
+};
 
 export default function PrivacyPolicyPage() {
   return (

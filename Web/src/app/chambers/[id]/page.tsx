@@ -48,6 +48,7 @@ export default function ChamberViewPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMountedRef = useRef(true);
   
   // Image viewer state
   const [viewingImage, setViewingImage] = useState<{ url: string; caption?: string; senderAlias?: string } | null>(null);
@@ -93,6 +94,7 @@ export default function ChamberViewPage() {
   // Cleanup typing timeout on unmount
   useEffect(() => {
     return () => {
+      isMountedRef.current = false;
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
@@ -203,17 +205,23 @@ export default function ChamberViewPage() {
         content: message.trim() || '[Image]',
         imageUrl,
       });
-      setMessage('');
-      handleRemoveImage();
+      if (isMountedRef.current) {
+        setMessage('');
+        handleRemoveImage();
+      }
     } catch (error) {
       console.error('Send error:', error);
-      toast({
-        title: "Failed to send",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      if (isMountedRef.current) {
+        toast({
+          title: "Failed to send",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setIsSending(false);
+      if (isMountedRef.current) {
+        setIsSending(false);
+      }
     }
   };
 
@@ -282,6 +290,15 @@ export default function ChamberViewPage() {
 
   const handleAliasChange = async () => {
     if (!validId || !newAlias.trim()) return;
+
+    if (newAlias.trim().length < 2) {
+      toast({
+        title: "Alias too short",
+        description: "Alias must be at least 2 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsActionPending(true);
     try {
@@ -352,9 +369,9 @@ export default function ChamberViewPage() {
                 <Users className="w-3 h-3" />
                 {chamber.memberCount} members
                 <span className="mx-1">•</span>
-                <Badge 
+<Badge 
                   variant="secondary" 
-                  className="text-xs bg-purple-500/20 text-purple-300"
+                  className="text-xs bg-primary/20 text-primary"
                 >
                   {chamber.userAlias}
                 </Badge>
@@ -567,7 +584,7 @@ export default function ChamberViewPage() {
               <p className="text-sm text-muted-foreground mb-2">Your Identity</p>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-purple-500/20 text-purple-300">
+<Badge className="bg-primary/20 text-primary">
                     {chamber.userAlias}
                   </Badge>
                   <span 
@@ -796,7 +813,10 @@ function MessageBubble({ message, isOwn, onImageClick }: { message: {
         {message.imageUrl && (
           <div 
             className="mb-2 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+            role="button"
+            tabIndex={0}
             onClick={() => onImageClick?.(message.imageUrl!, message.content, isOwn ? 'You' : aliasName)}
+            onKeyDown={(e) => e.key === 'Enter' && onImageClick?.(message.imageUrl!, message.content, isOwn ? 'You' : aliasName)}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 

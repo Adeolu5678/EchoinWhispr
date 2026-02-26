@@ -1,5 +1,16 @@
 import { Cookie } from 'lucide-react';
 import { LEGAL_LAST_UPDATED } from '../constants';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Cookie Policy | EchoinWhispr',
+  description: 'Learn about how EchoinWhispr uses cookies and similar technologies to improve your experience on our platform.',
+  openGraph: {
+    title: 'Cookie Policy | EchoinWhispr',
+    description: 'Learn about how EchoinWhispr uses cookies and similar technologies to improve your experience on our platform.',
+    type: 'website',
+  },
+};
 
 export default function CookiePolicyPage() {
   return (

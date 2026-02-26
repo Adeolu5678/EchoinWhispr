@@ -5,7 +5,7 @@
 @layer base {
   :root {
     /* ═══════════════════════════════════════════════════════════════════════
-       EchoinWhispr Brand Theme - Whisper Indigo & Echo Cyan
+       EchoinWhispr Brand Theme - Tech Blue & Creative Magenta
        ═══════════════════════════════════════════════════════════════════════ */
 
     /* Background Colors */
@@ -16,8 +16,8 @@
     --popover: 240 6% 8%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary - Whisper Indigo (#3F3D56) */
-    --primary: 243 18% 29%;
+    /* Primary - Sky Blue (#0ea5e9) */
+    --primary: 199 89% 48%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
@@ -28,32 +28,32 @@
     --muted: 240 4% 16%;
     --muted-foreground: 240 5% 58%;
 
-    /* Accent - Echo Cyan (#00C2FF) */
-    --accent: 194 100% 50%;
-    --accent-foreground: 0 0% 0%;
+    /* Accent - Creative Magenta (#E000FF) */
+    --accent: 288 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
     /* States */
-    --destructive: 0 72% 51%;
+    --destructive: 2 100% 59%;
     --destructive-foreground: 0 0% 98%;
-    --success: 160 84% 39%;
+    --success: 152 95% 39%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 48 100% 50%;
     --warning-foreground: 0 0% 0%;
-    --info: 194 100% 50%;
-    --info-foreground: 0 0% 0%;
+    --info: 187 94% 43%;
+    --info-foreground: 0 0% 100%;
 
     /* Borders & Inputs */
     --border: 240 4% 16%;
     --input: 240 4% 14%;
-    --ring: 194 100% 50%;
+    --ring: 199 89% 48%;
     --radius: 0.75rem;
 
-    /* Glow Effects - Updated for new colors */
-    --glow-primary: 0 0 30px rgba(63, 61, 86, 0.5);
-    --glow-primary-intense: 0 0 50px rgba(63, 61, 86, 0.7);
-    --glow-accent: 0 0 30px rgba(0, 194, 255, 0.4);
-    --glow-text: 0 0 60px rgba(0, 194, 255, 0.35);
-    --glow-text-accent: 0 0 60px rgba(0, 194, 255, 0.35);
+    /* Glow Effects - Sky Blue & Creative Magenta */
+    --glow-primary: 0 0 30px rgba(14, 165, 233, 0.5);
+    --glow-primary-intense: 0 0 50px rgba(14, 165, 233, 0.7);
+    --glow-accent: 0 0 30px rgba(224, 0, 255, 0.4);
+    --glow-text: 0 0 60px rgba(14, 165, 233, 0.35);
+    --glow-text-accent: 0 0 60px rgba(224, 0, 255, 0.35);
   }
 }
 
@@ -153,10 +153,10 @@
   }
 
   .glass-card-hover:hover {
-    border-color: rgba(168, 85, 247, 0.25);
+    border-color: rgba(224, 0, 255, 0.25);
     box-shadow:
       0 8px 40px rgba(0, 0, 0, 0.4),
-      0 0 30px rgba(168, 85, 247, 0.15),
+      0 0 30px rgba(224, 0, 255, 0.15),
       inset 0 0 0 1px rgba(255, 255, 255, 0.08);
     transform: translateY(-2px);
   }
@@ -178,9 +178,9 @@
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(
       135deg,
-      #3f3d56 0%,
-      #00a5d9 50%,
-      #00c2ff 100%
+      #0ea5e9 0%,
+      #0284c7 50%,
+      #e000ff 100%
     );
   }
 
@@ -188,9 +188,9 @@
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(
       135deg,
-      #5a5872 0%,
-      #3f3d56 50%,
-      #2d2b3f 100%
+      #38bdf8 0%,
+      #0ea5e9 50%,
+      #0284c7 100%
     );
   }
 
@@ -198,9 +198,9 @@
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(
       135deg,
-      #66d9ff 0%,
-      #00c2ff 50%,
-      #00a5d9 100%
+      #e000ff 0%,
+      #c700e6 50%,
+      #a21caf 100%
     );
   }
 
@@ -215,37 +215,35 @@
     );
   }
 
-  /* Animated gradient background - Whisper Indigo to Echo Cyan */
+  /* Animated gradient background - Sky Blue to Creative Magenta */
   .gradient-animated {
     background: linear-gradient(
       135deg,
-      hsl(243 18% 35%) 0%,
-      hsl(210 60% 40%) 35%,
-      hsl(194 100% 45%) 65%,
-      hsl(194 100% 50%) 100%
+      #0ea5e9 0%,
+      #0284c7 35%,
+      #e000ff 65%,
+      #c700e6 100%
     );
-    /* No animation - stable premium gradient */
   }
 
   .gradient-animated:hover {
     background: linear-gradient(
       135deg,
-      hsl(243 18% 40%) 0%,
-      hsl(210 60% 45%) 35%,
-      hsl(194 100% 50%) 65%,
-      hsl(194 100% 55%) 100%
+      #38bdf8 0%,
+      #0ea5e9 35%,
+      #e000ff 65%,
+      #c700e6 100%
     );
   }
 
   .gradient-animated-slow {
     background: linear-gradient(
       135deg,
-      hsl(243 18% 35%) 0%,
-      hsl(210 60% 40%) 35%,
-      hsl(194 100% 45%) 65%,
-      hsl(194 100% 50%) 100%
+      #0ea5e9 0%,
+      #0284c7 35%,
+      #e000ff 65%,
+      #c700e6 100%
     );
-    /* No animation - stable premium gradient */
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -280,7 +278,7 @@
     content: '';
     position: absolute;
     inset: -1px;
-    background: linear-gradient(135deg, #a855f7 0%, #d946ef 50%, #ec4899 100%);
+    background: linear-gradient(135deg, #0ea5e9 0%, #e000ff 50%, #c700e6 100%);
     border-radius: inherit;
     z-index: -1;
     opacity: 0.5;
@@ -308,7 +306,7 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(168, 85, 247, 0.08) 50%,
+      rgba(14, 165, 233, 0.08) 50%,
       transparent 100%
     );
     transform: translateX(-100%);
@@ -402,7 +400,7 @@
     position: absolute;
     background: radial-gradient(
       circle,
-      rgba(168, 85, 247, 0.3) 0%,
+      rgba(14, 165, 233, 0.3) 0%,
       transparent 70%
     );
     border-radius: 50%;
@@ -414,7 +412,7 @@
     position: absolute;
     background: radial-gradient(
       circle,
-      rgba(217, 70, 239, 0.25) 0%,
+      rgba(224, 0, 255, 0.25) 0%,
       transparent 70%
     );
     border-radius: 50%;
@@ -529,12 +527,12 @@
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
   }
   50% {
     box-shadow:
-      0 0 40px rgba(168, 85, 247, 0.5),
-      0 0 60px rgba(217, 70, 239, 0.25);
+      0 0 40px rgba(14, 165, 233, 0.5),
+      0 0 60px rgba(224, 0, 255, 0.25);
   }
 }
 
@@ -716,4 +714,43 @@
 
 .legal-table td {
   @apply px-4 py-3 text-muted-foreground;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-3000 {
+  animation-delay: 3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-pulse,
+  .animate-bounce,
+  .animate-spin,
+  .animate-float,
+  .animate-float-slow,
+  .animate-gradient-x,
+  .animate-shimmer,
+  .pulse-glow,
+  .shimmer::before {
+    animation: none !important;
+  }
+
+  .shimmer::before {
+    display: none;
+  }
 }

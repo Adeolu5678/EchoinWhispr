@@ -1,0 +1,11 @@
+# Android Signing Configuration
+# DO NOT commit this file to version control!
+# Add key.properties to .gitignore
+
+storeFile=../release.keystore
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyAlias=release
+keyPassword=YOUR_KEY_PASSWORD
+
+# To generate a release keystore, run:
+# keytool -genkey -v -keystore release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000

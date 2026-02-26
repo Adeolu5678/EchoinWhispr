@@ -17,8 +17,15 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isMountedRef = useRef(true);
 
   const audioUrl = useQuery(api.whispers.getVoiceMessageUrl, { storageId, whisperId });
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -26,14 +33,16 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
     const audio = audioRef.current;
     
     const updateProgress = () => {
-      if (audio.duration) {
+      if (audio.duration && isMountedRef.current) {
         setProgress((audio.currentTime / audio.duration) * 100);
       }
     };
 
     const handleEnded = () => {
-      setIsPlaying(false);
-      setProgress(0);
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+        setProgress(0);
+      }
     };
 
     audio.addEventListener('timeupdate', updateProgress);
@@ -42,6 +51,8 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
     return () => {
       audio.removeEventListener('timeupdate', updateProgress);
       audio.removeEventListener('ended', handleEnded);
+      audio.pause();
+      audio.src = '';
     };
   }, [audioUrl]);
 
@@ -50,13 +61,21 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
 
     if (isPlaying) {
       audioRef.current.pause();
-      setIsPlaying(false);
+      if (isMountedRef.current) {
+        setIsPlaying(false);
+      }
     } else {
       audioRef.current.play()
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          if (isMountedRef.current) {
+            setIsPlaying(true);
+          }
+        })
         .catch((error) => {
           console.error('Playback failed:', error);
-          setIsPlaying(false);
+          if (isMountedRef.current) {
+            setIsPlaying(false);
+          }
         });
     }
   };
@@ -78,7 +97,7 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
   }
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl">
+    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl">
       <audio ref={audioRef} src={audioUrl} hidden />
 
       <Button
@@ -86,6 +105,7 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
         variant="secondary"
         className="h-10 w-10 rounded-full"
         onClick={togglePlayback}
+        aria-label={isPlaying ? "Pause voice message" : "Play voice message"}
       >
         {isPlaying ? (
           <Pause className="w-4 h-4" />
@@ -95,9 +115,16 @@ export function VoicePlayer({ storageId, whisperId, duration }: VoicePlayerProps
       </Button>
 
       <div className="flex-1 space-y-1">
-        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+        <div 
+          className="h-1 bg-white/10 rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={Math.round(progress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Voice message progress"
+        >
           <div 
-            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-100"
+            className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-100"
             style={{ width: `${progress}%` }}
           />
         </div>
