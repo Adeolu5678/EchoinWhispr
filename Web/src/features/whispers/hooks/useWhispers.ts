@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { usePaginatedQuery, useConvex } from 'convex/react';
+import { usePaginatedQuery } from 'convex/react';
 import { api } from '../../../lib/convex';
 import { whisperService } from '../services/whisperService';
 import {
@@ -82,7 +82,6 @@ export function useSendWhisper() {
  * @returns Object with whispers data, loading state, and error handling
  */
 export function useReceivedWhispers() {
-  const convex = useConvex();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const PAGE_SIZE = 10;
@@ -132,13 +131,14 @@ export function useReceivedWhispers() {
 
   const refetch = useCallback(async () => {
     setIsRefreshing(true);
+    // usePaginatedQuery auto-updates via Convex real-time subscriptions.
+    // A brief refresh indicator is shown for user feedback.
     try {
-      // Trigger a refetch by querying directly (usePaginatedQuery auto-updates via subscriptions)
-      await convex.query(api.whispers.getAllReceivedWhispers, {});
+      await new Promise(resolve => setTimeout(resolve, 300));
     } finally {
       setIsRefreshing(false);
     }
-  }, [convex]);
+  }, []);
 
   return {
     whispers,

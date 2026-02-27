@@ -993,14 +993,13 @@ export const approveUsernameChange = mutation({
     if (!userToUpdate) throw new Error('User not found');
 
     // Update username (and displayName if it matched the old username)
-    const updates: Record<string, unknown> = {
+    await ctx.db.patch(request.userId, {
       username: request.requestedUsername,
+      ...(userToUpdate.displayName === request.currentUsername
+        ? { displayName: request.requestedUsername }
+        : {}),
       updatedAt: Date.now(),
-    };
-    if (userToUpdate.displayName === request.currentUsername) {
-      updates.displayName = request.requestedUsername;
-    }
-    await ctx.db.patch(request.userId, updates);
+    });
 
     await ctx.db.patch(args.requestId, {
       status: 'approved',

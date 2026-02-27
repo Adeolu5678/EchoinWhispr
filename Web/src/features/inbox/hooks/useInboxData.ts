@@ -1,11 +1,8 @@
 import { useState, useCallback } from 'react';
-import { useConvex } from 'convex/react';
-import { api } from '@/lib/convex';
 import { useWhispers } from '@/features/whispers/hooks/useWhispers';
 import { useGetConversations } from '@/features/conversations/hooks/useGetConversations';
 
 export const useInboxData = () => {
-  const convex = useConvex();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const {
@@ -36,15 +33,11 @@ export const useInboxData = () => {
   const refetchAll = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([
-        convex.query(api.whispers.getAllReceivedWhispers, {}),
-        convex.query(api.conversations.getActiveConversations, { paginationOpts: { numItems: 200, cursor: null } }),
-      ]);
-      refetchWhispers();
+      await refetchWhispers();
     } finally {
       setIsRefreshing(false);
     }
-  }, [convex, refetchWhispers]);
+  }, [refetchWhispers]);
 
   return {
     whispers: whispers || [],
