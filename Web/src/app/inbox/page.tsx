@@ -46,6 +46,9 @@ export default function InboxPage() {
     whispers,
     isLoadingWhispers,
     whispersError,
+    hasMore,
+    isLoadingMore,
+    loadMore,
     conversations,
     isLoadingConversations,
     conversationsError,
@@ -201,6 +204,9 @@ export default function InboxPage() {
                     refetchWhispers={refetchAll}
                     markAsRead={markAsRead}
                     onReply={handleReply}
+                    hasMore={hasMore}
+                    isLoadingMore={isLoadingMore}
+                    loadMore={loadMore}
                   />
                 </Suspense>
               </TabsContent>

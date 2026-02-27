@@ -836,3 +836,211 @@ export const isCurrentUserDeleted = query({
     return user?.isDeleted ?? false;
   },
 });
+
+// ============================================================
+// USERNAME CHANGE REQUESTS
+// ============================================================
+
+const RESERVED_USERNAMES_SET = new Set([
+  'admin', 'administrator', 'moderator', 'mod', 'system', 'support',
+  'help', 'info', 'contact', 'about', 'privacy', 'terms', 'legal',
+  'api', 'app', 'web', 'mobile', 'blog', 'news', 'press', 'careers',
+  'jobs', 'pricing', 'features', 'docs', 'documentation', 'status',
+  'security', 'settings', 'config', 'test', 'testing', 'demo',
+  'example', 'sample', 'user', 'users', 'profile', 'profiles',
+  'account', 'accounts', 'login', 'logout', 'signin', 'signup',
+  'register', 'auth', 'authenticate', 'verify', 'confirmation',
+  'reset', 'password', 'forgot', 'recover', 'delete', 'remove',
+  'ban', 'banned', 'suspended', 'deleted', 'inactive', 'disabled',
+  'owner', 'founder', 'ceo', 'staff', 'team', 'official', 'verified',
+  'echoinwhispr', 'echo', 'whisper', 'whispers', 'echoes',
+  'null', 'undefined', 'none', 'anonymous', 'guest', 'bot', 'service',
+  'everyone', 'all', 'public', 'private', 'hidden', 'default',
+]);
+
+/** Submit a username change request that will be reviewed by admins. */
+export const requestUsernameChange = mutation({
+  args: {
+    requestedUsername: v.string(),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+    if (!user) throw new Error('User not found');
+
+    const normalizedUsername = args.requestedUsername.trim().toLowerCase();
+    const usernameRegex = /^[a-z0-9_]{3,20}$/;
+    if (!usernameRegex.test(normalizedUsername)) {
+      throw new Error('Username must be 3–20 characters: lowercase letters, numbers, underscores');
+    }
+    if (RESERVED_USERNAMES_SET.has(normalizedUsername)) {
+      throw new Error('This username is reserved');
+    }
+    if (user.username === normalizedUsername) {
+      throw new Error('New username must be different from your current username');
+    }
+
+    // Check availability
+    const existing = await ctx.db
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', normalizedUsername))
+      .first();
+    if (existing) throw new Error('This username is already taken');
+
+    // Only one pending request at a time
+    const pendingRequest = await ctx.db
+      .query('usernameChangeRequests')
+      .withIndex('by_user_id', q => q.eq('userId', user._id))
+      .filter(q => q.eq(q.field('status'), 'pending'))
+      .first();
+    if (pendingRequest) throw new Error('You already have a pending username change request');
+
+    await ctx.db.insert('usernameChangeRequests', {
+      userId: user._id,
+      currentUsername: user.username,
+      requestedUsername: normalizedUsername,
+      status: 'pending',
+      reason: args.reason,
+      createdAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/** Get the current user's most recent username change request. */
+export const getMyUsernameChangeRequest = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+    if (!user) return null;
+
+    return ctx.db
+      .query('usernameChangeRequests')
+      .withIndex('by_user_id', q => q.eq('userId', user._id))
+      .order('desc')
+      .first();
+  },
+});
+
+/** List all pending username change requests (admin only). */
+export const getPendingUsernameChangeRequests = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    const adminOk = await isAdmin(ctx, identity.subject);
+    const superOk = await isSuperAdmin(ctx, identity.subject);
+    if (!adminOk && !superOk) throw new Error('Not authorized');
+
+    return ctx.db
+      .query('usernameChangeRequests')
+      .withIndex('by_status', q => q.eq('status', 'pending'))
+      .order('asc')
+      .take(100);
+  },
+});
+
+/** Approve a username change request (admin only). */
+export const approveUsernameChange = mutation({
+  args: { requestId: v.id('usernameChangeRequests') },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    const adminOk = await isAdmin(ctx, identity.subject);
+    const superOk = await isSuperAdmin(ctx, identity.subject);
+    if (!adminOk && !superOk) throw new Error('Not authorized');
+
+    const admin = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+    if (!admin) throw new Error('Admin not found');
+
+    const request = await ctx.db.get(args.requestId);
+    if (!request || request.status !== 'pending') throw new Error('Request not found or already processed');
+
+    // Re-check availability
+    const existing = await ctx.db
+      .query('users')
+      .withIndex('by_username', q => q.eq('username', request.requestedUsername))
+      .first();
+    if (existing) {
+      await ctx.db.patch(args.requestId, {
+        status: 'rejected',
+        reviewedBy: admin._id,
+        reviewedAt: Date.now(),
+        rejectionReason: 'Username was taken by another user',
+      });
+      throw new Error('Username is no longer available – request rejected');
+    }
+
+    const userToUpdate = await ctx.db.get(request.userId);
+    if (!userToUpdate) throw new Error('User not found');
+
+    // Update username (and displayName if it matched the old username)
+    await ctx.db.patch(request.userId, {
+      username: request.requestedUsername,
+      ...(userToUpdate.displayName === request.currentUsername
+        ? { displayName: request.requestedUsername }
+        : {}),
+      updatedAt: Date.now(),
+    });
+
+    await ctx.db.patch(args.requestId, {
+      status: 'approved',
+      reviewedBy: admin._id,
+      reviewedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/** Reject a username change request (admin only). */
+export const rejectUsernameChange = mutation({
+  args: {
+    requestId: v.id('usernameChangeRequests'),
+    rejectionReason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Not authenticated');
+
+    const adminOk = await isAdmin(ctx, identity.subject);
+    const superOk = await isSuperAdmin(ctx, identity.subject);
+    if (!adminOk && !superOk) throw new Error('Not authorized');
+
+    const admin = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .first();
+    if (!admin) throw new Error('Admin not found');
+
+    const request = await ctx.db.get(args.requestId);
+    if (!request || request.status !== 'pending') throw new Error('Request not found or already processed');
+
+    await ctx.db.patch(args.requestId, {
+      status: 'rejected',
+      reviewedBy: admin._id,
+      reviewedAt: Date.now(),
+      rejectionReason: args.rejectionReason,
+    });
+
+    return { success: true };
+  },
+});

@@ -14,7 +14,18 @@ import LandingPage from '@/components/LandingPage';
  * @returns {JSX.Element} The rendered page
  */
 export default function HomePage() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
+
+  // Wait for Clerk to finish loading before deciding which page to show.
+  // Without this guard the LandingPage flashes briefly for authenticated users
+  // because isSignedIn starts as undefined.
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   if (!isSignedIn) {
     return <LandingPage />;

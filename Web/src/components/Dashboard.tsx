@@ -102,6 +102,13 @@ export function Dashboard() {
     paginationOpts: { numItems: 5, cursor: null } 
   });
 
+  // Track how long we've been waiting – after 8 s, show whatever we have
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setHasTimedOut(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
@@ -122,14 +129,11 @@ export function Dashboard() {
     }
   }, [isDeleted, signOut, router]);
 
-  const isLoading = 
+  // Only block on the most critical queries; secondary queries degrade gracefully
+  const isLoading = !hasTimedOut && (
     currentUser === undefined ||
-    isDeleted === undefined ||
-    pendingFriendRequests === undefined ||
-    friendsList === undefined ||
-    myChambers === undefined ||
-    resonancePrefs === undefined ||
-    receivedWhispers === undefined;
+    isDeleted === undefined
+  );
 
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
 

@@ -129,25 +129,32 @@ export async function POST(request: NextRequest) {
 
     const convex = new ConvexHttpClient(convexUrl);
 
-    // Get the current user from Convex using Clerk ID to obtain the Convex user ID
-    const currentUser = await convex.query(api.users.getUserByClerkId, {
-      clerkId: userId,
-    });
-
-    if (!currentUser) {
-      console.error('Authenticated user not found in Convex database');
-      return NextResponse.json(
-        { error: 'User data not found' },
-        { status: 404 }
-      );
+    // Try to authenticate the Convex client with a Clerk JWT so we can
+    // exclude the current user from results.  If the 'convex' JWT template
+    // is not configured in Clerk, we fall back to unauthenticated search
+    // (the current user may appear in results, but self-whispers are blocked
+    // server-side in the sendWhisper mutation).
+    let excludeUserId: string | undefined;
+    try {
+      const authObj = await auth();
+      const token = await authObj.getToken({ template: 'convex' });
+      if (token) {
+        convex.setAuth(token);
+        const currentUser = await convex.query(api.users.getUserByClerkId, {
+          clerkId: userId,
+        });
+        excludeUserId = currentUser?._id;
+      }
+    } catch {
+      // Token retrieval or user lookup failed – proceed without exclusion
     }
 
-    // Call Convex search function with the proper Convex user ID
+    // Call Convex search function
     const searchResult = await convex.query(api.users.searchUsers, {
       query: query.trim(),
       limit: parsedLimit,
       offset: parsedOffset,
-      excludeUserId: currentUser._id,
+      ...(excludeUserId ? { excludeUserId: excludeUserId as import('../../../../../Convex/convex/_generated/dataModel').Id<'users'> } : {}),
     });
 
     // Return the search results

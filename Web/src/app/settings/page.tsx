@@ -7,12 +7,14 @@ import { MysterySettings } from '@/features/whispers/components/MysterySettings'
 import { NotificationSettings } from '@/features/profile/components/NotificationSettings';
 import { RequestAdminModal } from '@/features/admin/components';
 import { useAdminData } from '@/features/admin/hooks';
-import { Settings as SettingsIcon, Eye, Moon, Sun, Monitor, Heart, Briefcase, GraduationCap, Palette, Shield, Crown, ArrowRight } from 'lucide-react';
+import { Settings as SettingsIcon, Eye, Moon, Sun, Monitor, Heart, Briefcase, GraduationCap, Palette, Shield, Crown, ArrowRight, AtSign, Loader2, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/lib/convex';
@@ -23,6 +25,9 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [adminModalOpen, setAdminModalOpen] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [usernameChangeReason, setUsernameChangeReason] = useState('');
+  const [isRequestingUsernameChange, setIsRequestingUsernameChange] = useState(false);
   const isMysteryWhispersEnabled = useFeatureFlag('MYSTERY_WHISPERS');
   const isPushNotificationsEnabled = useFeatureFlag('PUSH_NOTIFICATIONS');
   const { isAdmin, myRequestStatus } = useAdminData();
@@ -32,12 +37,32 @@ export default function SettingsPage() {
   const lifePhases = useQuery(api.resonance.getLifePhases);
   const currentUser = useQuery(api.users.getCurrentUser);
   const hasAdmins = useQuery(api.admin.hasAdmins);
+  const myUsernameChangeRequest = useQuery(api.users.getMyUsernameChangeRequest);
 
   const updatePreferences = useMutation(api.users.updatePreferences);
   const updateResonancePrefs = useMutation(api.resonance.updateResonancePreferences);
   const updateLifePhase = useMutation(api.resonance.updateLifePhase);
   const updateMentorship = useMutation(api.resonance.updateMentorshipPreferences);
   const initializeFirstSuperAdmin = useMutation(api.admin.initializeFirstSuperAdmin);
+  const requestUsernameChange = useMutation(api.users.requestUsernameChange);
+
+  const handleRequestUsernameChange = async () => {
+    if (!newUsername.trim()) return;
+    setIsRequestingUsernameChange(true);
+    try {
+      await requestUsernameChange({
+        requestedUsername: newUsername.trim().toLowerCase(),
+        reason: usernameChangeReason.trim() || undefined,
+      });
+      toast({ title: 'Request submitted!', description: 'Admins will review your request shortly.' });
+      setNewUsername('');
+      setUsernameChangeReason('');
+    } catch (error) {
+      toast({ title: 'Request failed', description: error instanceof Error ? error.message : 'Please try again.', variant: 'destructive' });
+    } finally {
+      setIsRequestingUsernameChange(false);
+    }
+  };
 
   // Sync saved theme preference from Convex to next-themes on load
   useEffect(() => {
@@ -180,6 +205,93 @@ export default function SettingsPage() {
                 </div>
               </div>
             )}
+
+            {/* Username Change Request */}
+            <Card className="glass border-white/10 p-6">
+              <h2 className="font-semibold mb-1 flex items-center gap-2">
+                <AtSign className="w-5 h-5 text-primary" />
+                Change Username
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Your current username is <span className="font-mono text-foreground">@{currentUser?.username}</span>.
+                Username changes require admin approval.
+              </p>
+
+              {/* Show existing request status */}
+              {myUsernameChangeRequest && myUsernameChangeRequest.status === 'pending' && (
+                <div className="mb-4 flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <Clock className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-amber-400">Request pending</p>
+                    <p className="text-muted-foreground">
+                      Your request to change to <span className="font-mono">@{myUsernameChangeRequest.requestedUsername}</span> is awaiting admin review.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {myUsernameChangeRequest && myUsernameChangeRequest.status === 'approved' && (
+                <div className="mb-4 flex items-start gap-3 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+                  <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-green-400">Last request approved</p>
+                    <p className="text-muted-foreground">
+                      Username was changed to <span className="font-mono">@{myUsernameChangeRequest.requestedUsername}</span>.
+                    </p>
+                  </div>
+                </div>
+              )}
+              {myUsernameChangeRequest && myUsernameChangeRequest.status === 'rejected' && (
+                <div className="mb-4 flex items-start gap-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                  <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-red-400">Last request rejected</p>
+                    {myUsernameChangeRequest.rejectionReason && (
+                      <p className="text-muted-foreground">{myUsernameChangeRequest.rejectionReason}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Only show form if no pending request */}
+              {myUsernameChangeRequest?.status !== 'pending' && (
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-username" className="text-sm">Requested username</Label>
+                    <Input
+                      id="new-username"
+                      placeholder="e.g. newcoolname"
+                      value={newUsername}
+                      onChange={e => setNewUsername(e.target.value.toLowerCase())}
+                      className="bg-white/5 border-white/10 focus:border-primary/50 font-mono"
+                      maxLength={20}
+                    />
+                    <p className="text-xs text-muted-foreground">3–20 characters, letters/numbers/underscores only</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="username-reason" className="text-sm">Reason (optional)</Label>
+                    <Textarea
+                      id="username-reason"
+                      placeholder="Why do you want to change your username?"
+                      value={usernameChangeReason}
+                      onChange={e => setUsernameChangeReason(e.target.value)}
+                      className="bg-white/5 border-white/10 focus:border-primary/50 min-h-[80px] resize-none"
+                      maxLength={300}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleRequestUsernameChange}
+                    disabled={!newUsername.trim() || isRequestingUsernameChange}
+                    className="gap-2"
+                  >
+                    {isRequestingUsernameChange ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" />Submitting...</>
+                    ) : (
+                      <><AtSign className="w-4 h-4" />Submit Request</>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </Card>
           </TabsContent>
 
           {/* Resonance Settings */}

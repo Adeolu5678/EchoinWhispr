@@ -64,6 +64,8 @@
 
   html {
     scroll-behavior: smooth;
+    /* Reserve space for the scrollbar so layout doesn't shift when dialogs lock body scroll */
+    scrollbar-gutter: stable;
   }
 
   body {
@@ -75,6 +77,12 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Prevent Radix/shadcn Dialog from adding right padding that shifts the layout */
+  body[data-scroll-locked] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
   }
 
   /* Custom scrollbar for dark theme */
