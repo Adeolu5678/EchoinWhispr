@@ -13,6 +13,9 @@ export const useInboxData = () => {
     isLoadingWhispers,
     whispersError,
     unreadCount: whisperUnreadCount,
+    hasMore,
+    isLoadingMore,
+    loadMore,
     refetchWhispers,
     markAsRead,
   } = useWhispers();
@@ -47,6 +50,9 @@ export const useInboxData = () => {
     whispers: whispers || [],
     isLoadingWhispers,
     whispersError,
+    hasMore,
+    isLoadingMore,
+    loadMore,
 
     conversations: conversations || [],
     isLoadingConversations,

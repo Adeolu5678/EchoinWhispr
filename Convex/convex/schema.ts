@@ -485,5 +485,21 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_user_read', ['userId', 'read'])
     .index('by_created', ['createdAt']),
+
+  // === Username Change Requests ===
+  usernameChangeRequests: defineTable({
+    userId: v.id('users'),
+    currentUsername: v.string(),
+    requestedUsername: v.string(),
+    status: v.union(v.literal('pending'), v.literal('approved'), v.literal('rejected')),
+    reason: v.optional(v.string()),
+    reviewedBy: v.optional(v.id('users')),
+    reviewedAt: v.optional(v.number()),
+    rejectionReason: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index('by_user_id', ['userId'])
+    .index('by_status', ['status'])
+    .index('by_requested_username', ['requestedUsername']),
 });
 

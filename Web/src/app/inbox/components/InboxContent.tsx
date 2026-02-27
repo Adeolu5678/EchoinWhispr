@@ -4,9 +4,12 @@
  * Content component that handles the inbox logic.
  * Separated for better error boundary isolation and suspense handling.
  */
+import { useState, useMemo } from 'react';
 import { WhisperList } from '@/features/whispers/components/WhisperList';
 import { WhisperWithSender } from '@/features/whispers/types';
 import { AppError } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface InboxContentProps {
   whispers: WhisperWithSender[] | undefined;
@@ -15,7 +18,12 @@ interface InboxContentProps {
   refetchWhispers: () => void;
   markAsRead: (whisperId: string) => Promise<void>;
   onReply: (whisperId: string) => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  loadMore?: () => void;
 }
+
+type FilterType = 'all' | 'unread' | 'read';
 
 export function InboxContent({
   whispers,
@@ -24,7 +32,22 @@ export function InboxContent({
   refetchWhispers,
   markAsRead,
   onReply,
+  hasMore = false,
+  isLoadingMore = false,
+  loadMore,
 }: InboxContentProps) {
+  const [filter, setFilter] = useState<FilterType>('all');
+
+  const filteredWhispers = useMemo(() => {
+    if (!whispers) return [];
+    if (filter === 'unread') return whispers.filter(w => !w.isRead);
+    if (filter === 'read') return whispers.filter(w => w.isRead);
+    return whispers;
+  }, [whispers, filter]);
+
+  const unreadCount = useMemo(() => (whispers ?? []).filter(w => !w.isRead).length, [whispers]);
+  const readCount = useMemo(() => (whispers ?? []).filter(w => w.isRead).length, [whispers]);
+
   // Show loading state
   if (isLoadingWhispers) {
     return (
@@ -96,7 +119,7 @@ export function InboxContent({
     );
   }
 
-  // Show empty state if no whispers
+  // Show empty state if no whispers at all
   if (!whispers || whispers.length === 0) {
     return (
       <div className="text-center py-12">
@@ -132,18 +155,83 @@ export function InboxContent({
     );
   }
 
-  // Show whispers list
   return (
-    <WhisperList
-      whispers={whispers}
-      isLoading={isLoadingWhispers}
-      error={whispersError}
-      showMarkAsRead={true}
-      onWhisperMarkAsRead={markAsRead}
-      onReply={onReply}
-      emptyStateMessage="No whispers found in your inbox."
-      emptyStateActionLabel="Refresh Inbox"
-      onEmptyStateAction={refetchWhispers}
-    />
+    <div className="space-y-4">
+      {/* Read / Unread filter pills */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+            filter === 'all'
+              ? 'bg-primary text-white border-primary shadow-lg shadow-primary/25'
+              : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          All ({whispers.length})
+        </button>
+        <button
+          onClick={() => setFilter('unread')}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+            filter === 'unread'
+              ? 'bg-primary text-white border-primary shadow-lg shadow-primary/25'
+              : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          Unread ({unreadCount})
+        </button>
+        <button
+          onClick={() => setFilter('read')}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+            filter === 'read'
+              ? 'bg-primary text-white border-primary shadow-lg shadow-primary/25'
+              : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          Read ({readCount})
+        </button>
+      </div>
+
+      {/* Show empty filtered state */}
+      {filteredWhispers.length === 0 ? (
+        <div className="text-center py-10 text-muted-foreground">
+          <p className="text-sm">No {filter} whispers.</p>
+        </div>
+      ) : (
+        <>
+          <WhisperList
+            whispers={filteredWhispers}
+            isLoading={isLoadingWhispers}
+            error={whispersError}
+            showMarkAsRead={true}
+            onWhisperMarkAsRead={markAsRead}
+            onReply={onReply}
+            emptyStateMessage={`No ${filter} whispers found.`}
+            emptyStateActionLabel="Refresh Inbox"
+            onEmptyStateAction={refetchWhispers}
+          />
+
+          {/* Load More button – only show on the "all" filter so pagination is clear */}
+          {filter === 'all' && hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={loadMore}
+                disabled={isLoadingMore}
+                className="border-white/20 hover:bg-white/10 hover:border-white/30 transition-all duration-300 min-w-[140px]"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More'
+                )}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }

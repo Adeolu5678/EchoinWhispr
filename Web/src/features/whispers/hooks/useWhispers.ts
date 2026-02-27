@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { useQuery, useConvex } from 'convex/react';
+import { usePaginatedQuery, useConvex } from 'convex/react';
 import { api } from '../../../lib/convex';
 import { whisperService } from '../services/whisperService';
 import {
@@ -77,18 +77,28 @@ export function useSendWhisper() {
 }
 
 /**
- * Hook for receiving whispers with real-time subscriptions
- * Fetches ALL whispers at once (no pagination)
+ * Hook for receiving whispers with real-time subscriptions and pagination.
+ * Loads the first 10 whispers and exposes a loadMore function.
  * @returns Object with whispers data, loading state, and error handling
  */
 export function useReceivedWhispers() {
   const convex = useConvex();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const results = useQuery(api.whispers.getAllReceivedWhispers);
+  const PAGE_SIZE = 10;
+
+  const {
+    results: rawResults,
+    status,
+    loadMore,
+  } = usePaginatedQuery(
+    api.whispers.getReceivedWhispers,
+    {},
+    { initialNumItems: PAGE_SIZE }
+  );
 
   const whispers = useMemo(() => {
-    return (results ?? []).map(whisper => ({
+    return (rawResults ?? []).map(whisper => ({
       ...whisper,
       isOwnWhisper: false,
       formattedTime: new Date(whisper._creationTime).toLocaleTimeString('en-US', {
@@ -100,7 +110,7 @@ export function useReceivedWhispers() {
       senderName: 'Anonymous',
       senderAvatar: undefined,
     })) as WhisperWithSender[];
-  }, [results]);
+  }, [rawResults]);
 
   const unreadCount = useMemo(() => {
     return whispers.filter((whisper: WhisperWithSender) => !whisper.isRead).length;
@@ -110,11 +120,20 @@ export function useReceivedWhispers() {
     return unreadCount > 0;
   }, [unreadCount]);
 
-  const isLoading = results === undefined;
+  const isLoading = status === 'LoadingFirstPage';
+  const isLoadingMore = status === 'LoadingMore';
+  const hasMore = status === 'CanLoadMore';
+
+  const handleLoadMore = useCallback(() => {
+    if (hasMore) {
+      loadMore(PAGE_SIZE);
+    }
+  }, [hasMore, loadMore]);
 
   const refetch = useCallback(async () => {
     setIsRefreshing(true);
     try {
+      // Trigger a refetch by querying directly (usePaginatedQuery auto-updates via subscriptions)
       await convex.query(api.whispers.getAllReceivedWhispers, {});
     } finally {
       setIsRefreshing(false);
@@ -124,13 +143,13 @@ export function useReceivedWhispers() {
   return {
     whispers,
     isLoading,
-    isLoadingMore: false,
+    isLoadingMore,
     isRefreshing,
     error: null,
     unreadCount,
     hasUnread,
-    hasMore: false,
-    loadMore: () => {},
+    hasMore,
+    loadMore: handleLoadMore,
     refetch,
     clearError: () => {},
   };
@@ -242,6 +261,9 @@ export function useWhispers() {
     whispersError: receivedWhispers.error,
     unreadCount: receivedWhispers.unreadCount,
     hasUnread: receivedWhispers.hasUnread,
+    hasMore: receivedWhispers.hasMore,
+    isLoadingMore: receivedWhispers.isLoadingMore,
+    loadMore: receivedWhispers.loadMore,
     refetchWhispers: receivedWhispers.refetch,
 
     // Mark as read functionality
