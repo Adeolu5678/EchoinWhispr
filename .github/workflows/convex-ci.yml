@@ -82,7 +82,11 @@ jobs:
           fi
 
       - name: Validate Convex schema
+        if: ${{ secrets.CONVEX_STAGING_DEPLOYMENT != '' && secrets.CONVEX_STAGING_DEPLOY_KEY != '' }}
         working-directory: ./Convex
+        env:
+          CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_STAGING_DEPLOYMENT }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_STAGING_DEPLOY_KEY }}
         run: pnpm generate
 
       - name: Check for schema changes
