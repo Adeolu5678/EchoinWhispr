@@ -82,11 +82,19 @@ export function Providers({ children }: ProvidersProps) {
             afterSignInUrl="/"
             afterSignUpUrl="/"
           >
-            <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-              <SessionManager />
-              {children}
-              <Toaster />
-            </ConvexProviderWithClerk>
+            {convex ? (
+              <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+                <SessionManager />
+                {children}
+                <Toaster />
+              </ConvexProviderWithClerk>
+            ) : (
+              <>
+                <SessionManager />
+                {children}
+                <Toaster />
+              </>
+            )}
           </ClerkProvider>
         </AuthErrorBoundary>
       </ToastStateProvider>
