@@ -2,12 +2,12 @@ name: Convex Backend CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'Convex/**'
       - '.github/workflows/convex-ci.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'Convex/**'
       - '.github/workflows/convex-ci.yml'
@@ -83,14 +83,7 @@ jobs:
 
       - name: Validate Convex schema
         working-directory: ./Convex
-        run: |
-          pnpm dlx convex generate
-          if [ $? -eq 0 ]; then
-            echo "Schema validation successful"
-          else
-            echo "Schema validation failed"
-            exit 1
-          fi
+        run: pnpm generate
 
       - name: Check for schema changes
         id: schema-check
