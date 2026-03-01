@@ -31,6 +31,7 @@ export default function WhisperDetailPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const whisper = useQuery(
@@ -72,6 +73,7 @@ export default function WhisperDetailPage() {
   }, [imagePreview]);
 
   useEffect(() => {
+    setMounted(true);
     return () => {
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview);
@@ -188,7 +190,7 @@ export default function WhisperDetailPage() {
   const isReplyDisabled = (!replyContent.trim() && !selectedImage) || isReplying || isUploading;
 
   // Loading state skeleton matching the new design
-  if (!whisper) {
+  if (!whisper || !mounted) {
     return (
       <div className="min-h-[100dvh] pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
         <div className="w-full max-w-3xl space-y-6">

@@ -104,5 +104,5 @@ All input components feature 8px rounded corners.
 
 ### Implementation Approach
 - Start with atomic design principles (atoms, molecules, organisms)
-- Build a component library that can be shared across web and mobile platforms
+- Build a component library for the Next.js web application
 - Establish a clear versioning and release process for the library

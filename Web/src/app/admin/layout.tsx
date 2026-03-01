@@ -1,7 +1,7 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { redirect } from 'next/navigation';
+import { useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { Shield, MessageSquare, Users, ChevronRight, Home } from 'lucide-react';
@@ -12,11 +12,25 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const router = useRouter(); 
   const { isSignedIn, isLoaded } = useAuth();
-  const { isAdmin, isSuperAdmin, isLoading } = useAdminData();
+  const { isAdmin, isSuperAdmin, isLoading: isAdminLoading } = useAdminData();
 
-  // Show loading state
-  if (!isLoaded || isLoading) {
+  const isLoading = !isLoaded || isAdminLoading;
+
+  // Effect to handle redirection once loading is complete
+  useEffect(() => {
+    if (!isLoading) {
+      if (!isSignedIn) {
+        router.push('/sign-in');
+      } else if (!isAdmin) {
+        router.push('/');
+      }
+    }
+  }, [isLoading, isSignedIn, isLoaded, isAdmin, router]);
+
+  // Show loading state while determining access
+  if (isLoading || (!isSignedIn || !isAdmin)) {
     return (
       <div className="min-h-[100dvh] pt-20 pb-10 px-4 md:px-8 lg:px-12 flex justify-center">
         <div className="w-full max-w-6xl animate-pulse">
@@ -25,16 +39,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
     );
-  }
-
-  // Redirect if not signed in
-  if (!isSignedIn) {
-    redirect('/sign-in');
-  }
-
-  // Redirect if not admin
-  if (!isAdmin) {
-    redirect('/');
   }
 
   const navItems = [

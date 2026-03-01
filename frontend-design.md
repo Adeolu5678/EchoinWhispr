@@ -16,29 +16,33 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 
 ## Color Palette
 
-### Primary Colors (Purple)
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `primary-500` | `#a855f7` | Main brand color, buttons, links |
-| `primary-400` | `#c084fc` | Hover states, highlights |
-| `primary-600` | `#9333ea` | Active states, emphasis |
+### Primary Colors (Sky Blue)
 
-### Accent Colors (Fuchsia)
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `accent-500` | `#d946ef` | Secondary highlights, CTAs |
-| `accent-400` | `#e879f9` | Hover states |
-| `accent-600` | `#c026d3` | Active states |
+| `primary` | `#0ea5e9` | Main brand color, buttons, links |
+| `primary-hover` | `#38bdf8` | Hover states, highlights |
+| `primary-active` | `#0284c7` | Active states, emphasis |
+
+### Accent Colors (Creative Magenta)
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `accent` | `#E000FF` | Secondary highlights, CTAs |
+| `accent-hover` | `#eb33ff` | Hover states |
+| `accent-active` | `#c700e6` | Active states |
 
 ### Background Colors
+
 | Token | Value | Usage |
 |-------|-------|-------|
-| `background` | `#0a0a0b` | Main app background |
-| `card` | `#141416` | Card backgrounds |
-| `secondary` | `#111113` | Elevated surfaces |
+| `background` | `#09090b` | Main app background (hsl 240 6% 4%) |
+| `card` | `#111113` | Card backgrounds (hsl 240 6% 7%) |
+| `secondary` | `#141417` | Elevated surfaces (hsl 240 4% 14%) |
 
 ### Semantic Colors
-- **Success**: `#10b981` (Emerald)
+
+- **Success**: `#0ea15e` (Emerald)
 - **Error**: `#ef4444` (Red)
 - **Warning**: `#f59e0b` (Amber)
 - **Info**: `#06b6d4` (Cyan)
@@ -48,12 +52,14 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ## Typography
 
 ### Font Families
+
 ```css
 --font-inter: 'Inter', system-ui, sans-serif;  /* Body text */
 --font-outfit: 'Outfit', system-ui, sans-serif; /* Display headings */
 ```
 
 ### Type Scale
+
 | Class | Size | Usage |
 |-------|------|-------|
 | `text-sm` | 14px | Captions, labels |
@@ -64,6 +70,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 | `text-6xl` | 60px | Hero headings |
 
 ### Font Usage
+
 - **Headings (h1-h3)**: Use `font-display` (Outfit)
 - **Body text**: Use `font-sans` (Inter)
 - **Code**: Use `font-mono` (JetBrains Mono)
@@ -104,6 +111,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ## Glow Effects
 
 ### Text Glow
+
 ```css
 .text-glow {
   text-shadow: 0 0 60px rgba(168, 85, 247, 0.35);
@@ -111,6 +119,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ```
 
 ### Box Glow
+
 ```css
 .glow-primary {
   box-shadow: 0 0 30px rgba(168, 85, 247, 0.35);
@@ -122,6 +131,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ```
 
 ### Gradient Text
+
 ```css
 .text-gradient {
   background-image: linear-gradient(135deg, #a855f7, #d946ef, #ec4899);
@@ -135,6 +145,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ## Animation System
 
 ### Available Animations
+
 | Class | Effect | Duration |
 |-------|--------|----------|
 | `animate-fade-in` | Opacity 0→1 | 300ms |
@@ -146,6 +157,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 | `animate-gradient` | Gradient shift | 8s |
 
 ### Stagger Animations
+
 ```jsx
 <div className="stagger-1">First</div>  // 100ms delay
 <div className="stagger-2">Second</div> // 200ms delay
@@ -216,6 +228,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ## Layout Patterns
 
 ### Page Layout
+
 ```jsx
 <div className="min-h-screen pt-20 pb-10 px-4">
   <div className="max-w-4xl mx-auto">
@@ -233,6 +246,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ```
 
 ### Background Orbs
+
 ```jsx
 {/* Decorative background orbs */}
 <div className="orb-primary w-96 h-96 -top-20 -left-20" />
@@ -244,6 +258,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ## Responsive Design
 
 ### Breakpoints
+
 | Prefix | Min Width | Typical Device |
 |--------|-----------|----------------|
 | `sm` | 640px | Large phones |
@@ -253,6 +268,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 | `2xl` | 1536px | Large screens |
 
 ### Mobile-First Approach
+
 ```jsx
 // Text scaling
 <h1 className="text-3xl md:text-4xl lg:text-5xl">
@@ -281,6 +297,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 ## Best Practices
 
 ### Do's ✅
+
 - Use design tokens instead of hardcoded values
 - Add `transition-all duration-300` for smooth interactions
 - Use `glass-card` for content containers
@@ -288,6 +305,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 - Use animations purposefully
 
 ### Don'ts ❌
+
 - Don't use pure black `#000000`
 - Don't skip hover states
 - Don't use multiple competing glow effects
@@ -298,7 +316,7 @@ EchoinWhispr's frontend follows a **Premium Neon-Glass Aesthetic** with these co
 
 ## File Structure
 
-```
+```bash
 Web/src/
 ├── app/
 │   ├── globals.css      # CSS variables, utilities
