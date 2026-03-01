@@ -282,20 +282,7 @@ export const getWhisperById = query({
     whisperId: v.id('whispers'),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .first();
-
-    if (!user) {
-      return null;
-    }
-
+    const user = await requireUser(ctx);
     const whisper = await ctx.db.get(args.whisperId);
     if (!whisper) {
       throw new Error('Whisper not found');
