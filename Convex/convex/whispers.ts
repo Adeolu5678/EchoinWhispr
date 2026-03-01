@@ -283,7 +283,6 @@ export const getWhisperById = query({
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
-
     const whisper = await ctx.db.get(args.whisperId);
     if (!whisper) {
       throw new Error('Whisper not found');

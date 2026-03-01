@@ -1,42 +1,57 @@
-# EchoinWhispr: Web Application (Web Folder)
+# EchoinWhispr: Web Application
 
-This Web folder contains the complete codebase for the EchoinWhispr web application. This application is being meticulously rebuilt from the ground up using a modern, scalable technology stack to provide a seamless and intuitive user experience that mirrors the functionality of the primary mobile application.
+The primary user interface for the EchoinWhispr platform, built as a modern, high-performance web application using Next.js 14 and the Neon-Glass design system.
 
-1. Project Overview
-   The EchoinWhispr web application is a core component of the unified EchoinWhispr ecosystem, designed to facilitate anonymous one-way messages ("Whispers") that can evolve into two-way conversations. This web interface offers broad accessibility, allowing users to engage with the platform from any device with a web browser.
+## Performance & UX First
 
-2. Technology Stack
-   The web application is built on a robust and modern technology stack, chosen for its performance, scalability, and developer experience.
-   Client Framework: React with Next.js
-   Next.js is utilized for its powerful features, including server-side rendering (SSR) and static site generation (SSG), which enhance performance, SEO, and user experience.
-   Styling: Tailwind CSS and Shadcn
-   Tailwind CSS provides a utility-first approach for rapid and consistent styling. Shadcn UI components offer a set of beautifully designed and accessible UI primitives, built on top of Tailwind.
-   Backend & API Layer: Convex
-   Convex serves as both the real-time database and API layer, simplifying data management and providing live updates across the application.
-   Authentication: Clerk
-   Clerk provides a comprehensive, secure, and easily integratable authentication service, handling user sign-up, login, and session management.
-   Hosting: Vercel
-   Vercel offers an optimized hosting platform for Next.js applications, providing seamless deployments, global CDN, and serverless functions.
-   Package Management: PNPM
-   PNPM is used for efficient package management, especially beneficial in monorepo setups, offering speed and disk space savings.
+This workspace contains the frontend logic, UI components, and client-side integrations for the entire platform. It is optimized for speed, accessibility, and "premium" visual fidelity.
 
-3. Current Feature Status (2026)
-   The application has evolved beyond the initial MVP. Key implemented features include:
-   - **Mobile-Responsive Design**: A PWA-like experience with bottom navigation and optimized layouts for all devices.
-   - **Conversation Evolution**: The "Whisper" to "Conversation" flow is fully functional.
-   - **Admin System**: Comprehensive dashboard for role management and content moderation.
-   - **Authentication**: Usage of Clerk v6 for secure access.
-   - **UI/UX**: Refined, glassmorphic design system using Shadcn UI.
+## Key Features (Web)
 
-4. Scalability & Future Features
-   The application is designed with a modular architecture and incorporates feature flags to enable easy integration of future functionalities without extensive refactoring. This "foundation-first" approach means that while certain advanced features are not active in the MVP, the structural elements are in place for their seamless addition in later iterations.   Future features include (but are not limited to):
-   - **Payments**: Stripe integration for Premium subscriptions (Framework present, pending full rollout).
-   - **Native Mobile Apps**: Dedicated React Native and Flutter applications.
-   - **Advanced Location Features**: Geolocation-based discovery.
+- **Responsive Neon-Glass UI**: A state-of-the-art dark-first interface with glassmorphism and real-time animations.
+- **Dynamic Persona Dashboard**: Manage anonymous personas and switch contexts seamlessly.
+- **Adaptive Whisper Feed**: Infinite-scrolling feed of whispers with rich media support.
+- **Identity Unmasking**: Guided UI for the mutual identity reveal process.
+- **Clerk Auth Integration**: Zero-friction onboarding and secure session management.
+- **PWA Ready**: Installable as a progressive web app for mobile devices.
 
+## Technology Stack
 
-5. Project Management & Development Workflow
-   Development of the web application follows a "Human-in-the-Loop" workflow. AI agents generate code based on detailed prompts, and you, as the sole human developer, act as the project orchestrator.
-   Kanban Workflow: Tasks are managed on a Notion Kanban board, progressing through Backlog, To Do, Vibecoding in Progress, Ready for Review, Testing, and Done states.
-   AI Agent Logbook: Each task card serves as a logbook entry, meticulously documenting the AI prompt, generated output, review notes, and traceability links to the main specification.
-   This structured approach ensures transparency, quality, and efficient iteration throughout the development process.
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS & Shadcn UI
+- **Animations**: Framer Motion & CSS keyframes
+- **State Management**: Convex React Hooks (Reactive)
+- **Auth**: Clerk (Clerk v6)
+- **Deployment**: Vercel
+
+## Development Workflow
+
+### Setup
+
+1. Ensure root dependencies are installed: `pnpm install`
+2. Create `.env.local` in this directory:
+   ```bash
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
+   CLERK_SECRET_KEY=...
+   NEXT_PUBLIC_CONVEX_URL=...
+   ```
+
+### Commands
+
+- `pnpm dev`: Start the web dev server locally.
+- `pnpm build`: Build for production.
+- `pnpm start`: Run the production build locally.
+- `pnpm lint`: Run ESLint checks.
+
+## Architecture
+
+- **`src/app/`**: Next.js App Router for routes and layouts.
+- **`src/components/`**: Atomic UI components and feature-specific components.
+- **`src/hooks/`**: Custom React hooks for backend and UI logic.
+- **`src/lib/`**: Shared utility functions and configurations.
+
+## Links
+
+- [Design System Guide](../frontend-design.md)
+- [API Endpoints](../Documentations/API%20Endpoints.md)
+- [Product Requirements (PRD)](../Documentations/Product%20Requirements%20Document%20(PRD).md)

@@ -1,113 +1,93 @@
-# API Endpoints Documentation
+# API Endpoints Documentation (Convex Backend)
 
 ## Overview
 
-EchoinWhispr is an anonymous messaging platform built on a modern Web2 stack. The system architecture combines Convex for backend logic and real-time database capabilities with Clerk for authentication. API endpoints are implemented primarily through Convex functions (Queries, Mutations, and Actions).
+EchoinWhispr's backend is powered by **Convex**, providing a reactive, real-time data layer with serverless logic. Clerk handles identity management, which is tightly integrated with Convex.
 
-- **Convex Functions**: Serverless functions that run on Convex's infrastructure for data persistence, business logic, and third-party integrations.
-- **Web API Routes**: Next.js API routes for specific edge cases or integrations not suitable for Convex directly (though most logic resides in Convex).
-- **External Services**: Integration with Clerk for identity management and potentially other services for media storage if not using Convex file storage.
+- **Convex Functions**: Accessible via `useQuery`, `useMutation`, and `useAction` in the frontend.
+- **Authentication**: All non-public functions require a valid Clerk session.
 
-## Convex Functions (Backend API)
+---
 
-The core backend logic is implemented in Convex. These functions are called directly from the client using the `convex/react` hooks.
+## Core Modules
 
-### User Management
+### User & Persona Management (`convex/users.ts`)
 
-#### `mutation users.register(args: { career: string, interests: string[], mood: string })`
+#### `query users.getCurrentUser`
+- **Description**: Retrieves the currently authenticated user's data.
+- **Returns**: User object or `null`.
 
-- **Description**: Registers a new user and creates their anonymous persona profile linked to their Clerk identity.
-- **Parameters**:
-  - `career`: User's career (e.g., "Software Engineer")
-  - `interests`: Array of user interests (e.g., ["Tech", "Art"])
-  - `mood`: Current mood status (e.g., "Creative")
-- **Returns**: User ID
-- **Auth**: Required (Clerk)
+#### `mutation users.getOrCreateCurrentUser`
+- **Description**: Initializes a user record upon first login (called after Clerk auth).
+- **Returns**: Newly created or existing user object.
 
-#### `mutation users.updatePersona(args: { career: string, interests: string[], mood: string })`
+#### `mutation users.updateUsername(args: { username: string })`
+- **Description**: Sets or updates the user's unique platform handle.
 
-- **Description**: Updates an existing user's persona information.
-- **Parameters**:
-  - `career`: Updated career string
-  - `interests`: Updated interests array
-  - `mood`: Updated mood string
-- **Returns**: null
-- **Auth**: Required (Clerk)
+#### `mutation users.updateUserProfile(args: { career?, interests?, mood?, bio?, avatarUrl?, isPublic? })`
+- **Description**: Updates the user's anonymous persona and public profile.
 
-### Subscription Management
+---
 
-#### `mutation subscriptions.upgrade(args: { planId: string })`
+### Messaging & Whispers (`convex/whispers.ts`)
 
-- **Description**: Initiates a subscription upgrade (e.g., via Stripe checkout session creation).
-- **Parameters**:
-  - `planId`: ID of the plan to subscribe to
-- **Returns**: Checkout URL or status
+#### `mutation whispers.sendWhisper(args: { recipientUsername: string, content: string, imageUrl?, location? })`
+- **Description**: Sends an anonymous one-way message.
+- **Constraints**: 280 character limit; rate-limited to 20/hour.
 
-#### `query subscriptions.getStatus(args: {})`
+#### `query whispers.getReceivedWhispers(args: { paginationOpts })`
+- **Description**: Paginated list of whispers received by the user.
 
-- **Description**: Checks the current user's subscription status.
-- **Returns**: Subscription object (status, expiry, plan)
+#### `mutation whispers.replyToWhisper(args: { parentWhisperId: Id, content: string })`
+- **Description**: Creates a "Whisper Chain" by replying to your own whisper.
 
-### Query Functions
+---
 
-#### `query users.getProfile(args: { userId: Id<"users"> })`
+### Echo Chambers (`convex/echoChambers.ts`)
 
-- **Description**: Retrieves a user's complete anonymous persona.
-- **Returns**: User profile object
+#### `mutation echoChambers.create(args: { name: string, topic: string, isPublic: boolean })`
+- **Description**: Creates a new anonymous group chat room.
 
-#### `query users.findMoodMatch(args: { mood: string })`
+#### `mutation echoChambers.sendMessage(args: { chamberId: Id, content: string })`
+- **Description**: Sends a message within a chamber using an anonymous alias.
 
-- **Description**: Finds a random user with matching mood for anonymous matching.
-- **Returns**: Matched User ID or null
+---
 
-#### `query users.search(args: { query: string })`
+### Resonance & Matching (`convex/resonance.ts`)
 
-- **Description**: Searches for users by username or public handle.
-- **Parameters**:
-  - `query`: Search string
-- **Returns**: Array of matching user objects
+#### `query resonance.findMatches`
+- **Description**: Finds potential connections based on current mood and shared interests.
 
-### Admin Functions
+#### `mutation resonance.updatePreferences(args: { preferSimilarMood: boolean, matchLifePhase: boolean })`
+- **Description**: Tunes the resonance matching algorithm for the user.
 
-#### `mutation admin.updateSettings(args: { setting: string, value: any })`
+---
 
-- **Description**: Updates global platform settings.
-- **Auth**: Admin only
+### Unmasking Ceremony (`convex/unmasking.ts`)
 
-## Web API Routes
+#### `mutation unmasking.request(args: { conversationId: Id })`
+- **Description**: Proposes an identity reveal to a connection.
+- **Logic**: Identity is only revealed if both parties accept (Mutual Consent).
 
-The web application provides RESTful API endpoints for specific integrations, suchs as webhooks.
+---
 
-### Webhooks
+### Admin System (`convex/admin.ts`)
+
+#### `query admin.getAnalytics`
+- **Description**: Provides platform growth and engagement metrics.
+- **Auth**: Admin/Super-Admin only.
+
+---
+
+## Webhooks (`Web/src/app/api/webhooks/`)
 
 #### `POST /api/webhooks/clerk`
+- **Description**: Syncs Clerk user events (creation, deletion, updates) to the Convex database.
 
-- **Description**: Handles user creation/update events from Clerk.
+---
 
-#### `POST /api/webhooks/stripe`
+## File Storage
 
-- **Description**: Handles subscription payment events from Stripe.
-
-## External Services
-
-### File Storage (Convex Storage)
-
-The system uses Convex's built-in file storage for images and attachments.
-
-#### Content Upload
-
-- **uploadUrl**: Generated via `mutation generateUploadUrl`
-- **storageId**: Returned after upload, stored in database records
-
-#### Content Retrieval
-
-- **storageId**: Used to generate signed URLs for serving content
-
-### Identity Services (Clerk)
-
-- **Authentication**: Handled via Clerk SDK (Login, Logout, Session Management)
-- **User Metadata**: Stored in Clerk and synced to Convex users table
-
-### Encryption
-
-While not using decentralized keys, end-to-end encryption can still be implemented client-side if required for specific "whisper" features, using standard crypto libraries (e.g., Web Crypto API) before sending data to Convex.
+Uses **Convex Storage** for all media assets.
+- **Upload**: Call `generateUploadUrl` mutation, then POST to the returned URL.
+- **Access**: Store the `storageId` in document fields to generate signed URLs via `ctx.storage.getUrl()`.

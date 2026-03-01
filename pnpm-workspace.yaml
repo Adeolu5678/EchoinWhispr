@@ -1,6 +1,5 @@
 packages:
   - 'Web'
-  - 'ReactNative'
   - 'Convex'
   - 'design-system'
   - 'packages/*'

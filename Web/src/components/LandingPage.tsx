@@ -221,129 +221,6 @@ const OrbitingStars = () => {
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// Frame Sequencer Canvas — progressive loading, mobile-adaptive
-// ═══════════════════════════════════════════════════════════════════════
-
-const FRAME_COUNT = 240;
-
-const getFrameStep = () => {
-  if (typeof window === 'undefined') return 1;
-  if (window.innerWidth < 640) return 3;
-  if (window.innerWidth < 1024) return 2;
-  return 1;
-};
-
-const FrameSequencer = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: true });
-    if (!ctx) return;
-
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const step = getFrameStep();
-    const images = new Map<number, HTMLImageElement>();
-    let currentFrame = 1;
-
-    // Draw frame — with onload retry if the image isn't decoded yet
-    const drawFrame = (frameIndex: number) => {
-      const snapped = Math.round((frameIndex - 1) / step) * step + 1;
-      const clamped = Math.max(1, Math.min(FRAME_COUNT, snapped));
-      const img = images.get(clamped);
-      if (!img) return;
-
-      const doDraw = () => {
-        if (canvas.width !== img.width || canvas.height !== img.height) {
-          canvas.width = img.width || 800;
-          canvas.height = img.height || 800;
-        } else {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        // Cover watermark in bottom-right
-        ctx.fillStyle = '#000';
-        ctx.fillRect(canvas.width * 0.78, canvas.height * 0.88, canvas.width * 0.22, canvas.height * 0.12);
-      };
-
-      if (img.complete && img.naturalHeight > 0) {
-        doDraw();
-      } else {
-        // Retry once image fully loads
-        img.onload = doDraw;
-      }
-    };
-
-    // Scroll handler
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const docH = Math.max(1, document.documentElement.scrollHeight - document.documentElement.clientHeight);
-          const target = Math.floor((window.scrollY / docH) * (FRAME_COUNT - 1)) + 1;
-          if (currentFrame !== target) { currentFrame = target; drawFrame(target); }
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll, { passive: true });
-
-    // Progressive loading
-    const frameIndices: number[] = [];
-    for (let i = 1; i <= FRAME_COUNT; i += step) frameIndices.push(i);
-
-    const loadBatch = (indices: number[], onDone?: () => void) => {
-      let remaining = indices.length;
-      if (remaining === 0) { onDone?.(); return; }
-      indices.forEach((i) => {
-        if (images.has(i)) { if (--remaining === 0) onDone?.(); return; }
-        const img = new window.Image();
-        img.decoding = 'async';
-        img.onload = img.onerror = () => { if (--remaining === 0) onDone?.(); };
-        img.src = `/frames/ezgif-frame-${i.toString().padStart(3, '0')}.png`;
-        images.set(i, img);
-      });
-    };
-
-    // Phase 1: 30 frames → show first frame immediately (or just frame 240 if reduced)
-    const initialBatch = reduced ? [240] : frameIndices.slice(0, 30);
-    
-    loadBatch(initialBatch, () => {
-      // If reduced, draw 240 (which will snap to nearest loaded frame, 240 itself)
-      drawFrame(reduced ? 240 : 1);
-      
-      if (!reduced) {
-        // Phase 2: rest deferred
-        const rest = frameIndices.slice(30);
-        if ('requestIdleCallback' in window) {
-          (window as Window & { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(() => loadBatch(rest));
-        } else {
-          setTimeout(() => loadBatch(rest), 400);
-        }
-      }
-    });
-
-    if (reduced) return;
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="pointer-events-none mix-blend-screen"
-      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-    />
-  );
-};
 
 export default function LandingPage(): JSX.Element {
   const prefersReducedMotion = useReducedMotion();
@@ -395,7 +272,7 @@ export default function LandingPage(): JSX.Element {
       </nav>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          FIXED BACKGROUND LAYER (Stars + Mask)
+          FIXED BACKGROUND LAYER (Stars)
           ═══════════════════════════════════════════════════════════════════ */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         {/* Background is pure black to seamlessly hide mask JPEG compression artifacts */}
@@ -406,20 +283,6 @@ export default function LandingPage(): JSX.Element {
           <OrbitingStars />
         </div>
 
-        {/* Foreground Hero Asset Component */}
-        <div className="absolute inset-0 flex items-center justify-center z-[5]">
-          <div className="relative w-full h-full sm:w-[80%] sm:h-[120%] md:h-[150%] max-h-[80vh] flex items-center justify-center">
-            
-            {/* Soft glow removed to ensure pure black blending */}
-            {/* <div className="absolute w-[60%] h-[70%] bg-primary/10 rounded-full blur-[60px] z-[0]" /> */}
-            
-            {/* The Frame Sequencer using the 240 user-provided frames */}
-            <div className="absolute inset-0 z-[1] flex items-center justify-center">
-              <FrameSequencer />
-            </div>
-            
-          </div>
-        </div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════

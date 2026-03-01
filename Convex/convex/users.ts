@@ -891,8 +891,7 @@ export const getPendingUsernameChangeRequests = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
 
-    const { isAdmin: checkIsAdmin } = await import('./adminAuth');
-    const isAdminUser = await checkIsAdmin(ctx, identity.subject);
+    const isAdminUser = await isAdmin(ctx, identity.subject);
     if (!isAdminUser) return [];
 
     const requests = await ctx.db

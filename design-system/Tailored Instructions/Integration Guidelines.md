@@ -5,12 +5,12 @@ This guide outlines how to integrate the EchoinWhispr design system into applica
 
 ## Architecture Integration
 
-### Decentralized Stack Considerations
-Following the five-layer architecture (Identity, State & Logic, Data Storage, Consensus & Routing, Data Reading):
+### Modern Tech Stack Considerations
+Following the centralized yet reactive architecture (Next.js, Convex, Clerk):
 
-- **Client-Side Optimization**: Design system components must handle client-side filtering of HCS streams efficiently
-- **Performance Requirements**: Implement lazy loading for images and optimize bundle sizes for the read-heavy, write-light architecture
-- **Privacy Compliance**: Ensure no plaintext content touches Hedera network components
+- **Reactive UI Optimization**: Design system components must seamlessly handle real-time data updates from Convex queries.
+- **Performance Requirements**: Implement lazy loading for images and optimize bundle sizes for high-performance rendering.
+- **Privacy Compliance**: Ensure all sensitive persona data is handled via the secure encryption layer before hitting the backend.
 
 ### Non-Functional Requirements Alignment
 - **Security**: Components must support E2E-encryption workflows
@@ -29,7 +29,7 @@ Following the five-layer architecture (Identity, State & Logic, Data Storage, Co
 ### Component Integration Patterns
 - **Atomic Design**: Implement atoms (buttons, inputs), molecules (cards, forms), organisms (navigation, layouts)
 - **Composition**: Use component composition for flexible, reusable UI patterns
-- **State Management**: Integrate with Hedera state queries and HCS subscriptions
+- **State Management**: Integrate with Convex hooks (`useQuery`, `useMutation`) for real-time state synchronization
 
 ### Cross-Platform Consistency
 - **Shared Logic**: Maintain consistent business logic across web and mobile

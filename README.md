@@ -1,50 +1,40 @@
 # EchoinWhispr
 
-A social application for anonymous persona-based connections, featuring real-time messaging, interest-based matchmaking, and private conversations with Convex as the backend.
+A modern social platform for anonymous persona-based connections, featuring real-time messaging, interest-based matchmaking, and private "unmasking" ceremonies. Built with Next.js, Convex, and Clerk.
 
 ## Overview
 
-EchoinWhispr is a social application that enables trust-based connections through anonymous merit-based networking. It provides a familiar UX with powerful privacy features, targeting users who want meaningful connections without revealing their identity until they choose to.
+EchoinWhispr enables meaningful psychological connections through anonymous merit-based networking. It provides a familiar, premium UX with powerful privacy features, allowing users to interact via personas (based on career, interests, and mood) without revealing their true identity until they choose to.
 
 ## Key Features
 
-- **Clerk Authentication**: Secure identity management
-- **Persona Management**: Anonymous profiles based on career, interests, and mood
-- **Premium Features**: Subscription-based enhancements
-- **Search & Matching**: Find connections by career, interests, and mood
-- **Anonymous Conversations**: Private messaging with rich media support
-- **Real-time Backend**: Powered by Convex for live updates
+- **Persona Management**: Create anonymous profiles defined by your career, interests, and current mood.
+- **Whispers**: Send anonymous one-way messages into the "void" or to specific users.
+- **Conversations**: Evolve whispers into two-way private chats through mutual interaction.
+- **Echo Chambers**: Participate in anonymous group messaging based on specific topics.
+- **Resonance Matching**: AI-driven matchmaking based on mood, life phase, and shared interests.
+- **Unmasking Ceremony**: A structured process for users to voluntarily reveal their identity to trusted connections.
+- **Real-time Backend**: Powered by Convex for instantaneous updates and reactive data.
+- **Secure Auth**: Managed by Clerk for robust identity protection and session management.
 
 ## Project Structure
 
 ```bash
 EchoinWhispr/
-├── Web/                    # Next.js web application
-│   └── Tailored Instructions/
-│       # AI agent development guidelines
-├── Back-End/               # Hedera smart contracts and utilities
-│   ├── smart-contracts/    # Solidity contracts on Hedera
-│   ├── scripts/           # Deployment scripts
-│   └── utilities/         # Client-side encryption and IPFS services
-├── design-system/          # Shared design tokens and components
-└── Documentations/
-    └── Software Specification Documentation (SSD)/
-        # Comprehensive project documentation
+├── Web/                    # Next.js web application (Frontend)
+├── Convex/                 # Convex backend functions and schema
+├── design-system/          # Shared design tokens and brand assets
+└── Documentations/         # Project specifications and PRDs
 ```
 
 ## Technology Stack
 
-- **Frontend**: Next.js (Web), React Native with Expo (Mobile), Flutter (Learning)
-- **Backend**: Convex (Real-time database and API)
-- **Authentication**: Clerk
-- **Package Manager**: pnpm (Monorepo management)
-- **Language**: TypeScript (primary), Dart (Flutter)
-- **Styling**: Tailwind CSS (Web)
-
-## Current Status (2026)
-
-- **Web**: Production-ready, mobile-responsive PWA-like experience.
-- **Mobile**: Native apps in development.
+- **Frontend**: Next.js 14+ (React)
+- **Backend**: Convex (Real-time database, Serverless functions)
+- **Authentication**: Clerk v6
+- **Styling**: Tailwind CSS & Shadcn UI (Neon-Glass Aesthetic)
+- **Language**: TypeScript
+- **Package Manager**: pnpm (Monorepo)
 
 ## Getting Started
 
@@ -52,59 +42,43 @@ EchoinWhispr/
 
 - Node.js 18+
 - pnpm 8+
-- Hedera testnet account with HBAR
-- IPFS gateway access (Infura/Pinata recommended)
+- Convex account (for backend development)
+- Clerk account (for authentication)
 
 ### Installation
 
-1. Install dependencies for all workspaces:
+1. Clone the repository and install dependencies:
    ```bash
    pnpm install
    ```
 
-2. Set up environment variables for each platform (see platform-specific READMEs)
+2. Set up environment variables:
+   - Create `.env.local` in the `Web/` directory with your Clerk and Convex keys.
+   - Create `.env.local` in the `Convex/` directory with your Convex keys.
 
-### Development Scripts
+### Development
 
-- `pnpm dev:web` - Start Next.js development server
-- `pnpm build:all` - Build all platforms
-- `pnpm lint` - Run linting across all workspaces
-- `pnpm test` - Run tests across all workspaces
+Run the full stack (Frontend + Backend) concurrently:
+```bash
+pnpm dev:fullstack
+```
 
-### Platform-Specific Setup
-
-See the individual README files in each directory for detailed setup instructions:
-
-- [Web Application](./Web/README.md)
-- [Back-End Services](./Back-End/README.md)
-- [Design System](./design-system/README.md)
+Individual workspace commands:
+- `pnpm dev:web`: Start Next.js dev server.
+- `pnpm dev:convex`: Start Convex dev server.
 
 ## Architecture Principles
 
-1. **Decentralized by Design**: No central servers or databases
-2. **Privacy-First**: End-to-end encryption, anonymous personas
-3. **Trust by Design**: Immutable smart contracts govern all interactions
-4. **Web3-Web2 Bridge**: Familiar UX with powerful privacy features
-5. **Cost Efficiency**: Optimized for Hedera's low fees and high performance
-
-## Development Workflow
-
-1. **Monorepo Management**: All dependencies managed from root using pnpm workspaces
-2. **Decentralized Backend**: Hedera services provide unified backend across platforms
-3. **Client-Side Encryption**: Private keys never leave user devices
-4. **Code Quality**: ESLint and Prettier ensure consistent code quality
-
-## Contributing
-
-1. Follow the established coding standards
-2. Test all changes across platforms
-3. Update documentation as needed
-4. Ensure decentralization principles are maintained
+1. **Privacy-First**: User identity is detached from activity until explicit "unmasking".
+2. **Real-time Interaction**: Seamless, reactive experience across all features.
+3. **Modular Design**: Features are encapsulated for easy scaling and maintenance.
+4. **Premium Aesthetics**: High-fidelity "Neon-Glass" design system for a state-of-the-art feel.
 
 ## Documentation
 
-- [Software Specification Documentation](./Documentations/Software Specification Documentation (SSD)/README.md)
-- [Platform-Specific Instructions](./Web/Tailored Instructions/README.md)
+- [Product Requirements Document (PRD)](./Documentations/Product%20Requirements%20Document%20(PRD).md)
+- [API Endpoints](./Documentations/API%20Endpoints.md)
+- [Design System](./frontend-design.md)
 
 ## License
 
